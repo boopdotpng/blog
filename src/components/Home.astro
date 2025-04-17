@@ -1,0 +1,156 @@
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+}
+const { posts } = Astro.props as Props;
+const categories = Array.from(new Set(posts.map(p => p.data.cat).filter(Boolean)));
+const catColors: Record<string, string> = {
+  life: '#ff595e',        // red
+  misc: '#ff924c',        // orange
+  "machine learning": '#ffca3a',    // yellow
+  biology: '#8ac926',     // green
+  programming: '#1982c4',  // blue
+  fpga: '#8b5cf6'  // violet 
+};
+---
+
+<section class="home-list">
+  <h1 class="home-title">posts</h1>
+
+  <div class="filter-bar">
+    {categories.map(cat => (
+      <button
+        class="pill"
+        data-cat={cat}
+        style={`--pill-color: ${catColors[cat] ?? '#58a6ff'}`}
+      >
+        {cat}
+      </button>
+    ))}
+  </div>
+
+  <ul class="post-list">
+    {posts.map(post => (
+      <li
+        class="post-list-item"
+        data-cat={post.data.cat}
+        style={`--cat-color: ${catColors[post.data.cat] ?? '#58a6ff'}`}
+      >
+        <a class="post-card-link" href={`/blog/${post.slug}`}>
+          <div class="post-date">{post.data.pubDate}</div>
+          <div class="post-title">{post.data.title}</div>
+          <div class="post-desc">{post.data.description ?? 'no description available'}</div>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<script>
+  const active = new Set();
+  const pills = document.querySelectorAll('[data-cat]');
+  const posts = document.querySelectorAll('.post-list-item');
+
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      const cat = pill.dataset.cat;
+      pill.classList.toggle('active');
+      active.has(cat) ? active.delete(cat) : active.add(cat);
+      updatePosts();
+    });
+  });
+
+  function updatePosts() {
+    posts.forEach(post => {
+      const cat = post.getAttribute('data-cat');
+      const show = active.size === 0 || active.has(cat);
+      post.style.display = show ? '' : 'none';
+    });
+  }
+</script>
+
+<style>
+.home-list {
+  margin: 0 auto;
+  max-width: 600px;
+  padding: 2rem 0 0 0;
+}
+.home-title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.02em;
+  text-align: left;
+  color: #fff;
+}
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.6rem;
+}
+.pill {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--pill-color, #58a6ff);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pill-color, #58a6ff);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+.pill.active {
+  background: var(--pill-color, #58a6ff);
+  color: #18181b;
+}
+.post-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+.post-list-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.post-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: background 0.2s;
+  border-radius: 6px;
+  padding: 0.6rem;
+}
+.post-card-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.post-date {
+  font-size: 1rem;
+  color: #a1a1aa;
+  margin-bottom: 0.1rem;
+}
+.post-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--cat-color);
+  margin: 0 0 0.15rem 0;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: opacity 0.18s;
+}
+.post-card-link:hover .post-title {
+  opacity: 0.85;
+  text-decoration: none;
+}
+.post-desc {
+  font-size: 1.05rem;
+  color: #bdbdbd;
+  margin: 0 0 0.12rem 0;
+  line-height: 1.5;
+}
+</style>

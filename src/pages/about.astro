@@ -1,0 +1,102 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>about | anuraag</title>
+    <link rel="stylesheet" href="/katex.min.css" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <style>
+      :root {
+        --bg: #18181b;
+        --fg: #f4f4f5;
+        --font-size: 16px;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: system-ui, sans-serif;
+        font-size: var(--font-size);
+        line-height: 1.5;
+        height: 100%;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 5vh;
+        padding: 0 1rem;
+        box-sizing: border-box;
+      }
+      .site-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      .site-title a {
+        color: var(--fg);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+      }
+      .site-title a .arrow {
+        margin-right: 0.4rem;
+        font-size: 0.9rem;
+      }
+      nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        gap: 1rem;
+      }
+      nav a {
+        color: var(--fg);
+        text-decoration: underline;
+        font-size: 0.9rem;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 1rem;
+        text-align: center;
+      }
+      p {
+        font-size: 1.05rem;
+        color: #ccc;
+        max-width: 40ch;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="site-title">
+        <a href="/">
+          <span class="arrow">&#8592;</span>anuraag
+        </a>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="/about">about</a></li>
+          <li><a href="https://twitter.com/boopdotpng" target="_blank">twitter</a></li>
+          <li><a href="https://github.com/boopdotpng" target="_blank">github</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <p>
+        i'm anuraag. i work as a software engineer, and i'm currently digging into tinygrad, learning verilog and chip design, and studying biology. mostly trying to understand how machines and brains work.
+      </p>
+    </main>
+  </body>
+</html>
