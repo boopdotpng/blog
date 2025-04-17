@@ -6,6 +6,9 @@ import { getCollection } from 'astro:content';
 const posts = await getCollection('blog');
 ---
 
-<Layout>
+<Layout
+  title="ml, bio, coding | anuraag"
+  description="notes on neural nets, chips, biology, and other stuff"
+>
   <Home posts={posts} />
 </Layout>

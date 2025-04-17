@@ -4,10 +4,26 @@ const isHome = Astro.url.pathname === '/';
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ml, bio, coding | anuraag</title>
-  <link rel="stylesheet" href="/katex.min.css" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={Astro.props.description ?? 'thoughts on neural nets, chips, and cells'} />
+  
+    <title>{Astro.props.title ?? 'ml, bio, coding | anuraag'}</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="/katex.min.css" />
+  
+    <meta property="og:title" content={Astro.props.title ?? 'ml, bio, coding | anuraag'} />
+    <meta property="og:description" content={Astro.props.description ?? 'thoughts on neural nets, chips, and cells'} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://anuraagw.me" />
+    <meta property="og:image" content="https://anuraagw.me/preview.png" />
+  
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={Astro.props.title ?? 'ml, bio, coding | anuraag'} />
+    <meta name="twitter:description" content={Astro.props.description ?? 'thoughts on neural nets, chips, and cells'} />
+    <meta name="twitter:image" content="https://anuraagw.me/preview.png" />
+  
   <style>
     :root {
       --bg: #18181b;

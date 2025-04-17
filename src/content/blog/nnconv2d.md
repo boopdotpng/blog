@@ -1,7 +1,7 @@
 ---
-title: "nn.conv2d"
+title: "nn.conv2d in tinygrad"
 pubDate: "2025-04-16"
-description: "conv2d in tinygrad"
+description: "how does conv2d work in tinygrad?"
 cat: "machine learning"
 ---
 
