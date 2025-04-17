@@ -20,34 +20,43 @@ const { Content } = await post.render();
     <div class="post-date-main"><time datetime={post.data.pubDate}>{post.data.pubDate}</time></div>
     <Content />
   </article>
-<style>
-article.post-plain {
-  background: none;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-  margin-bottom: 2.5rem;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.post-title-main {
-  font-size: 2.4rem;
-  font-weight: 700;
-  color: #fff;
-  margin: 2.5rem 0 0.7rem 0;
-  line-height: 1.13;
-}
-.post-date-main {
-  color: #a1a1aa;
-  font-size: 1.08rem;
-  margin-bottom: 2.2rem;
-}
-article.post-plain img {
-  border-radius: 10px;
-  margin: 1.5rem 0;
-  max-width: 100%;
-  box-shadow: 0 2px 12px 0 rgba(88,166,255,0.07);
-}
-</style>
+
+  <style>
+    html, body {
+      overflow-x: hidden;
+    }
+    article.post-plain {
+      background: none;
+      border: none;
+      box-shadow: none;
+      padding: 0 1rem;
+      margin-bottom: 2.5rem;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .post-title-main {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 2.5rem 0 0.7rem 0;
+      line-height: 1.13;
+    }
+    .post-date-main {
+      color: #a1a1aa;
+      font-size: 1.08rem;
+      margin-bottom: 2.2rem;
+    }
+    article.post-plain img {
+      border-radius: 10px;
+      margin: 1.5rem 0;
+      max-width: 100%;
+      box-shadow: 0 2px 12px 0 rgba(88,166,255,0.07);
+    }
+    @media (max-width: 768px) {
+      article.post-plain {
+        padding: 0 1.2rem;
+      }
+    }
+  </style>
 </Layout>
