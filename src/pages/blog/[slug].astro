@@ -11,55 +11,71 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await post.render(); 
+const { Content } = await post.render();
 ---
 
+<style>
+html, body {
+  overflow-x: auto;
+}
+
+code, code .line, pre, pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: block;
+}
+
+article.post-plain {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0 1rem;
+  margin-bottom: 2.5rem;
+  max-width: 800px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.post-title-main {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 2.5rem 0 0.7rem 0;
+  line-height: 1.13;
+}
+
+.post-date-main {
+  color: #a1a1aa;
+  font-size: 1.08rem;
+  margin-bottom: 2.2rem;
+}
+
+article.post-plain img {
+  border-radius: 10px;
+  margin: 1.5rem 0;
+  max-width: 100%;
+  box-shadow: 0 2px 12px 0 rgba(88,166,255,0.07);
+}
+
+@media (max-width: 768px) {
+  article.post-plain {
+    padding: 0 1%;
+  }
+}
+
+</style>
+
 <Layout
-title={post.data.title}
-description={post.data.description ?? 'a short post on something'}
+  title={post.data.title}
+  description={post.data.description ?? 'a short post on something'}
 >
   <article class="post-plain">
     <h1 class="post-title-main">{post.data.title}</h1>
-    <div class="post-date-main"><time datetime={post.data.pubDate}>{post.data.pubDate}</time></div>
+    <div class="post-date-main">
+      <time datetime={post.data.pubDate}>{post.data.pubDate}</time>
+    </div>
     <Content />
   </article>
-
-  <style>
-    html, body {
-      overflow-x: auto;
-    }
-    article.post-plain {
-      background: none;
-      border: none;
-      box-shadow: none;
-      padding: 0 0.75rem;
-      margin-bottom: 2.5rem;
-      max-width: 720px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .post-title-main {
-      font-size: 2.4rem;
-      font-weight: 700;
-      color: #fff;
-      margin: 2.5rem 0 0.7rem 0;
-      line-height: 1.13;
-    }
-    .post-date-main {
-      color: #a1a1aa;
-      font-size: 1.08rem;
-      margin-bottom: 2.2rem;
-    }
-    article.post-plain img {
-      border-radius: 10px;
-      margin: 1.5rem 0;
-      max-width: 100%;
-      box-shadow: 0 2px 12px 0 rgba(88,166,255,0.07);
-    }
-    @media (max-width: 768px) {
-      article.post-plain {
-        padding: 0 1%;
-      }
-    }
-  </style>
 </Layout>
