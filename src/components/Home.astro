@@ -4,6 +4,7 @@ interface Props {
   posts: CollectionEntry<'blog'>[];
 }
 const { posts } = Astro.props as Props;
+posts.sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())
 const categories = Array.from(new Set(posts.map(p => p.data.cat).filter(Boolean)));
 const catColors: Record<string, string> = {
   life: '#ff595e',        // red
