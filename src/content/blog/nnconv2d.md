@@ -5,6 +5,8 @@ description: "how does conv2d work in tinygrad?"
 cat: "machine learning"
 ---
 
+** This blog is a work in progress. **
+
 **Input**: shape $(N, C_{in}, H, W)$ where $N$: batch size, $C_{in}$: input channels (3 for RGB images), and $H$,$W$: height and width of the image. 
 
 **Weights**: shape $(C_{out}, C_{in}, K_h, K_w)$ where $C_{out}$ = number of filters (output channels) and $K_h, K_w$: kernel dimensions. 
