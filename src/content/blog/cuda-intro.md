@@ -7,7 +7,7 @@ cat: "machine learning"
 
 This post is an in depth overview on GPU architecture and how to write performant GPU code. It covers execution hierarchy, memory layout, scheduling, memory access patterns, and basic profiling. The goal is to build enough knowledge to write a SGEMM (single precision general matrix multiply) kernel that achieves 50% of theoretical GPU FLOPS. 
 
-The specifics in this guide, including naming and the specific capabilities of each SM are tailored to Nvidia's Blackwell (GB203) generation of cards (specifically the 5070 Ti). The 
+The specifics in this guide, including naming and the specific capabilities of each SM are tailored to Nvidia's Blackwell (GB203) generation of cards (specifically the 5070 Ti). 
 ## GPU Architecture Overview
 This is a high level chart that shows the hierarchy of components in an Nvidia GPU. At the top is a GPC. The 5070 Ti includes 6 GPCs and 35 TPCs, which averages to about 6 TPCs per GPC. The distribution is intentionally uneven to accommodate performance tuning and chip layout constraints.
 
