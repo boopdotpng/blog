@@ -1,0 +1,36 @@
+---
+title: "Universities have stopped filtering"
+pubDate: "2025-05-09"
+description: "What's wrong?"
+cat: "misc"
+---
+
+# Universities have stopped filtering
+
+> the question: "write a class that stores the points of a triangle and write a method to compute the perimeter and area."<br/>
+> they couldn’t do it. that’s just insane. and it's going to affect both them and others down the line. <br/>
+> when *redacted* teaches advanced embedded systems, he’s stuck dealing with students who can’t write a `for` loop, while the ones who actually want to learn are bored out of their minds. why? because they just gpt’ed their way through earlier coding classes.
+
+---
+
+What we're seeing in this class isn't new. It's an expression of a long-standing divide that predates ChatGPT, the internet, or libraries. There have always been two kinds of people: the curious ones who want to learn, understand, build something revolutionary and the ones who just cruise through life with no ambition or direction. If you wanted to learn something pre-internet, you had to go to a library (which might not even exist in your area), or find your way into a top-tier college to become competent in your field and contribute meaningfully. There were real barriers to knowledge, and those constraints filtered out a lot of people. Today, the hoops are almost entirely gone. Anyone with an internet connection has a near-infinite quantity of information at their disposal. That removal of friction hasn't eliminated the divide, it has only made it wider. 
+
+ As knowledge became more accessible, the filtering role of universities weakened. In the past, you could be sure that anyone who graduated college --even if they were unmotivated and passionless -- was capable of holding a job and contributing to society. They were forced to actually learn things in college; either by rote memorization, figuring out the bare minimum necessary to pass, or in rare cases cheating (it was much more difficult pre-internet).  Some students genuinely became interested in what they studied and developed ambition because they were forced to look at the material. You can make a very good argument that colleges peaked in the pre-internet era; the structure of education and lack of easy knowledge access made almost everyone who went to college competent. 
+
+Universities have only gotten worse since the pre internet era. Tuition is now 3-4 times more expensive than it was pre-internet. All this extra money doesn't go towards facilities that increase the overall quality of education. Instead we get DEI departments, unnecessary staff, million dollar football fields and degrees that produce little to no economic value. Someone can take a $40,000 loan from the government to study a field like gender studies, producing no clear return on investment. Despite claims of "diversity", intellectual conformity dominates across many departments. Fields like gender studies or critical theory departments exist to reinforce a political narrative, not to explore truth. 
+
+None of these classes challenge your worldview or force you to confront complexity. There are many examples of this, but the one that I always think about is a Liberal Studies class I took about climate change years ago. Instead of seriously examining the causes of climate change -- like rent-seeking, governments with distorted incentives, and geopolitical manipulation of energy markets, the class rotated around emotionally charged topics like fast fashion and symbolic activism, including coverage of figures like Greta Thunberg. The final assignment required us to read a book that tied climate change to religion. I can't remember what the name was, but the curriculum had clearly drifted from analytical rigor. There was no systems-level analysis, no engagement with global energy policy, and no effort to trace institutional or economic incentives. The class framed climate change like it was a personal moral failure and critique of capitalism rather than the result of a deeply entangled political and economic forces. 
+
+If you want to watch a real discussion on climate change, see this Lex Fridman [podcast](https://www.youtube.com/watch?v=5Gk9gIpGvSE&pp=ygUabGV4IGZyaWRtYW4gY2xpbWF0ZSBoY2FuZ2U%3D). 
+
+This isn't a one-off experience. You can make a similar critique of dozens of other classes at UNCC (and other schools). To be clear, general education classes are a benefit if done with a grounded, analytical curriculum and an actual examination of the structure of the world. 
+
+These curricular failures don't happen in a vacuum. They're downstream from a broader shift in how colleges choose who to admit. In the 1980s (it had accelerated by the 90s) colleges decided that they no would no longer select students based on intelligence or potential. Rather, they would use a subjective set of analyses that incorporated personality, extracurriculars, and the projection of a particular image. Affirmative action policies implemented after the civil rights movement in the 70s led to admissions of students with significantly lower academic preparation, which created massive performance gaps across groups. Standardized testing was one of the last objective filters that we had to determine intelligence / capability, but that's also mostly gone now. Universities attacked the tests as "biased" and refused to confront the underlying causes (culture, family structure, disparities in K-12 education, etc). Since then, the racial basis of affirmative action has expanded to include gender, sexuality, socioeconomic status, and political orientation (left-aligned). This does not promote real diversity. 
+
+The UCLA school of medicine reported that over 50% of its students failed standardized tests in core subjects. The national average is 5%. This can almost entirely be attributed to the subjective admissions criteria chosen by universities. Harvard, whose admissions policies have been criticized for producing racially disparate outcomes, added a remedial math class (Math MA5) to address deficiencies in foundational algebra. How far have these institutions declined? 
+
+Universities are unwilling to fail students, change their curriculum to better engage students in the ChatGPT era, or return back to objective admission criteria. 
+
+The curious, high agency people will thrive without colleges. They'll use AI not to replace thinking, but to increase their productivity and understand concepts faster than ever before. The collapse of standards at universities leaves the indifferent with nowhere to hide. The system that once gave them credibility, a job, and a purpose is falling apart. A college degree is worth less year over year. The purpose of universities pre-internet was to aggregate knowledge and intelligent, high-achieving people. Now, knowledge aggregation has been mostly solved by the internet, and universities no longer admit the most talented people. What's the point now? What will happen to universities 10 years from now? 
+
+This was never about colleges. The curious continue to accelerate, while the indifferent will fall further behind. The divergence will become impossible to ignore.  
