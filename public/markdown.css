@@ -1,3 +1,4 @@
+/* markdown.css - Moved to public directory for GitHub Pages access */
 .markdown-body {
   font-family: system-ui, sans-serif;
   color: #e0e0e0;
@@ -39,7 +40,7 @@
   text-indent: 0;
   margin-left: 0;
   display: block;
-  font-size: 1em;
+  font-size: 0.9em;
   padding: 0;
 }
 
@@ -51,14 +52,14 @@
 
 .markdown-body code {
   padding: 0.2em 0.4em;
-  font-size: 1em;
+  font-size: 0.9em;
 }
 
 .markdown-body pre, .markdown-body code, .markdown-body pre code {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
-  font-size: 1em;
+  font-size: 0.9em;
 }
 
 .markdown-body table {
