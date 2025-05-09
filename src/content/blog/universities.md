@@ -5,8 +5,6 @@ description: "What's wrong?"
 cat: "misc"
 ---
 
-# Universities have stopped filtering
-
 > the question: "write a class that stores the points of a triangle and write a method to compute the perimeter and area."<br/>
 > they couldn’t do it. that’s just insane. and it's going to affect both them and others down the line. <br/>
 > when *redacted* teaches advanced embedded systems, he’s stuck dealing with students who can’t write a `for` loop, while the ones who actually want to learn are bored out of their minds. why? because they just gpt’ed their way through earlier coding classes.
