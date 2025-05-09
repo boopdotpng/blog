@@ -5,7 +5,6 @@ interface Props {
 }
 const { posts } = Astro.props as Props;
 posts.sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())
-const categories = Array.from(new Set(posts.map(p => p.data.cat).filter(Boolean)));
 const catColors: Record<string, string> = {
   life: '#ff595e',        // red
   misc: '#ff924c',        // orange
@@ -19,57 +18,26 @@ const catColors: Record<string, string> = {
 <section class="home-list">
   <h1 class="home-title">posts</h1>
 
-  <div class="filter-bar">
-    {categories.map(cat => (
-      <button
-        class="pill"
-        data-cat={cat}
-        style={`--pill-color: ${catColors[cat] ?? '#58a6ff'}`}
-      >
-        {cat}
-      </button>
-    ))}
-  </div>
-
   <ul class="post-list">
-    {posts.map(post => (
-      <li
-        class="post-list-item"
-        data-cat={post.data.cat}
-        style={`--cat-color: ${catColors[post.data.cat] ?? '#58a6ff'}`}
-      >
-        <a class="post-card-link" href={`/blog/${post.slug}`}>
-          <div class="post-date">{post.data.pubDate}</div>
-          <div class="post-title">{post.data.title}</div>
-          <div class="post-desc">{post.data.description ?? 'no description available'}</div>
-        </a>
-      </li>
-    ))}
+    {posts.map(post => {
+      const cat = post.data.cat;
+      const catColor = cat ? catColors[cat] ?? '#58a6ff' : '#58a6ff';
+      return (
+        <li
+          class="post-list-item"
+          data-cat={cat}
+          style={`--cat-color: ${catColor}`}
+        >
+          <a class="post-card-link" href={`/blog/${post.slug}`}>
+            <div class="post-date">{post.data.pubDate}</div>
+            <div class="post-title">{post.data.title}</div>
+            <div class="post-desc">{post.data.description ?? 'no description available'}</div>
+          </a>
+        </li>
+      );
+    })}
   </ul>
 </section>
-
-<script>
-  const active = new Set();
-  const pills = document.querySelectorAll('[data-cat]');
-  const posts = document.querySelectorAll('.post-list-item');
-
-  pills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      const cat = pill.dataset.cat;
-      pill.classList.toggle('active');
-      active.has(cat) ? active.delete(cat) : active.add(cat);
-      updatePosts();
-    });
-  });
-
-  function updatePosts() {
-    posts.forEach(post => {
-      const cat = post.getAttribute('data-cat');
-      const show = active.size === 0 || active.has(cat);
-      post.style.display = show ? '' : 'none';
-    });
-  }
-</script>
 
 <style>
 .home-list {
@@ -85,26 +53,8 @@ const catColors: Record<string, string> = {
   text-align: left;
   color: #fff;
 }
-.filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 1.6rem;
-}
-.pill {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--pill-color, #58a6ff);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--pill-color, #58a6ff);
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s;
-}
-.pill.active {
-  background: var(--pill-color, #58a6ff);
-  color: #18181b;
+.filter-bar, .pill, .pill.active {
+  display: none !important;
 }
 .post-list {
   list-style: none;
