@@ -59,18 +59,16 @@ GPCs in traditional consumer GPUs also handle rasterization and graphics functio
 ### Streaming Multiprocessors 
 There are a lot of individual components that make up an SM: 
 
-| Element                | Notes                                                                                                              | Count / Size Per SM |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------- |
-| **Compute**            |                                                                                                                    |                     |
-| CUDA cores             | Scalar ALUs that can execute one FP32 or INT32 instruction per clock cycle, per core, on a single operand. <br>    | 128                 |
-| Tensor cores           | Accelerates small matrix multiply-accumulate ops using mixed precision (FP16, BF16, TF32).                         | 4                   |
-| Special Function Units | Handles transcendental and high-latency functions: sin, cos, exp, sqrt, etc.                                       | 4                   |
-| Warp schedulers        | Manages instruction dispatch for one warp (32 threads) per cycle, directing execution to available CUDA cores.<br> | 4                   |
-| Load/Store units       | Interface for memory ops (load, store). Routes data to/from memory hierarchy.                                      | 4–8                 |
-|                        |                                                                                                                    |                     |
-| **Memory**             |                                                                                                                    |                     |
-| Register file          | Fast, per-thread memory used for all intermediate values. Like CPU registers, but all 32-bit.                      | 128–256 KB          |
-| Shared memory/L1 cache | Low-latency, per-SM memory. Shared memory is stored in L1 cache and is managed by the programmer.                  | 64–164 KB           |
+| Element                | Notes                                                                                                          | Count / Size Per SM |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------- |
+| CUDA cores             | Scalar ALUs that can execute one FP32 or INT32 instruction per clock cycle, per core, on a single operand.     | 128                 |
+| Tensor cores           | Accelerates small matrix multiply-accumulate ops using mixed precision (FP16, BF16, TF32).                     | 4                   |
+| Special Function Units | Handles transcendental and high-latency functions: sin, cos, exp, sqrt, etc.                                   | 4                   |
+| Warp schedulers        | Manages instruction dispatch for one warp (32 threads) per cycle, directing execution to available CUDA cores. | 4                   |
+| Load/Store units       | Interface for memory ops (load, store). Routes data to/from memory hierarchy.                                  | 4–8                 |
+| Register file          | Fast, per-thread memory used for all intermediate values. Like CPU registers, but all 32-bit.                  | 128–256 KB          |
+| Shared memory/L1 cache | Low-latency, per-SM memory. Shared memory is stored in L1 cache and is managed by the programmer.              | 64–164 KB           |
+
 
 Most if not all of the compute on a GPU is done by CUDA cores. Some mixed precision datatypes (fp16, bf16, tf32, etc) are offloaded to other units within the SM (tensor cores for example), along with all exp, sin, cos-adjacent computations (on SFUs). 
 ### Execution model 
@@ -422,11 +420,10 @@ sum += a[row * 4096 + i] * b[col * 4096 + i];
 The way we access A is row-major. This is inherently good for memory coalescing, since you're reading strictly left to right. All the values are next to each other in memory.
 
 B, on the other hand access columns in a row-major array, which is very bad for coalescing.  
-```
+```cpp
 thread 0 → b[0 * 4096 + i] → b[i]
 thread 1 → b[1 * 4096 + i] → b[4096 + i]
 thread 2 → b[2 * 4096 + i] → b[8192 + i]
-...
 ```
 Each thread accesses a float 4096 elements away from the adjacent thread. Within a warp, this creates a lot of separate memory transactions, which we saw evidence of in the `ncu` report. 
 

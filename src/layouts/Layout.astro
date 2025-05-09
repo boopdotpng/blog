@@ -25,76 +25,87 @@ const isHome = Astro.url.pathname === '/';
     <meta name="twitter:description" content={Astro.props.description ?? 'thoughts on neural nets, chips, and cells'} />
     <meta name="twitter:image" content="https://anuraagw.me/preview.png" />
   
-  <style>
-    :root {
-      --bg: #18181b;
-      --fg: #f4f4f5;
-      --accent: #58a6ff;
-      --font-size: 16px;
-    }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: system-ui, sans-serif;
-      line-height: 1.5;
-      font-size: var(--font-size);
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 5vh;
-      padding: 0 1rem;
-      box-sizing: border-box;
-    }
-    .site-title {
-      font-size: 1rem;
-      font-weight: 700;
-      margin: 0;
-    }
-    .site-title a {
-      color: var(--fg);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-    }
-    .site-title a .arrow {
-      margin-right: 0.4rem;
-      font-size: 0.9rem;
-    }
-    nav ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      gap: 1rem;
-    }
-    nav a {
-      color: var(--fg);
-      text-decoration: underline;
-      font-size: 0.9rem;
-    }
-    main {
-      max-width: 680px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    .post-card {
-      display: block;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border: 1px solid #333;
-      border-radius: 6px;
-      transition: background 0.2s;
-      text-decoration: none;
-      color: inherit;
-    }
-    .post-card:hover {
-      background: #232326;
-    }
-  </style>
+<style>
+  :root {
+    --bg: #18181b;
+    --fg: #f4f4f5;
+    --accent: #58a6ff;
+    --font-size: 16px;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+    font-size: var(--font-size);
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 5vh;
+    padding: 0 1rem;
+    box-sizing: border-box;
+  }
+
+  .site-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .site-title a {
+    color: var(--fg);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .site-title a .arrow {
+    margin-right: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 1rem;
+  }
+
+  nav a {
+    color: var(--fg);
+    text-decoration: underline;
+    font-size: 0.9rem;
+  }
+
+  main {
+    max-width: clamp(720px, 80%, 960px);
+    margin: 2rem auto;
+    padding: 0 clamp(1rem, 4vw, 2rem);
+  }
+
+  .post-card {
+    display: block;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #333;
+    border-radius: 6px;
+    transition: background 0.2s;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .post-card:hover {
+    background: #232326;
+  }
+</style>
+
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",

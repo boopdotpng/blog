@@ -32,41 +32,71 @@
   padding: 1em;
   overflow-x: auto;
   margin: 1.5em 0;
+  text-indent: 0;
+}
+
+.markdown-body pre code {
+  text-indent: 0;
+  margin-left: 0;
+  display: block;
+  font-size: 1em;
+  padding: 0;
+}
+
+.markdown-body pre > code {
+  display: block;
+  padding: 0;
+  margin: 0;
 }
 
 .markdown-body code {
   padding: 0.2em 0.4em;
-  font-size: 0.98em;
+  font-size: 1em;
 }
 
 .markdown-body pre, .markdown-body code, .markdown-body pre code {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
+  font-size: 1em;
 }
 
 .markdown-body table {
   width: 100%;
   border-collapse: collapse;
   margin: 2em 0;
+  table-layout: auto;
   background: none;
   color: inherit;
 }
 
 .markdown-body th, .markdown-body td {
-  border: 1px solid #333;
-  padding: 0.4em 0.7em;
+  padding: 0.8em 1em;
+  max-width: 0;
   text-align: left;
+  border: none;
   background: none;
-  color: inherit;
 }
 
 .markdown-body th {
   font-weight: 600;
+  font-size: 1rem;
+  border-bottom: 2px solid #888; /* bold underline for header */
+  color: #ffffff;
 }
 
-.markdown-body tr:nth-child(even) {
-  background: none;
+.markdown-body tr:not(:first-child) td {
+  border-top: 1px solid #444; /* lighter horizontal lines between rows */
+}
+
+.markdown-body td:first-child,
+.markdown-body th:first-child {
+  padding-left: 0;
+}
+
+.markdown-body td:last-child,
+.markdown-body th:last-child {
+  padding-right: 0;
 }
 
 .markdown-body blockquote {
@@ -85,4 +115,11 @@
 
 .markdown-body a:hover {
   text-decoration: underline;
+}
+
+.markdown-body svg {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
 }
