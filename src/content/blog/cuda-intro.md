@@ -11,7 +11,7 @@ The specifics in this guide, including naming and the specific capabilities of e
 ## GPU Architecture Overview
 This is a high level chart that shows the hierarchy of components in an Nvidia GPU. At the top is a GPC. The 5070 Ti includes 6 GPCs and 35 TPCs, which averages to about 6 TPCs per GPC. The distribution is intentionally uneven to accommodate performance tuning and chip layout constraints.
 
-<svg width="700" height="580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px">
+<svg viewBox="0 0 700 580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- GPU Box -->
   <rect x="20" y="20" width="660" height="540" fill="#121212" stroke="#aaa" stroke-width="1.5"/>
   <text x="30" y="40" fill="#fff">GPU</text>
@@ -90,7 +90,7 @@ This is how each part of the execution model maps to CUDA terms. Each parameter 
 | blockDim  | How many threads are in each block? |
 | threadIdx | Where in the block is this thread?  |
 | gridDim   | How many total blocks are there?    |
-<svg width="700" height="520" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px">
+<svg viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- Outer Grid Box -->
   <rect x="20" y="20" width="660" height="470" fill="#121212" stroke="#aaa" stroke-width="1.5"/>
   <text x="30" y="40" fill="#fff">grid (1d) gridDim = 3</text>
@@ -230,7 +230,7 @@ __global__ void record_thread_coords(int* coords, int width) {
 
 The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`. For each cell in the `6,4` grid, we store 2 coordinates (`x,y`). We need to launch 24 threads to cover the entire grid. Consider the following arrangement, where `blockDim = (2,2)`, `gridDim = (2,3)`, and `total_threads = 2*2*2*3 = 24`:  
 
-<svg width="560" height="580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px">
+<svg viewBox="0 0 560 580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- Outer Grid Box -->
   <rect x="20" y="20" width="520" height="540" fill="#121212" stroke="#aaa" stroke-width="1.5"/>
   <text x="30" y="40" fill="#fff">grid (2d) gridDim = (2,3)</text>

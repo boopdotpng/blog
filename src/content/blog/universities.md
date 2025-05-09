@@ -9,7 +9,6 @@ cat: "misc"
 > they couldn’t do it. that’s just insane. and it's going to affect both them and others down the line. <br/>
 > when *redacted* teaches advanced embedded systems, he’s stuck dealing with students who can’t write a `for` loop, while the ones who actually want to learn are bored out of their minds. why? because they just gpt’ed their way through earlier coding classes.
 
----
 
 What we're seeing in this class isn't new. It's an expression of a long-standing divide that predates ChatGPT, the internet, or libraries. There have always been two kinds of people: the curious ones who want to learn, understand, build something revolutionary and the ones who just cruise through life with no ambition or direction. If you wanted to learn something pre-internet, you had to go to a library (which might not even exist in your area), or find your way into a top-tier college to become competent in your field and contribute meaningfully. There were real barriers to knowledge, and those constraints filtered out a lot of people. Today, the hoops are almost entirely gone. Anyone with an internet connection has a near-infinite quantity of information at their disposal. That removal of friction hasn't eliminated the divide, it has only made it wider. 
 
