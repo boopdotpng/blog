@@ -12,6 +12,7 @@ const isHome = Astro.url.pathname === '/';
     <title>{Astro.props.title ?? 'ml, bio, coding | anuraag'}</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="/katex.min.css" />
+    <link rel="stylesheet" href="/src/assets/markdown.css" />
   
     <meta property="og:title" content={Astro.props.title ?? 'ml, bio, coding | anuraag'} />
     <meta property="og:description" content={Astro.props.description ?? 'thoughts on neural nets, chips, and cells'} />
