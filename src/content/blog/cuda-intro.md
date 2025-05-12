@@ -1,6 +1,6 @@
 ---
-title: "Intro to CUDA and GPU programming"
-pubDate: "2025-05-09"
+title: "Intro to GPU programming: part 1"
+pubDate: "2025-05-10"
 description: "How to actually write fast GPU code?"
 cat: "machine learning"
 ---
@@ -26,10 +26,8 @@ This is a high level chart that shows the hierarchy of components in an Nvidia G
   <!-- SM Boxes in TPC 1 -->
   <rect x="80" y="130" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
   <text x="90" y="150" fill="#fff">SM (Streaming Multiprocessor)</text>
-  <text x="90" y="170" fill="#ddd">- 128 cuda cores</text>
   <rect x="360" y="130" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
   <text x="370" y="150" fill="#fff">SM (Streaming Multiprocessor)</text>
-  <text x="370" y="170" fill="#ddd">- 4 tensor cores</text>
 
   <!-- TPC 2 -->
   <rect x="60" y="240" width="580" height="120" fill="#2d4d2d" stroke="#aaa"/>
@@ -37,10 +35,8 @@ This is a high level chart that shows the hierarchy of components in an Nvidia G
   <!-- SM Boxes in TPC 2 -->
   <rect x="80" y="270" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
   <text x="90" y="290" fill="#fff">SM (Streaming Multiprocessor)</text>
-  <text x="90" y="310" fill="#ddd">- 128 cuda cores</text>
   <rect x="360" y="270" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
   <text x="370" y="290" fill="#fff">SM (Streaming Multiprocessor)</text>
-  <text x="370" y="310" fill="#ddd">- 4 tensor cores</text>
 
   <!-- L2 Cache Box -->
   <rect x="40" y="400" width="620" height="40" fill="#4d4d2d" stroke="#aaa"/>
@@ -61,14 +57,13 @@ There are a lot of individual components that make up an SM:
 
 | Element                | Notes                                                                                                          | Count / Size Per SM |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------- |
-| CUDA cores             | Scalar ALUs that can execute one FP32 or INT32 instruction per clock cycle, per core, on a single operand.     | 128                 |
+| CUDA cores             | Scalar ALUs that can execute one FP32 or INT32 instruction per clock cycle, per core.                          | 128                 |
 | Tensor cores           | Accelerates small matrix multiply-accumulate ops using mixed precision (FP16, BF16, TF32).                     | 4                   |
 | Special Function Units | Handles transcendental and high-latency functions: sin, cos, exp, sqrt, etc.                                   | 4                   |
 | Warp schedulers        | Manages instruction dispatch for one warp (32 threads) per cycle, directing execution to available CUDA cores. | 4                   |
-| Load/Store units       | Interface for memory ops (load, store). Routes data to/from memory hierarchy.                                  | 4–8                 |
-| Register file          | Fast, per-thread memory used for all intermediate values. Like CPU registers, but all 32-bit.                  | 128–256 KB          |
-| Shared memory/L1 cache | Low-latency, per-SM memory. Shared memory is stored in L1 cache and is managed by the programmer.              | 64–164 KB           |
-
+| Load/Store units       | Interface for memory ops (load, store). Routes data to/from memory hierarchy.                                  | 8                   |
+| Register file          | Fast, per-thread memory used for all intermediate values. Like CPU registers, but all 32-bit.                  | 256 KB              |
+| Shared memory/L1 cache | Low-latency, per-SM memory. Shared memory is stored in L1 cache and is managed by the programmer.              | 128 KB              |
 
 Most if not all of the compute on a GPU is done by CUDA cores. Some mixed precision datatypes (fp16, bf16, tf32, etc) are offloaded to other units within the SM (tensor cores for example), along with all exp, sin, cos-adjacent computations (on SFUs). 
 ### Execution model 
@@ -76,13 +71,18 @@ The GPU execution model follows a hierarchy; from bottom to top:
 
 A **thread** is the smallest unit of execution on the GPU. Every thread runs its own instance of the kernel function, with its operations independently scheduled on CUDA cores.
 
-A **warp** is a fixed group of 32 threads (all from the same block) that are executed in lockstep under the SIMT (single instruction multiple thread) model. Each SM has 4 warp schedulers, each capable of issuing one instruction per cycle to a warp. In practice, the SM can track and switch between dozens of warps (active or stalled), depending on occupancy. This is crucial for mitigating memory latency. If memory access is slow for one warp, it can be put aside and executed later once the data is ready. Context switching like this is extremely cheap on a GPU. It's also important to note that memory access requests are done per warp level, not per thread.
+A **warp** is a fixed group of 32 threads (all from the same block) that are executed in lockstep under the SIMT (single instruction multiple thread) model. Each SM has 4 warp schedulers, each capable of issuing one instruction per cycle to a warp. In practice, the SM can track and switch between dozens of warps (active or stalled), depending on occupancy.
+
+This is crucial for mitigating memory latency. If memory access is slow for one warp, it can be put aside and executed later once the data is ready. Context switching like this is extremely cheap on a GPU. It's also important to note that memory access requests are done per warp level, not per thread.
 
 A **block** is a group of threads (up to 1024) that execute together and share memory. Blocks are assigned to individual SMs, and multiple blocks can be scheduled on the same SM if there are enough available resources (dependent on register and shared memory usage). The number of active threads and blocks per SM is known as occupancy. 
 
 A **grid** is a collection of blocks that covers all blocks and threads launched by the kernel and spans the entire GPU. Blocks within a grid cannot communicate or share memory with each other. 
 
-This is how each part of the execution model maps to CUDA terms. Each parameter in table is of type `dims3`, meaning it has 3 dimensions (x, y, z). 
+**Occupancy:**
+Occupancy refers to how many warps can be actively scheduled on an SM at a time. It depends on resource usage per block: registers, shared memory, and thread count. Higher occupancy can help hide memory latency, but it’s not always correlated with performance.
+
+This is how each part of the execution model maps to CUDA terms. Each parameter in the table is of type `dims3(x,y,z)`. 
 
 | Parameter | Notes                               |
 | --------- | ----------------------------------- |
@@ -146,7 +146,28 @@ When you call `cudaMalloc`, the pointer returned points to a region in this memo
 #### L2 cache
 L2 cache is a unified, on chip cache shared by all SMs. It sits between global memory and the SMs, buffering data to reduce access latency and minimize redundant memory traffic. 
 #### L1 cache / shared memory 
-L1 cache is fast, low latency cache local to each SM and shares physical space with shared memory. Shared memory can be explicitly allocated in a kernel using the `__shared__` keyword and is accessible only within the same block. 
+L1 cache is a fast, low-latency memory local to each Streaming Multiprocessor (SM). On most NVIDIA GPUs, it shares physical space with shared memory, and the partition between the two can sometimes be configured (e.g., 48 KB shared / 16 KB L1, or 32 KB / 32 KB).
+
+Shared memory is a software-managed memory space that lives on-chip. It can be explicitly allocated in a kernel using the `__shared__` keyword and is visible to all threads within the same block. It has significantly lower latency and higher bandwidth than global memory, making it ideal for data reuse within blocks.
+
+**Shared memory bank conflicts:**
+Shared memory is divided into 32 banks, each capable of servicing 4 bytes (a float) per clock cycle. You can think of these banks as lanes that operate in parallel. When all 32 threads in a warp access different banks in a given cycle, all memory requests are serviced in parallel -- this is the optimal, conflict free case. 
+
+Each shared memory address (in bytes) maps to a bank using the formula: 
+```cpp
+bank = (address_in_bytes / 4) % 32
+// or, for an array of floats: 
+bank = float_index % 32
+```
+
+However, if multiple threads accesses different address that map to the same bank, a bank conflict occurs. These accesses are serialized, and each thread must wait its turn to access shared memory. For example, if all 32 threads access different rows of the same column in a row-major 2D array (which often maps to the same bank), the memory accesses will be serialized, significantly reducing performance. 
+
+In most kernels, this isn't a massive bottleneck. Since shared memory is low latency (~40 cycles), the extra time added by conflicts is often negligible compared to compute or global memory access.
+
+**Note:**
+If multiple threads access the same address in the same bank, there is no conflict. The hardware can broadcast the result to all of the threads.
+
+See the end of the post for a Nvidia video with more details.
 #### Register file
 Each SM has a large bank of 32-bit registers (around 128 KB) divided among its active threads. Registers are the fastest form of memory and are private to each thread.
 
@@ -198,7 +219,7 @@ All the parameters listed here are actually three dimensional, but since our dat
 
 #### Over-launching and powers of 2
 Due to the way GPU hardware is designed, you should use a power-of-two number for threads per block. This avoids having a partially unfilled warp, which hurts throughput. Even though this isn't strictly necessary, powers of two have several other advantages: 
-- Promotes coalesced memory accesss, since addresses are more likely to be aligned and regularly spaced
+- Promotes coalesced memory accesses, since addresses are more likely to be aligned and regularly spaced
 - Enables faster index math, as bit shifting is cheaper than division or modulo
 - Simplifies tiling (especially for a tiled matrix multiplication, which we will see later)
 
@@ -207,7 +228,7 @@ To prevent these extra threads from accessing out-of-bounds memory, we add a gua
 if (gid >= 1000) return;
 ```
 #### Why 1d dispatch breaks down for 2d data
-This style of indexing works very well when your data is 1 dimensional, but falls apart fast when you're working with 2d structures like matrices or images. Consider a `32x32` matrix stored in [row-major](https://en.wikipedia.org/wiki/Row-_and_column-major_order) order. We calculate the `gid` value the same way as last time, but now, since our data is 2d, we have to manually unflatten the index into a (col, row) pair. 
+This style of indexing works very well when your data is 1 dimensional, but falls apart fast when you're working with 2d structures like matrices or images. Consider a `32x32` matrix stored in row-major order. We calculate the `gid` value the same way as last time, but now, since our data is 2d, we have to manually unflatten the index into a (row, col) pair. 
 ```cpp
 int gid = blockIdx.x * blockDim.x + threadIdx.x;
 int row = gid / width;
@@ -223,12 +244,12 @@ __global__ void record_thread_coords(int* coords, int width) {
   
   int idx = row * width + col; // flattened row-major index
   
-  coords[2 * idx + 0] = col; // x coordinate
-  coords[2 * idx + 1] = row; // y coordinate
+  coords[2 * idx + 0] = col; 
+  coords[2 * idx + 1] = row; 
 }
 ```
 
-The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`. For each cell in the `6,4` grid, we store 2 coordinates (`x,y`). We need to launch 24 threads to cover the entire grid. Consider the following arrangement, where `blockDim = (2,2)`, `gridDim = (2,3)`, and `total_threads = 2*2*2*3 = 24`:  
+The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values per cell `(row,col)` across a `6x4` thread grid. We need to launch 24 threads to cover the entire grid. Consider the following arrangement, where `blockDim = (2,2)`, `gridDim = (2,3)`, and `total_threads = 2*2*2*3 = 24`:  
 
 <svg viewBox="0 0 560 580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- Outer Grid Box -->
@@ -314,19 +335,20 @@ To illustrate the `col` and `row` calculations, let's go through the kernel for 
 int col = blockIdx.x * blockDim.x + threadIdx.x; 
 int row = blockIdx.y * blockDim.y + threadIdx.y;
 ```
-The x component of the global id is `1 * 2 + 0 = 2`.
-The y component of the global id is `1 * 2 + 1 = 3`.
+
+This gives a global thread position of `(row, col) = (3, 2)` computed as:
+- `row = 1 * 2 + 1 = 3`.
+- `col = 1 * 2 + 0 = 2`.
+ 
  ```
 Output (coords array): 
-(0,0) (1,0) (2,0) (3,0)
-(0,1) (1,1) (2,1) (3,1)
-(0,2) (1,2) (2,2) (3,2)
-(0,3) (1,3) (2,3) (3,3)
-(0,4) (1,4) (2,4) (3,4)
-(0,5) (1,5) (2,5) (3,5)
+(0,0) (0,1) (0,2) (0,3)
+(1,0) (1,1) (1,2) (1,3)
+(2,0) (2,1) (2,2) (2,3)
+(3,0) (3,1) (3,2) (3,3)
+(4,0) (4,1) (4,2) (4,3)
+(5,0) (5,1) (5,2) (5,3)
 ```
-
-The printed coordinates are in `(col, row)` format, where `col` corresponds to the horizontal `x` axis and `row` to the vertical `y` axis. This mirrors standard 2d matrix conventions, where the first dimension indexes rows (`y`) and the second indexes columns (`x`). each entry `(x, y)` represents the global coordinates of a thread in the grid.
 
 You can see this example at [cuda-matmuls/misc/2d_dispatch_viz.cu](https://github.com/boopdotpng/cuda-matmuls/blob/master/misc/2d_dispatch_viz.cu).
 ## Matrix multiplication
@@ -384,15 +406,31 @@ __global__ void matmul(const float *a, const float *b, float *c) {
     uint row = blockIdx.y * blockDim.y + threadIdx.y;
     uint col = blockIdx.x * blockDim.x + threadIdx.x;
     float sum = 0.0f;
-    for (uint i = 0; i < 4096; ++i)
-        sum += a[row * 4096 + i] * b[col * 4096 + i];
-    c[row * 4096 + col] = sum;
+    for (uint i = 0; i < N; ++i)
+        sum += a[row * N + i] * b[i * N + col];
+    c[row * N + col] = sum;
 }
 ```
 
-This hovers around 0.68 TFLOPS (50x slower than theoretical). Interestingly, this implementation is slower than Numpy's multithreaded CPU matrix multiplication, which means we're not utilizing the GPU effectively. 
-#### Profiling kernels
-`ncu` is the one of the best ways to understand what the bottleneck is for a particular kernel. You can see SM throughput, number of cycles, DRAM bandwidth, and a lot of other important statistics. Profiling this kernel using `ncu` : 
+This hovers around 2.7 TFLOPS (7.9% of theoretical).
+#### Uncoalesced memory access
+To highlight the performance impact of global memory access patterns, here’s a version of the matmul kernel where `b` is accessed differently. To preserve correctness, `b` must be transposed so that each of its columns becomes a row in memory. This allows column access via row-major indexing:
+```cpp
+__global__ void matmul_uncoalesced(const float *a, const float *bt, float *c) {
+    uint row = blockIdx.y * blockDim.y + threadIdx.y;
+    uint col = blockIdx.x * blockDim.x + threadIdx.x;
+    float sum = 0.0f;
+    for (uint i = 0; i < N; ++i) {
+		sum += a[row * N + i] * bt[col * N + i];
+		//                      this changed
+    }
+    c[row * N + col] = sum;
+}
+```
+
+This kernel hovers around ~0.6 TFLOPS (1.7% of theoretical). 
+
+`ncu` is the one of the best ways to understand what the bottleneck is for a particular kernel. You can see SM throughput, number of cycles, DRAM bandwidth, and a lot of other important statistics. To verify that this kernel is memory bottlenecked, we can read the `ncu` report: 
 
 | Metric                     | Value       | Unit   |
 | -------------------------- | ----------- | ------ |
@@ -407,44 +445,49 @@ This hovers around 0.68 TFLOPS (50x slower than theoretical). Interestingly, thi
 
 The key takeaways here are: 
 - Compute throughput is only 22%, meaning nearly 80% of cycles are spent not executing useful instructions 
-- DRAM throughput is only 7.52%, which implies most of the traffic is stalled or wasted 
+- DRAM throughput is only 7.52%. Even though the kernel is spending significant time waiting on memory, actual data throughput is low dude to inefficient memory access patterns. The memory requests are scattered.
 - L2 sees significantly fewer cycles than L1. Since L2 sits between global memory and the SMs, this means that the global memory accesses are not being cached. 
 - DRAM was active for ~45% of the kernel duration, meaning nearly **half** the time is spent waiting on global memory. 
-This kernel is bottlenecked by inefficient global memory accesses. 
-#### Fixing the memory access issue
-The root cause of the memory issues in the previous kernel is this line: 
+
+The root cause of the memory issues is this line: 
 ```cpp
-sum += a[row * 4096 + i] * b[col * 4096 + i];
+sum += a[row * N + i] * bt[col * N + i];
+```
+The most important question to ask when thinking about memory coalescing is "Are threads in a warp accessing adjacent memory?". In this case, `col` changes by 1 for every thread in a warp, which makes the index of `bt` jump by `N` every thread. Every thread in the warp is accessing a memory location `N` floats away from the previous one. 
+
+In the original kernel, we had: 
+```cpp
+sum += a[row * N + i] * b[i * N + col];
 ```
 
-The way we access A is row-major. This is inherently good for memory coalescing, since you're reading strictly left to right. All the values are next to each other in memory.
+Here, the key difference is the index of `b` only increases by 1 each warp, which means that adjacent threads in a warp access adjacent memory. This is why the original kernel is faster. 
 
-B, on the other hand access columns in a row-major array, which is very bad for coalescing.  
-```cpp
-thread 0 → b[0 * 4096 + i] → b[i]
-thread 1 → b[1 * 4096 + i] → b[4096 + i]
-thread 2 → b[2 * 4096 + i] → b[8192 + i]
-```
-Each thread accesses a float 4096 elements away from the adjacent thread. Within a warp, this creates a lot of separate memory transactions, which we saw evidence of in the `ncu` report. 
+The reason `B` is the performance bottleneck instead of A is that threads are assigned to warps in row-major order, meaning that 32 values of `threadIdx.x` increase before incrementing `threadIdx.y`. So, `col` changes per thread in each warp, but `row` varies much less.  With our current `16x16` block size: 
 
-The most straightforward solution here is to transpose B. If you transpose B, the rows and columns are switched. Then, we can access the columns of B the same way we access the rows of A. Now, both A and B are accessed row-wise, reducing the overall memory transactions greatly.  
+| Warp | ThreadIdx.y | ThreadIdx.x Range |
+| ---- | ----------- | ----------------- |
+| 0    | 0           | 0–15              |
+|      | 1           | 0–15              |
+| 1    | 2           | 0–15              |
+|      | 3           | 0–15              |
+| 2    | 4           | 0–15              |
+|      | 5           | 0–15              |
+| 3    | 6           | 0–15              |
+|      | 7           | 0–15              |
 
-```cpp
- sum += a[row * 4096 + i] * b[i * 4096 + col];
-```
-
-With B transposed, the kernel hovers around 2.7 TFLOPS (~13x slower than theoretical and a ~4x speedup from the previous kernel).  
+All threads in a warp access the same or adjacent `row` values. Looping over `i` accesses contiguous memory, and there stride is 1 across threads. `col`(dependent on `threadIdx.x`) is different for every thread in the warp.
 #### NCU comparison table
-Here is a table comparing profiling results from the two kernels. The first column is the new kernel where we transposed B, and the second column is the kernel that we profiled earlier.
+Here is a table comparing profiling results from the two kernels. 
 
-| Metric              | matmul_B_transposed | matmul_B_original | Unit  |
-| ------------------- | ------------------- | ----------------- | ----- |
-| SM Throughput       | 92.33               | 21.79             | %     |
-| DRAM Throughput     | 33.58               | 7.52              | %     |
-| L2 Cache Throughput | 28.38               | 9.01              | %     |
-| Duration            | 57.95               | 245.92            | ms    |
-| Total DRAM Cycles   | 6.39e+09            | 2.71e+10          | cycle |
-| Total L2 Cycles     | 2.86e+09            | 1.21e+10          | cycle |
+| Metric              | matmul  | matmul_uncoalesced | Unit  |
+| ------------------- | -------- | ------------------ | ----- |
+| SM Throughput       | 92.33    | 21.79              | %     |
+| DRAM Throughput     | 33.58    | 7.52               | %     |
+| L2 Cache Throughput | 28.38    | 9.01               | %     |
+| Duration            | 57.95    | 245.92             | ms    |
+| Total DRAM Cycles   | 6.39e+09 | 2.71e+10           | cycle |
+| Total L2 Cycles     | 2.86e+09 | 1.21e+10           | cycle |
+
 The key differences to note: 
 - SM throughput increased to 92% (~4.2x higher), indicating that the GPU is now spending most of its time performing computations rather than stalling on memory accesses.
 - Memory system cycles have gone down almost 5x.
@@ -464,15 +507,16 @@ Since many threads access overlapping rows and columns, the same values are repe
 **Solution: shared memory tiling** 
 Shared memory (fast, on chip L1) allows a thread block to load and reuse data. Instead of every thread individually accessing global memory: 
 1. We divide the matrix into tiles (16x16 blocks) 
-2. Every block loads one tile of A and one tile of B into shared memory
+2. Every block loads one tile of A and one tile of B into shared memory. 
 3. All threads in that block compute partial products using only shared memory
 4. This process is repeated until the full dot product is accumulated 
 
-By doing this, each value from `A` and `B` is loaded from global memory once per tile instead of once per thread. This drastically reduces the amount of global memory accesses that our kernel performs. 
+By doing this, each value from `A` and `B` is loaded from global memory once per tile instead of once per thread. Every thread in the naive kernel would load `N*2` values from global memory (one row of `A` and one column of `B`). With shared memory tiling, every value in a tile of `A` and `B` is loaded once per block and reused by all `TILE*TILE` threads in that block. It's an order of magnitude fewer global memory accesses. 
 
-This [twitter](https://x.com/Hesamation/status/1920141361531040152) post does a great job visualizing data accesses and cache hits for this method. 
+See the end of the post for a visualization of cache and memory usage for a tiled matmul kernel with shared memory. 
 
-The launch parameters for this kernel are the same as the previous one. We're still launching one thread per output element of C, and since each block is responsible for a `16x16` tile, we have to launch 256 threads per block. `gridDim = (N/16, N/16)`, same as before. 
+The launch parameters for this kernel are the same as the previous one. We're still launching one thread per output cell in C, and since each block is responsible for calculating a `16x16` tile of C, we have to launch 256 threads per block. `gridDim = (N/16, N/16)`, same as before. 
+
 ```cpp
 __global__ void tiled_matmul(const float *a, const float *b, float *c) {
     const uint row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -495,32 +539,146 @@ __global__ void tiled_matmul(const float *a, const float *b, float *c) {
 }
 ```
 
+Step by step: 
+```cpp
+ const uint row = blockIdx.y * blockDim.y + threadIdx.y;
+ const uint col = blockIdx.x * blockDim.x + threadIdx.x;
+ // global row and column of C that this thread writes to
+```
 
+```cpp
+ for (int tile_idx = 0; tile_idx < N; tile_idx += TILE) {
+	tile_a[threadIdx.y][threadIdx.x] = a[row * N + (tile_idx + threadIdx.x)];
+	tile_b[threadIdx.y][threadIdx.x] = b[(tile_idx + threadIdx.y) * N + col];
+	__syncthreads();
+```
 
+This loop goes through the tiles horizontally (only 1d) because the col is determined by the global `row` and `col` variables. To visualize this better, we'll simulate this part of the kernel for a `4x4` matrix with 4 `2x2` tiles.
+$$
+A = \begin{pmatrix}
+a_{00} & a_{01} & a_{02} & a_{03} \\
+a_{10} & a_{11} & a_{12} & a_{13} \\
+a_{20} & a_{21} & a_{22} & a_{23} \\
+a_{30} & a_{31} & a_{32} & a_{33}
+\end{pmatrix}
+,\quad
+B = \begin{pmatrix}
+b_{00} & b_{01} & b_{02} & b_{03} \\
+b_{10} & b_{11} & b_{12} & b_{13} \\
+b_{20} & b_{21} & b_{22} & b_{23} \\
+b_{30} & b_{31} & b_{32} & b_{33}
+\end{pmatrix}
 
+$$
+Every block in this kernel calculates a `2x2` tile of C. Assume we're simulating the block that calculates the tile containing $C_{20},C_{21},C_{30},C_{31}$ (`blockIdx = (0,1)`). 
 
-This kernel hovers around 3.9 TFLOPS (~9x slower than theoretical) with 16x16 tiles.
+To determine which tiles from A and B we need to calculate the bottom left tile of `C`, consider which rows and columns of A and B you would need to calculate each element individually: 
 
-#### 32x32 tile size and occupancy 
-go into PTX, register usage, and use ncu to see how many blocks can run per SM due to the high register / shared memory usage. run example with 32 and fact check. 
+| Element in C | Row from A | Column from B |
+| ------------ | ---------- | ------------- |
+| $C_{20}$     | 2          | 0             |
+| $C_{21}$     | 2          | 1             |
+| $C_{30}$     | 3          | 0             |
+| $C_{31}$     | 3          | 1             |
 
-### Optimizations
-Cleary, we're still very far from the theoretical performance of our GPU. The optimizations from this point forward..... 
+So you would need rows 2,3 from A and columns 0,1 from B. If we think about these like 2x2 tiles, you realize that we need the bottom half of A and the left half of B.
+$$
+\left[
+\begin{array}{cc|cc}
+a_{20} & a_{21} & a_{22} & a_{23} \\
+a_{30} & a_{31} & a_{32} & a_{33}
+\end{array}
+\right]
+$$
+$$
+\left[
+\begin{array}{cc}
+b_{00} & b_{01} \\
+b_{10} & b_{11} \\
+\hline
+b_{20} & b_{21} \\
+b_{30} & b_{31}
+\end{array}
+\right]
+$$
+Each thread in the block loads and multiplies elements from these tiles to calculate the value of C at the global row and column. During the first iteration where `tile_idx = 0` we load tiles: 
+$$
+tileA = \begin{pmatrix}
+A_{20} & A_{21}  \\
+A_{30} & A_{31} \\
+\end{pmatrix}
+,\quad
+tileB = \begin{pmatrix}
+B_{00} & B_{01}  \\
+B_{10} & B_{11} \\
+\end{pmatrix}
+$$
+The `__syncthreads()` instruction is the key component in this kernel. This instructs the GPU to wait for all threads in the block to reach this point before proceeding. It's important because the compute loop depends on all the data being loaded from global memory to the shared tiles. If you omit it, the accumulation loop will multiply tiles before all the threads have finished loading data.
 
+Then, we compute: 
+```cpp
+for (int k = 0; k < TILE; ++k)
+	// just a row from tile A times a column from tile B
+	acc += tile_a[threadIdx.y][k] * tile_b[k][threadIdx.x];
+__syncthreads();
+```
+> **A quick note on access patterns:** <br>
+> While tile_b[k][threadIdx.x] can lead to minor bank conflicts due to column-wise access, the impact is typically small for float loads at this tile size. Optimizing further would require interleaved layouts or padding, which isn’t worth it here.
 
+At this point, here is what we've added to `acc` for each thread. Keep in mind that `acc` is the final scalar value that every thread writes to C.  
+- $C_{20}$ += $A_{20} \times B_{00} + A_{21} \times B_{10}$
+- $C_{21}$ += $A_{20} \times B_{01} + A_{21} \times B_{11}$
+- $C_{30}$ += $A_{30} \times B_{00} + A_{31} \times B_{10}$
+- $C_{31}$ += $A_{30} \times B_{10} + A_{31} \times B_{11}$
 
-## References 
+It's partial because we haven't added the values from the second iteration of the loop, where `tile_idx = 2`. We're missing the last two tiles (or half of each row and column):
+$$
+tileA = \begin{pmatrix}
+A_{22} & A_{23}  \\
+A_{32} & A_{33} \\
+\end{pmatrix}
+,\quad
+tileB = \begin{pmatrix}
+B_{20} & B_{21}  \\
+B_{30} & B_{31} \\
+\end{pmatrix}
+$$
+We do the same computation and add the following values to `acc`: 
+- $C_{20}$ += $A_{20} \times B_{20} + A_{21} \times B_{30}$
+- $C_{21}$ += $A_{20} \times B_{21} + A_{21} \times B_{31}$
+- $C_{30}$ += $A_{30} \times B_{20} + A_{31} \times B_{30}$
+- $C_{31}$ += $A_{30} \times B_{21} + A_{31} \times B_{31}$
 
-This was partially inspired by some George Hotz streams I watched:
-- [how do GPUs work?](https://youtu.be/OUzm06YaUsI) 
-- [can you multiply a matrix?](https://youtu.be/VgSQ1GOC86s). 
+Now we've added the full dot product for each square to `acc`.
 
-All the code in this post can be found on [GitHub](https://github.com/boopdotpng/cuda-matmuls).
+The second `__syncthreads()` is necessary because the tiles are overwritten every loop iteration. If we omit it, threads from different iterations could write to shared memory while we're accumulating, leading to race conditions and incorrect data. 
 
-For another perspective on CUDA and GPU architecture, see the guide at [modal.com](https://modal.com/gpu-glossary). 
+This kernel hovers around 3.9 TFLOPS (11.4% of theoretical) with 16x16 tiles.
+#### 32×32 tile size and SM occupancy
+Increasing the tile size (from 16 to 32) reduces global memory reads because there are fewer tiles and more data can be reused, but it comes at a cost. Each block now uses 4× more shared memory and launches 1024 threads (vs 256), which increases register pressure and limits how many blocks can fit on an SM. Performance drops to ~3.4 TFLOPS (vs. ~3.9 TFLOPS for `TILE=16`).
 
-[Nvidia blackwell architecture whitepaper](https://resources.nvidia.com/en-us-blackwell-architecture).
+| Metric                      | TILE=16 | TILE=32 | Unit  |
+| --------------------------- | ------- | ------- | ----- |
+| Achieved Occupancy          | 99.71   | 66.72   | %     |
+| Block Limit Shared Mem      | 21      | 1       | block |
+| Block Limit Registers       | 6       | 1       | block |
+| Static Shared Mem Per Block | 2.05    | 8.19    | KB    |
+| Shared Mem Config Size      | 65.54   | 16.38   | KB    |
+| Compute Throughput          | 96.17   | 74.75   | %     |
+| L2 Cache Throughput         | 26.65   | 11.81   | %     |
+| DRAM Throughput             | 47.63   | 19.01   | %     |
 
-[High Yield: 5090 deep dive](https://youtu.be/rCwgAGG2sZQ)
+With `TILE=32`, occupancy tanks, only one block fits per SM, and compute throughput drops by ~20%. DRAM and L2 usage fall as expected, because shared memory reuse is higher.
 
-[Twitter](https://x.com/Hesamation/status/1920141361531040152) visualization of how data and cache is accessed for a tiled matrix multiply kernel. 
+The shared memory config (amount of shared memory per block) is lower for `TILE=32` because CUDA dynamically adjusts the shared:L1 split based on occupancy, register pressure, and shared memory usage. When shared usage is low (`TILE=16`), the driver defaults to a ~64K shared / 64K L1 split. But when more shared is needed (`TILE=32`) or register pressure is extremely high, it carves out only what’s required (~16KB) and gives the rest (~112KB) to L1. 
+### Optimizations & part 2
+Part 2 of this blog will push the performance of this kernel even further. We'll start reading PTX (Nvidia's GPU IR), examining assembly, and do more detailed profiling to understand how the previous kernel can be improved. We'll also compare our kernel to Tinygrad and PyTorch's code generation.
+## Further reading
+- [George Hotz - how do GPUs work?](https://youtu.be/OUzm06YaUsI) 
+- [George Hotz - can you multiply a matrix?](https://youtu.be/VgSQ1GOC86s) 
+- [GitHub repository](https://github.com/boopdotpng/cuda-matmuls)
+- [modal.com gpu glossary](https://modal.com/gpu-glossary) 
+- [Nvidia Blackwell Architecture Whitepaper](https://resources.nvidia.com/en-us-blackwell-architecture)
+- [High Yield: 5090 deep dive](https://youtu.be/rCwgAGG2sZQ)
+- [Visualization of cache/memory used for shared memory matmul kernel](https://x.com/Hesamation/status/1920141361531040152) 
+- [Peter Messmer - Nvidia: Shared Memory Accesses](https://www.youtube.com/watch?v=qOCUQoF_-MM)
