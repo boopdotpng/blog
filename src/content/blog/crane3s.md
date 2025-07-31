@@ -1,7 +1,7 @@
 ---
 title: "Reverse engineering the Crane 3s"
 pubDate: "2025-07-21"
-description: "Controlling the Crane 3s using raw bluetooth packets"
+description: "Controlling the Crane 3s using raw bluetooth packets."
 cat: "programming"
 ---
 
