@@ -18,6 +18,9 @@ This is Capricor's only pipeline asset. If the phase 3 trial fails, the company 
 
 LVEF is a stronger endpoint for CAP-1002 -- past trials have shown that LVEF decline is approximately 0 compared to a modest drop in standard of care. However, the FDA has already issued Capricor a CRL on their last submission, which included HOPE-1, HOPE-2, and intermediate results from HOPE-2-OLE, citing lack of clinically meaningful skeletal benefit and unresolved CMC questions. HOPE-3 appears structurally identical to HOPE-2: mediocre PUL 2.0 efficacy, stronger LVEF data, and a larger sample size. Given the prior CRL, it's fair to assume that in this case the FDA would not allow this drug to go to market. Additionally, LVEF is not a valid surrogate for survival in DMD; there is a very poor correlation between preserved EF and functional outcomes. 
 
+_Update on August 9, 2025_: 
+Vinay Prasad, who previously issued a CRL for Deramiocel, is back at the FDA. This no doubt decreases the chance that the drug is approved. 
+
 All paths lead to the following outcome: 
 
 **HOPE-3 will fail on its primary endpoint (PUL2.0) and achieve statistical signifance on its secondary endpoint (LVEF). The FDA will not approve this drug.**
