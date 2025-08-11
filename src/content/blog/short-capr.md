@@ -9,6 +9,9 @@ The full report can be found [here](https://anuraagw.me/reports/capricor.pdf).
 
 > **Quick note:** I work full time and wrote this in the little free time I have — there may be some spelling or formatting issues, but the core thesis and data analysis are correct. 
 
+> **Update – August 11, 2025**  
+> Capricor seeks to resubmit its BLA based on its existing dataset, with HOPE-3 data (expected in Q4 2025) potentially serving as supportive and confirmatory evidence, pending regulatory guidance. They're submitting the same dataset to the same person who rejected them last time.
+
 > **Update – August 9, 2025**  
 > Vinay Prasad, who previously issued a CRL for Deramiocel, is back at the FDA. This no doubt decreases the chance that the drug is approved.  
 
