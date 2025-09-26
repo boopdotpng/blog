@@ -7,7 +7,10 @@ cat: "biology"
 
 The full report can be found [here](https://anuraagw.me/reports/capricor.pdf). 
 
-> **Quick note:** I work full time and wrote this in the little free time I have — there may be some spelling or formatting issues, but the core thesis and data analysis are correct. 
+> **Update – September 26, 2025**  
+> HOPE-3 pivotal trial completed; topline data expected mid-Q4 2025 to support BLA resubmission. 
+> LVEF will remain a secondary endpoint. 
+> HOPE-3 data will be submitted along with a response to the CRL. 
 
 > **Update – August 11, 2025**  
 > Capricor seeks to resubmit its BLA based on its existing dataset, with HOPE-3 data (expected in Q4 2025) potentially serving as supportive and confirmatory evidence, pending regulatory guidance. They're submitting the same dataset to the same person who rejected them last time.

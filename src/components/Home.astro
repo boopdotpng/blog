@@ -10,7 +10,7 @@ const catColors: Record<string, string> = {
   misc: '#ff924c',        // orange
   "machine learning": '#ffca3a',    // yellow
   biology: '#8ac926',     // green
-  programming: '#1982c4',  // blue
+  programming: '#0d47a1',  // much darker blue
   fpga: '#8b5cf6'  // violet 
 };
 ---
@@ -51,7 +51,7 @@ const catColors: Record<string, string> = {
   margin-bottom: 1.2rem;
   letter-spacing: -0.02em;
   text-align: left;
-  color: #fff;
+  color: var(--fg);
 }
 .filter-bar, .pill, .pill.active {
   display: none !important;
@@ -78,11 +78,11 @@ const catColors: Record<string, string> = {
   padding: 0.6rem;
 }
 .post-card-link:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card-hover);
 }
 .post-date {
   font-size: 1rem;
-  color: #a1a1aa;
+  color: var(--fg-muted);
   margin-bottom: 0.1rem;
 }
 .post-title {
@@ -100,7 +100,7 @@ const catColors: Record<string, string> = {
 }
 .post-desc {
   font-size: 1.05rem;
-  color: #bdbdbd;
+  color: var(--fg-subtle);
   margin: 0 0 0.12rem 0;
   line-height: 1.5;
 }
