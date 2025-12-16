@@ -4,13 +4,13 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && bun scripts/postbuild-seo.ts",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/sitemap": "3.4.2",
-    "astro": "5.12.9",
+    "@astrojs/sitemap": "3.6.0",
+    "astro": "5.16.4",
     "katex": "^0.16.22",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0"

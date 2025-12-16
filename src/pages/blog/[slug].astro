@@ -2,6 +2,7 @@
 // layout + content loading
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import galleryScriptUrl from '../../scripts/gallery.ts?url';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -13,6 +14,11 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await post.render();
+
+const publishedTime = (() => {
+  const date = new Date(`${post.data.pubDate}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+})();
 ---
 <style>
 :root {
@@ -122,6 +128,8 @@ article.post-plain svg {
 <Layout
   title={post.data.title}
   description={post.data.description ?? 'a short post on something'}
+  ogType="article"
+  publishedTime={publishedTime}
 >
   <div class="centered-wrapper">
     <article class="post-plain markdown-body">
@@ -132,4 +140,5 @@ article.post-plain svg {
       <Content />
     </article>
   </div>
+  <script type="module" src={galleryScriptUrl}></script>
 </Layout>

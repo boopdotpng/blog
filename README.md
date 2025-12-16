@@ -43,6 +43,19 @@ All commands are run from the root of the project, from a terminal:
 | `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `bun astro -- --help` | Get help using the Astro CLI                     |
 
+## Markdown gallery
+
+In any blog post (`src/content/blog/*.md`), add a fenced block:
+
+```md
+```gallery
+public/photos/one.jpg | optional caption
+public/photos/two.jpg
+```
+```
+
+Each line is an image path (usually under `public/`). This renders a single thumbnail that opens a fullscreen viewer (arrow keys + Esc).
+
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
