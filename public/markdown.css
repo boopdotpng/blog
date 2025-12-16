@@ -15,9 +15,9 @@
 }
 
 .markdown-body p {
-  margin: 0 0 1em 0;
+  margin: 0 0 0.8em 0;
   margin-block-start: 0;
-  margin-block-end: 1em;
+  margin-block-end: 0.8em;
 }
 
 .markdown-body ul, .markdown-body ol {
@@ -73,23 +73,13 @@
 }
 
 .markdown-body table {
-  width: 100%;
   border-collapse: collapse;
-  margin: 1em 0;
-  table-layout: auto;
+  margin: 0.7em 0;
   background: none;
   color: inherit;
-  overflow-x: auto;
-  display: block;
-  white-space: normal;
-}
-
-.markdown-body thead,
-.markdown-body tbody,
-.markdown-body tr {
-  display: table;
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
+  white-space: normal;
 }
 
 .markdown-body th, .markdown-body td {
@@ -102,26 +92,6 @@
   word-wrap: break-word;
   hyphens: auto;
   width: auto;
-}
-
-.markdown-body th:first-child,
-.markdown-body td:first-child {
-  width: auto;
-  min-width: 60px;
-  max-width: 100px;
-}
-
-.markdown-body th:nth-child(2),
-.markdown-body td:nth-child(2) {
-  width: auto;
-  min-width: 80px;
-  max-width: 150px;
-}
-
-.markdown-body th:last-child,
-.markdown-body td:last-child {
-  width: auto;
-  min-width: 200px;
 }
 
 .markdown-body th {
@@ -145,17 +115,29 @@
   padding-right: 0;
 }
 
+/* On desktop, allow tables to "bleed" wider than the post column when there's room. */
+@media (min-width: 1024px) {
+  .markdown-body table {
+    --table-bleed-width: min(1100px, calc(100vw - 2rem));
+    width: var(--table-bleed-width);
+    margin-left: calc((100% - var(--table-bleed-width)) / 2);
+    margin-right: calc((100% - var(--table-bleed-width)) / 2);
+  }
+}
+
 /* Mobile table optimizations */
 @media (max-width: 768px) {
   .markdown-body table {
     display: block;
-    width: auto;
     overflow-x: auto;
+    width: max-content;
+    min-width: 100%;
+    max-width: 100%;
     white-space: normal;
     -webkit-overflow-scrolling: touch;
     border: 1px solid #444;
     border-radius: 6px;
-    margin: 1em 0;
+    margin: 0.7em 0;
   }
   
   /* Scrollbar styling for all browsers */
@@ -197,14 +179,6 @@
       scrollbar-width: thin;
       scrollbar-color: #666 #2a2a2a;
     }
-  }
-  
-  .markdown-body thead,
-  .markdown-body tbody,
-  .markdown-body tr {
-    display: table;
-    width: 480px; /* Reduced width for better mobile experience */
-    table-layout: fixed;
   }
   
   .markdown-body th, 
