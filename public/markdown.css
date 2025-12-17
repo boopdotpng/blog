@@ -1,6 +1,6 @@
 /* markdown.css - Moved to public directory for GitHub Pages access */
 .markdown-body {
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-sans, system-ui, sans-serif);
   color: #e0e0e0;
   background: transparent;
   line-height: 1.7;
@@ -33,7 +33,7 @@
 }
 
 .markdown-body code, .markdown-body pre {
-  font-family: 'Fira Mono', 'Consolas', 'Monaco', monospace;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
   background: #23272e;
   color: #ffcb6b;
   border-radius: 4px;

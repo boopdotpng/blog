@@ -23,6 +23,8 @@ const ogImageUrl = Astro.site ? new URL('/favicon.ico', Astro.site).toString() :
   
     <title>{title}</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="preload" href="/fonts/GoogleSansCode-Variable.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="stylesheet" href="/katex.min.css" />
     <link rel="stylesheet" href="/markdown.css" />
     <link rel="canonical" href={canonicalUrl} />
@@ -41,11 +43,29 @@ const ogImageUrl = Astro.site ? new URL('/favicon.ico', Astro.site).toString() :
     <meta name="twitter:image" content={ogImageUrl} />
   
 <style>
+  @font-face {
+    font-family: "Google Sans Code";
+    font-style: normal;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url("/fonts/GoogleSansCode-Variable.ttf") format("truetype");
+  }
+
+  @font-face {
+    font-family: "Google Sans Code";
+    font-style: italic;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url("/fonts/GoogleSansCode-VariableItalic.ttf") format("truetype");
+  }
+
   :root {
     --bg: #18181b;
     --fg: #f4f4f5;
     --accent: #58a6ff;
     --font-size: 16px;
+    --font-sans: system-ui, sans-serif;
+    --font-mono: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 
   html, body {
@@ -53,9 +73,13 @@ const ogImageUrl = Astro.site ? new URL('/favicon.ico', Astro.site).toString() :
     padding: 0;
     background: var(--bg);
     color: var(--fg);
-    font-family: system-ui, sans-serif;
+    font-family: var(--font-sans);
     line-height: 1.5;
     font-size: var(--font-size);
+  }
+
+  code, pre, kbd, samp {
+    font-family: var(--font-mono);
   }
 
   header {
@@ -78,11 +102,16 @@ const ogImageUrl = Astro.site ? new URL('/favicon.ico', Astro.site).toString() :
     text-decoration: none;
     display: flex;
     align-items: center;
+    gap: 0.4rem;
   }
 
   .site-title a .arrow {
-    margin-right: 0.4rem;
     font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 1em;
+    line-height: 1;
   }
 
   nav ul {

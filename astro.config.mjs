@@ -6,7 +6,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import remarkGallery from './scripts/remark-gallery.mjs';
 
-function getBlogLastmodByPathname() {
+function parseBlogFrontmatter(file) {
+  const publishedMatch = file.match(/^\s*published:\s*["']?(true|false)["']?\s*$/m);
+  const published = publishedMatch ? publishedMatch[1] === 'true' : true;
+
+  const pubDateMatch = file.match(/^\s*pubDate:\s*["']?(\d{4}-\d{2}-\d{2})["']?\s*$/m);
+  const pubDate = pubDateMatch ? pubDateMatch[1] : undefined;
+
+  return { published, pubDate };
+}
+
+function getBlogMetadataByPathname() {
   const byPathname = new Map();
   const blogDir = path.resolve('src/content/blog');
 
@@ -20,14 +30,9 @@ function getBlogLastmodByPathname() {
       const filePath = path.join(blogDir, entry.name);
       const file = fs.readFileSync(filePath, 'utf8');
 
-      const match = file.match(/^\s*pubDate:\s*["']?(\d{4}-\d{2}-\d{2})["']?\s*$/m);
-      if (!match) continue;
-
-      const isoDate = match[1];
-      const lastmod = new Date(`${isoDate}T00:00:00.000Z`);
-      if (Number.isNaN(lastmod.getTime())) continue;
-
-      byPathname.set(`/blog/${slug}`, lastmod.toISOString());
+      const { published, pubDate } = parseBlogFrontmatter(file);
+      const pathname = `/blog/${slug}`;
+      byPathname.set(pathname, { published, pubDate });
     }
   } catch {
     // Best-effort only; sitemap generation still works without per-post lastmod.
@@ -36,7 +41,7 @@ function getBlogLastmodByPathname() {
   return byPathname;
 }
 
-const BLOG_LASTMOD_BY_PATHNAME = getBlogLastmodByPathname();
+const BLOG_METADATA_BY_PATHNAME = getBlogMetadataByPathname();
 
 export default defineConfig({
   site: process.env.SITE_URL ?? 'https://anuraagw.me',
@@ -46,11 +51,22 @@ export default defineConfig({
       filter: (page) => {
         const pathname = new URL(page).pathname;
         // Don't include non-canonical or non-content routes in the sitemap.
-        return pathname !== '/rss.xml' && pathname !== '/404' && pathname !== '/404.html';
+        if (pathname === '/rss.xml' || pathname === '/404' || pathname === '/404.html') return false;
+
+        const normalizedPathname = pathname.replace(/\/$/, '') || '/';
+        const blogMeta = BLOG_METADATA_BY_PATHNAME.get(normalizedPathname);
+        if (blogMeta && !blogMeta.published) return false;
+
+        return true;
       },
       serialize: (item) => {
         const pathname = new URL(item.url).pathname.replace(/\/$/, '') || '/';
-        const blogLastmod = BLOG_LASTMOD_BY_PATHNAME.get(pathname);
+        const blogMeta = BLOG_METADATA_BY_PATHNAME.get(pathname);
+        const blogLastmod = (() => {
+          if (!blogMeta?.pubDate) return undefined;
+          const lastmod = new Date(`${blogMeta.pubDate}T00:00:00.000Z`);
+          return Number.isNaN(lastmod.getTime()) ? undefined : lastmod.toISOString();
+        })();
 
         if (blogLastmod) {
           return { ...item, lastmod: blogLastmod, changefreq: 'monthly', priority: 0.7 };
