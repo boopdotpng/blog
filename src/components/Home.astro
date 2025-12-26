@@ -4,7 +4,12 @@ interface Props {
   posts: CollectionEntry<'blog'>[];
 }
 const { posts } = Astro.props as Props;
-posts.sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())
+const pinnedPosts = posts
+  .filter(post => post.data.pinned)
+  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
+const regularPosts = posts
+  .filter(post => !post.data.pinned)
+  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
 const catColors: Record<string, string> = {
   life: '#ff595e',        // red
   misc: '#ff924c',        // orange
@@ -13,48 +18,248 @@ const catColors: Record<string, string> = {
   programming: '#1982c4',  // blue
   fpga: '#8b5cf6'  // violet 
 };
+const workingOn = [
+  'tinygrad bounties',
+  'learning rdna',
+  'building educational resources for both',
+  'compilers / ml stuff',
+];
+const uncategorizedLabel = 'uncategorized';
+const groupedPosts = regularPosts.reduce((acc, post) => {
+  const key = post.data.cat ?? uncategorizedLabel;
+  if (!acc[key]) acc[key] = [];
+  acc[key].push(post);
+  return acc;
+}, {} as Record<string, CollectionEntry<'blog'>[]>);
+const categoryOrder = [
+  'programming',
+  'machine learning',
+  'biology',
+  'fpga',
+  'misc',
+  'life',
+  uncategorizedLabel,
+];
+const orderedCategories = [
+  ...categoryOrder,
+  ...Object.keys(groupedPosts)
+    .filter(cat => !categoryOrder.includes(cat))
+    .sort(),
+].filter(cat => groupedPosts[cat]?.length);
 ---
 
 <section class="home-list">
-  <h1 class="home-title">posts</h1>
+  {pinnedPosts.length > 0 && (
+    <div class="pinned-bar">
+      <div class="pinned-label">pinned</div>
+      <ul class="pinned-list">
+        {pinnedPosts.map(post => (
+          <li class="pinned-item">
+            <a class="pinned-link" href={`/blog/${post.slug}`}>
+              {post.data.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
 
-  <ul class="post-list">
-    {posts.map(post => {
-      const cat = post.data.cat;
-      const catColor = cat ? catColors[cat] ?? '#58a6ff' : '#58a6ff';
+  <div class="home-hero">
+    <div class="home-heading">
+      <h1 class="home-title">posts</h1>
+      <p class="home-subtitle">notes</p>
+    </div>
+    <aside class="working-card">
+      <div class="working-title">currently working on</div>
+      <ul class="working-list">
+        {workingOn.map(item => (
+          <li class="working-item">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </aside>
+  </div>
+
+  <div class="category-grid">
+    {orderedCategories.map(cat => {
+      const catColor = catColors[cat] ?? '#58a6ff';
+      const prettyCat = cat === uncategorizedLabel ? 'uncategorized' : cat;
       return (
-        <li
-          class="post-list-item"
-          data-cat={cat}
-          style={`--cat-color: ${catColor}`}
-        >
-          <a class="post-card-link" href={`/blog/${post.slug}`}>
-            <div class="post-date">{post.data.pubDate}</div>
-            <div class="post-title">{post.data.title}</div>
-            <div class="post-desc">{post.data.description ?? 'no description available'}</div>
-          </a>
-        </li>
+        <section class="category-card" style={`--cat-color: ${catColor}`}>
+          <header class="category-header">
+            <h2 class="category-title">{prettyCat}</h2>
+            <span class="category-count">{groupedPosts[cat].length}</span>
+          </header>
+          <ul class="post-list">
+            {groupedPosts[cat].map(post => (
+              <li class="post-list-item" data-cat={post.data.cat ?? undefined}>
+                <a class="post-card-link" href={`/blog/${post.slug}`}>
+                  <div class="post-title-row">
+                    <div class="post-title">{post.data.title}</div>
+                    <div class="post-date">{post.data.pubDate}</div>
+                  </div>
+                  <div class="post-desc">{post.data.description ?? 'no description available'}</div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
       );
     })}
-  </ul>
+  </div>
 </section>
 
 <style>
 .home-list {
   margin: 0 auto;
-  padding: 2rem 0 0 0;
-  max-width: 600px;
+  padding: 1.8rem 0 0 0;
+  max-width: 980px;
+  position: relative;
+}
+.home-list::before {
+  content: "";
+  position: absolute;
+  inset: -140px -40px auto -40px;
+  height: 260px;
+  background:
+    radial-gradient(closest-side, rgba(88, 166, 255, 0.18), transparent 70%),
+    radial-gradient(closest-side, rgba(255, 146, 76, 0.12), transparent 75%);
+  z-index: 0;
+  pointer-events: none;
+}
+.home-list > * {
+  position: relative;
+  z-index: 1;
+}
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1.4rem;
+  margin-bottom: 1.6rem;
+}
+.home-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 .home-title {
-  font-size: 2.1rem;
+  font-size: 2.3rem;
   font-weight: 700;
-  margin-bottom: 1.2rem;
+  margin: 0;
   letter-spacing: -0.02em;
   text-align: left;
   color: #fff;
 }
+.home-subtitle {
+  margin: 0;
+  color: #cbd5f5;
+  font-size: 1.05rem;
+}
+.working-card {
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.4);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+.working-title {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9aa3b2;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+.working-list {
+  list-style: disc;
+  padding: 0 0 0 1.1rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.working-item {
+  color: #e2e8f0;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+.pinned-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.pinned-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cbd5f5;
+}
+.pinned-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+}
+.pinned-item {
+  margin: 0;
+}
+.pinned-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.pinned-link:hover {
+  transform: translateY(-1px);
+  background: rgba(30, 41, 59, 0.8);
+}
 .filter-bar, .pill, .pill.active {
   display: none !important;
+}
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.1rem;
+}
+.category-card {
+  border-radius: 14px;
+  padding: 0.9rem 1rem 0.85rem;
+  background: rgba(24, 24, 27, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+.category-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.category-title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--cat-color);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+.category-count {
+  font-size: 0.85rem;
+  color: #9ca3af;
 }
 .post-list {
   list-style: none;
@@ -62,7 +267,7 @@ const catColors: Record<string, string> = {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.8rem;
+  gap: 0.85rem;
 }
 .post-list-item {
   display: flex;
@@ -75,21 +280,27 @@ const catColors: Record<string, string> = {
   display: block;
   transition: background 0.2s;
   border-radius: 6px;
-  padding: 0.6rem;
+  padding: 0.45rem 0.5rem;
 }
 .post-card-link:hover {
   background: rgba(255, 255, 255, 0.04);
 }
+.post-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
 .post-date {
-  font-size: 1rem;
-  color: #a1a1aa;
-  margin-bottom: 0.1rem;
+  font-size: 0.85rem;
+  color: #8b949e;
+  white-space: nowrap;
 }
 .post-title {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: var(--cat-color);
-  margin: 0 0 0.15rem 0;
+  color: #f8fafc;
+  margin: 0;
   line-height: 1.2;
   text-decoration: none;
   transition: opacity 0.18s;
@@ -99,9 +310,21 @@ const catColors: Record<string, string> = {
   text-decoration: none;
 }
 .post-desc {
-  font-size: 1.05rem;
-  color: #bdbdbd;
-  margin: 0 0 0.12rem 0;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  color: #b0b7c3;
+  margin: 0.1rem 0 0;
+  line-height: 1.45;
+}
+@media (max-width: 820px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .post-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
 }
 </style>

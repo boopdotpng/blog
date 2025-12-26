@@ -2,6 +2,7 @@
 title: "nn.conv2d in tinygrad"
 pubDate: "2025-04-16"
 published: false
+pinned: false
 description: "how does conv2d work in tinygrad?"
 cat: "machine learning"
 ---

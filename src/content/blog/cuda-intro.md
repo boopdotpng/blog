@@ -2,6 +2,7 @@
 title: "Intro to GPU programming: part 1"
 pubDate: "2025-05-10"
 published: true
+pinned: false
 description: "How to actually write fast GPU code?"
 cat: "machine learning"
 ---

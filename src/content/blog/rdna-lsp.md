@@ -2,6 +2,7 @@
 title: "AMDGPU LSP + VS Code Extension"
 pubDate: "2025-12-25"
 published: true
+pinned: false
 description: "Why are there no AMDGPU / RDNA development tools?"
 cat: "programming"
 ---

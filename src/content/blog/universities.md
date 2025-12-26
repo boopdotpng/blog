@@ -2,6 +2,7 @@
 title: "Universities have stopped filtering"
 pubDate: "2025-05-09"
 published: false
+pinned: false
 description: "What's wrong?"
 cat: "misc"
 ---
