@@ -7,8 +7,6 @@ description: "quick notes and links while exploring tinygrad internals."
 cat: "programming"
 ---
 
-Short grab bag of observations while skimming tinygrad internals.
+# BEAM search 
 
-- some notes on kernel scheduling
-- memory layout quirks worth revisiting
-- links to code paths i keep forgetting about
+> https://github.com/tinygrad/tinygrad/pull/13836
