@@ -3,7 +3,7 @@ title: "Universities have stopped filtering"
 pubDate: "2025-05-09"
 published: false
 pinned: false
-description: "What's wrong?"
+description: "Why collapsing academic standards and incentives are producing weaker outcomes."
 cat: "misc"
 ---
 

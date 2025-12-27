@@ -166,6 +166,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
     margin: 0;
     display: flex;
     gap: 0.4rem;
+    align-items: center;
   }
 
   nav a {
@@ -180,6 +181,37 @@ if (articleSchema && schemaArticle?.imageUrl) {
   nav a:hover {
     background: rgba(88, 166, 255, 0.1);
     color: var(--accent);
+  }
+  .rss-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    border-radius: 6px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .rss-link:hover {
+    background: rgba(88, 166, 255, 0.1);
+    color: var(--accent);
+  }
+  .rss-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+  .rss-link .rss-dot {
+    animation: rss-pulse 1.6s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes rss-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.85;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
   }
 
   main {
@@ -219,6 +251,15 @@ if (articleSchema && schemaArticle?.imageUrl) {
     </div>
     <nav>
       <ul>
+        <li>
+          <a class="rss-link" href="/rss.xml" aria-label="RSS feed">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M6.2 17.8a1.6 1.6 0 1 1-3.2 0 1.6 1.6 0 0 1 3.2 0Z" class="rss-dot"></path>
+              <path d="M4 10.2v2.6c3.9 0 7 3.1 7 7h2.6c0-5.3-4.3-9.6-9.6-9.6Z"></path>
+              <path d="M4 4v2.6c7.3 0 13.4 6 13.4 13.4H20C20 10.1 13.9 4 4 4Z"></path>
+            </svg>
+          </a>
+        </li>
         <li><a href="https://twitter.com/boopdotpng" target="_blank">twitter</a></li>
         <li><a href="https://github.com/boopdotpng" target="_blank">github</a></li>
       </ul>

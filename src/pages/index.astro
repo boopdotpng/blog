@@ -8,7 +8,7 @@ const posts = await getCollection('blog', ({ data }) => data.published);
 
 <Layout
   title="anuraag — notes" 
-  description="notes"
+  description="Field notes on systems, ML, GPUs, and biology, plus reverse engineering writeups and project updates."
 >
   <Home posts={posts} />
 </Layout>

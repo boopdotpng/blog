@@ -4,7 +4,7 @@ pubDate: "2025-05-10"
 published: true
 contents_table: true
 pinned: false
-description: "How to actually write fast GPU code?"
+description: "A practical intro to GPU architecture and performance, building toward an efficient SGEMM kernel."
 cat: "machine learning"
 ---
 
