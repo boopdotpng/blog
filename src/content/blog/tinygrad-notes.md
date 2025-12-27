@@ -136,8 +136,6 @@ Files involved:
 
 `get_runner` memoizes compiled programs based on the AST + context (including `BEAM`, `NOOPT`, `DEVECTORIZE` settings). If `TinyJit` is used, it captures kernels and replays them without recompiling. 
 
----
-
 # BEAM search 
 
 > https://github.com/tinygrad/tinygrad/pull/13836
@@ -198,11 +196,7 @@ Keep in mind that all of these optimizations are run at the AST stage, before th
 
 ## Examples of kernels optimized with BEAM
 
----
-
 # pattern matchers + graph rewrites (the non-BEAM optimization path)
-
----
 
 # undocumented environment variables
 
