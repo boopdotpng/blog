@@ -21,6 +21,7 @@ const publishedTime = (() => {
   const date = new Date(`${post.data.pubDate}T00:00:00.000Z`);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 })();
+const description = post.data.description ?? 'a short post on something';
 ---
 <style>
 :root {
@@ -181,9 +182,14 @@ article.post-plain svg {
 
 <Layout
   title={post.data.title}
-  description={post.data.description ?? 'a short post on something'}
+  description={description}
   ogType="article"
   publishedTime={publishedTime}
+  schemaArticle={{
+    title: post.data.title,
+    description,
+    publishedTime,
+  }}
 >
   <div class="centered-wrapper">
     <article class="post-plain markdown-body">
