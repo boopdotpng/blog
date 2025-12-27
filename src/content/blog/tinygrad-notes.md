@@ -1,123 +1,180 @@
 ---
 title: "tinygrad notes"
-pubDate: "2025-08-15"
+pubDate: "2025-12-26"
 published: true
 pinned: true
 contents_table: true
-description: "quick notes and links while exploring tinygrad internals."
+description: "notes and links while exploring tinygrad."
 cat: "programming"
 ---
 
 # rough progression of a tinygrad tensor operation 
 
-**1) Tensors are just Uop graphs**
+**1) Tensors are just thin wrappers over UOps**
 
-- Tensor.py
-- uop/ops.py
+Files involved:
+- `Tensor.py`
+- `uop/ops.py`
+- `uop/init.py`
 
-Tensors are just a thin wrapper over Uops. Every tensor operation is just a Uop (or set of Uops) that's injected into the current Uop graph.
+Tensors are just a thin wrapper over UOps. Every tensor operation creates a UOp (or set of UOps) that gets injected into the current UOp graph.
+
+```py
+Tensor.ones(3).uop
+
+UOp(Ops.EXPAND, dtypes.float, arg=None, src=(
+  UOp(Ops.RESHAPE, dtypes.float, arg=None, src=(
+    UOp(Ops.CONST, dtypes.float, arg=1.0, src=(
+      UOp(Ops.DEVICE, dtypes.void, arg='CPU', src=()),
+      UOp(Ops.UNIQUE, dtypes.void, arg=0, src=()),)),
+    UOp(Ops.CONST, dtypes.index, arg=1, src=()),)),
+  UOp(Ops.CONST, dtypes.index, arg=3, src=()),))
+```
+
+## all the ops 
+
+You can write an entire GPU kernel using just UOps, bypassing the tensor layer entirely.
+
+### Ops that don't appear in compiled programs 
+
+These are higher-level ops that get lowered or eliminated during compilation:
+
+- `unique`, `device`, `kernel`, `assign`, `custom_kernel`, `lunique`
+- `contiguous`, `contiguous_backward`, `detach`
+- `bufferize`, `copy`, `buffer`, `buffer_view`, `mselect`, `mstack`, `encdec`
+- `reshape`, `permute`, `expand`, `pad`, `shrink`, `flip`, `multi`
+- `reduce_axis`, `reduce`, `allreduce`
+- `unroll`, `contract`, `cat`, `ptrcat`
+
+### everything else (ops that appear in compiled programs)
+
+These are the low-level ops that actually make it into the final compiled kernel:
+
+- `define_global`, `define_var`, `bind`, `special`, `define_local`, `define_reg`
+- `noop`, `rewrite_error`, `program`, `linear`, `source`, `binary`, `sink`, `after`, `group`, `gep`, `vectorize`
+- `index`, `load`, `store`
+- `wmma`
+- `cast`, `bitcast`, `exp2`, `log2`, `sin`, `sqrt`, `reciprocal`, `neg`, `trunc`
+- `add`, `mul`, `shl`, `shr`, `idiv`, `max`, `mod`, `cmplt`, `cmpne`, `cmpeq`, `xor`, `or`, `and`, `threefry`, `sub`, `fdiv`, `pow`
+- `where`, `mulacc`
+- `barrier`, `range`, `if`, `end`, `endif`
+- `vconst`, `const`
+- `custom`, `customi`
 
 **2) Schedule creation (kernel partitioning)**
 
-- engine/schedule.py
-- schedule/__init__.py
-- rangeify.py
+Files involved:
+- `engine/schedule.py`
+- `schedule/__init__.py`
+- `rangeify.py`
 
-Each Uop graph turns into one or more kernel ASTs (rooted at Ops.SINK). Every kernel becomes an ExecItem with its own AST and buffers. 
+Each UOp graph gets turned into one or more kernel ASTs (each rooted at `Ops.SINK`). Every kernel becomes an `ExecItem` with its own AST and buffers. This is where tinygrad figures out how to partition your computation into separate GPU kernel launches.
 
 **3) Kernel AST rewrite + optimization**
 
-- codegen/init.py
-- postrange.py
-- opt/search.py (BEAM)
+Files involved:
+- `codegen/init.py`
+- `postrange.py`
+- `opt/search.py` (BEAM)
 
-Kernel ASTs are re-written and optimized based on rewrite rules defined in `PatternMatchers`. These are scattered all around the codebase and re-write portions of the Uop graph: movement ops, range splitting, constant folding, etc. 
+Kernel ASTs are rewritten and optimized based on rewrite rules defined in `PatternMatchers`. These are scattered all around the codebase and rewrite portions of the UOp graph: movement ops, range splitting, constant folding, etc. 
 
-`apply_opts` applies optimizations to the AST. This path varies based on the BEAM environment variable. 
+`apply_opts` applies optimizations to the AST. This path varies based on the `BEAM` environment variable. 
 
-BEAM on: 
+**BEAM on:** 
 BEAM search happens. See the BEAM section below.
 
-BEAM off: 
+**BEAM off:** 
 A bunch of hand-written optimizations are applied to each AST. See the pattern-matchers section below (todo). 
 
+Calls `codegen/opt/heuristic.py` to apply hand-coded optimizations, assuming `NOOPT` is unset and the AST doesn't have optimizations already applied. 
+
 More rewrites happen after this: 
-  - expander 
-  - devectorizer 
-  - gpudims
-  - lower index dtype
-  - decompositions 
-  - final rewrite
+- **expander** -- lowers ranges and reduces into loops
+- **devectorizer** -- handles `UPCAST` ops
+- **gpudims** -- GPU launch dimensions 
+- **lower index dtype** -- converts symbolic dtypes into dtypes for the respective backend
+- **decompositions** -- replaces unsupported ops with supported ops on the target renderer
+- **final rewrite** -- one last cleanup pass
 
-These can be found in
-  - codegen/late/expander.py
-  - codegen/late/devectorizer.py
-  - .../gpudims.py
-  - codegen/simplify.py
+These can be found in:
+- `codegen/late/expander.py`
+- `codegen/late/devectorizer.py`
+- `codegen/late/gpudims.py`
+- `codegen/simplify.py`
 
-At the end of the rewrite chain, the Uop graph is linearized into a list of Uops to be run in a straight line.
+At the end of the rewrite chain, the UOp graph is linearized into a list of UOps to be run in a straight line.
 
-Linearization happens in
-  - codegen/late/linearizer.py 
-  - renderer/init.py
+Linearization happens in:
+- `codegen/late/linearizer.py` 
+- `renderer/init.py`
 
 **4) Render to source**
 
-- renderers, like renderer/ptx.py 
-- renderer/init.py
+Files involved:
+- renderers, like `renderer/ptx.py` 
+- `renderer/init.py`
 
-The renderer (`tinygrad/renderer/*`) turns the linearized Uops into device source code (CUDA, HIP, etc). 
+The renderer (`tinygrad/renderer/*`) turns the linearized UOps into device source code (CUDA, HIP, etc). A `ProgramSpec` object is created. 
 
 **5) Compile to binary**
 
-- engine/realize.py
-- runtime/ops_*.py
+Files involved:
+- `engine/realize.py`
+- `runtime/ops_*.py`
 
-The device compiler compiles the source into a binary (ProgramSpec.lib). Done via CompiledRunner in `tinygrad/engine/realize.py`. 
+The device compiler compiles the source into a binary (`ProgramSpec.lib`). This is done via `CompiledRunner` in `tinygrad/engine/realize.py`. 
 
 **6) Runtime launch**
 
-`ExecItem.run()` calls the device runtime with buffers, global_local sizes, and variable values. The kernel is run on the GPU/CPU here. 
+`ExecItem.run()` calls the device runtime with buffers, global/local sizes, and variable values. The kernel actually runs on the GPU/CPU here. 
 
 **7) Caching/JIT**
 
-- jit.py
+Files involved:
+- `jit.py`
 
-`get_runner` memorizes compiled programs based on the AST + context (including BEAM, NOOPT, DEVECTORIZE). If TinyJit is used, it captures kernels and replays them without re-compiling. 
+`get_runner` memoizes compiled programs based on the AST + context (including `BEAM`, `NOOPT`, `DEVECTORIZE` settings). If `TinyJit` is used, it captures kernels and replays them without recompiling. 
+
+---
 
 # BEAM search 
 
 > https://github.com/tinygrad/tinygrad/pull/13836
 
-Python 3.14 removed support for pickling Itertools objects, which broke BEAM in tinygad. BEAM pickles Scheduler objects and sends them to worker processes to be executed. The particular line that fails: 
+Python 3.14 removed support for pickling `itertools` objects, which broke BEAM in tinygrad. Currently, BEAM pickles `Scheduler` objects and sends them to worker processes to be executed. This is an issue because the `Scheduler` contains an `itertools.count` that cannot be serialized:
 
 ```py
 # tinygrad/codegen/opt/postrange.py:21
 self.opt_range = itertools.count(start=max([x.arg[0] for x in self.rngs], default=0)+1)
 ```
 
-This led into a long rabbit hole into what BEAM actually does. It's one of the main reasons tinygrad is so fast. 
+This led me down a long rabbit hole into what BEAM actually does. It's one of the main reasons tinygrad is so fast. 
 
-It runs many variants of every AST in your graph to find the one that runs fastest on your hardware. 
+## What BEAM does
 
-The parameters adjusted are
+It runs many variants of every AST in your graph to find the one that runs fastest on your hardware. Think of it as auto-tuning at the kernel optimization level.
 
-| opt      | arguments                                  | description |
-| -------- | ------------------------------------------ | ----------- |
-| UNROLL   | axis, amt                                  | 
-| UPCAST   | axis, amt                                  |
-| LOCAL    | axis, amt                                  |
-| GROUP    | axis, amt                                  |
-| GROUPTOP | axis, amt                                  |
-| THREAD   | axis, amt                                  |
-| TC       | tc_select, tc_opt, use                     |
-| SWAP     | axis0, axis1                               |
-| PADTO    | axis, amt                                  |
-| NOLOCALS | NOLOCALS=1 (optional environment variable) |
+The parameters BEAM adjusts are:
 
-(from *actions* in `tinygrad/codegen/opt/search.py`)
+| opt      | arguments                              | description                                                                                     |
+| -------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| UNROLL   | axis, amt                              | loop unrolling, i.e. `#pragma unroll`                                                           |
+| UPCAST   | axis, amt                              | like `float4` loads, later touched by devectorize                                               |
+| LOCAL    | axis, amt                              | split work between threads in a workgroup                                                       |
+| GROUP    | axis, amt                              | parallelize reduce operations, inner axis inside outer loop                                     |
+| GROUPTOP | axis, amt                              | same as above, inner axis is above outer loop                                                   |
+| THREAD   | axis, amt                              | which globalizable axis becomes the thread index? `local` is workgroup size (block)             |
+| TC       | axis, (tc_select, tc_opt, use)         | tensor core/wmma ops when device supports                                                       |
+| SWAP     | axis0, axis1                           | two `RANGE` nodes exchange axis IDs, only on global axes                                        |
+| PADTO    | axis, amt                              | pads loop axes (for tile sizes that require dimensions to be multiples), adds guard             |
+| NOLOCALS | NOLOCALS=1 (optional env var)          | disables local/shared memory axes                                                               |
 
-Keep in mind that all of these optimizations are run at the AST stage, before the kernel is linearized and rendered into a program. For reference, here is a Uop graph for a 
+(from `actions` in `tinygrad/codegen/opt/search.py`)
+
+Keep in mind that all of these optimizations are run at the AST stage, before the kernel is linearized and rendered into a program.
+
+## Examples of each optimization
 
 **Unroll**
 
@@ -139,24 +196,30 @@ Keep in mind that all of these optimizations are run at the AST stage, before th
 
 **Nolocals**
 
+## Examples of kernels optimized with BEAM
 
-## examples of kernels optimized with beam 
+---
 
+# pattern matchers + graph rewrites (the non-BEAM optimization path)
 
-# pattern matchers + graph rewrites (the non beam optimization path)
-
-
+---
 
 # undocumented environment variables
 
-There are a lot of random environment variables scattered around the tinygrad codebase, and most of these aren't documented at all. These are incredibly useful for debugging, profiling, and understanding what's going on. Here is a list of all the ones I've found so far. 
+There are a lot of random environment variables scattered around the tinygrad codebase, and most of these aren't documented at all. These are incredibly useful for debugging, profiling, and understanding what's going on. Here's a list of all the ones I've found so far:
 
+| variable          | range        | description                                                       |
+| ----------------- | ------------ | ----------------------------------------------------------------- |
+| IGNORE_BEAM_CACHE | 0 or nonzero | always regenerate BEAM kernels                                    |
+| CACHELEVEL        | 0 or nonzero | disable all cache                                                 |
+| TRACK_MATCH_STATS | 0-3          | 1: basic tracking, 2: detailed trace data, 3: per-match timing   |
+| CUDA_PTX          | 0 or nonzero | PTX codegen for Nvidia GPUs, use with `NV=1`                      |
+| NOOPT             | 0 or nonzero | disables optimizations on the AST                                 |
+| BEAM              | 0 or nonzero | enables BEAM search (auto-tuning)                                 |
+| DEVECTORIZE       | 0 or nonzero | controls whether devectorization happens                          |
 
-| variable          | range        | description                                                    |
-| ----------------- | ------------ | -------------------------------------------------------------- |
-| IGNORE_BEAM_CACHE | 0 or nonzero | always regenerate beam kernels                                 |
-| CACHELEVEL        | 0 or nonzero | disable all cache                                              |
-| TRACK_MATCH_STATS | 0-3          | 1: basic tracking, 2: detailed trace data, 3: per-match timing |
-| CUDA_PTX          | 0 or nonzero | PTX codegen for Nvidia GPUs, use with NV=1                     |
+You can set some of these using the `with helpers.Context(VAR=n):` pattern, which is useful for only enabling certain features for part of a program, but it's not guaranteed to work with all settings. Either set them using `os.environ["VAR"] = "value"` at the start of the file or pass them when you run the program:
 
-You can set some of these using the `with helpers.Context(VAR=n):` pattern, which is useful for only enabling certain features for part of a program, but it's not guaranteed to work with all settings. Either set them using `os.environ["n"] = ""` at the start of the file or pass them when you run the program. 
+```bash
+BEAM=1 TRACK_MATCH_STATS=2 python your_script.py
+```
