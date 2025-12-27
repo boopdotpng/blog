@@ -13,7 +13,9 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await post.render();
+const { Content, headings } = await post.render();
+const showContentsTable = post.data.contents_table ?? false;
+const tocHeadings = headings.filter(heading => heading.depth >= 1 && heading.depth <= 3);
 
 const publishedTime = (() => {
   const date = new Date(`${post.data.pubDate}T00:00:00.000Z`);
@@ -49,16 +51,68 @@ pre {
 
 /* Post title styling */
 .post-title-main {
-  font-size: 2.4rem;
+  font-size: 2.6rem;
   line-height: 1.2;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
+
 
 .post-date-main {
   color: #777;
   margin-bottom: 2rem;
+}
+
+/* table of contents */
+.toc {
+  border-left: 2px solid rgba(88, 166, 255, 0.3);
+  padding-left: 1rem;
+  margin: 0 0 2rem;
+  background: rgba(88, 166, 255, 0.03);
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+}
+
+.toc-title {
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc-item {
+  margin: 0.3rem 0;
+}
+
+.toc-item a {
+  color: #58a6ff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.toc-item a:hover {
+  color: #79c0ff;
+}
+
+.toc-depth-2 {
+  margin-left: 1rem;
+  font-size: 0.95em;
+}
+
+.toc-depth-3 {
+  margin-left: 2rem;
+  font-size: 0.9em;
+  opacity: 0.85;
 }
 
 /* Perfect centering wrapper */
@@ -110,7 +164,7 @@ article.post-plain svg {
   }
   
   .post-title-main {
-    font-size: 2.2rem;  /* Larger, but still fits on mobile screens */
+    font-size: 2.2rem;  /* Slightly tighter for mobile */
     margin-top: 0.5rem;
   }
   .post-date-main {
@@ -137,6 +191,18 @@ article.post-plain svg {
       <div class="post-date-main">
         <time datetime={post.data.pubDate}>{post.data.pubDate}</time>
       </div>
+      {showContentsTable && tocHeadings.length > 0 && (
+        <nav class="toc" aria-label="Table of contents">
+          <div class="toc-title">Contents</div>
+          <ol class="toc-list">
+            {tocHeadings.map(heading => (
+              <li class={`toc-item toc-depth-${heading.depth}`}>
+                <a href={`#${heading.slug}`}>{heading.text}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
       <Content />
     </article>
   </div>
