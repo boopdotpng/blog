@@ -67,7 +67,7 @@
 .markdown-body code, .markdown-body pre {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
   background: #23272e;
-  color: #ffcb6b;
+  color: #c9d1d9;
   border-radius: 4px;
 }
 
