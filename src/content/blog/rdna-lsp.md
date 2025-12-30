@@ -1,9 +1,9 @@
 ---
-title: "AMDGPU LSP + VS Code Extension"
+title: "amdgpu lsp + vs code extension"
 pubDate: "2025-12-25"
 published: true
 pinned: false
-description: "Why are there no AMDGPU / RDNA development tools?"
+description: "why are there no amdgpu / rdna development tools?"
 cat: "programming"
 ---
 

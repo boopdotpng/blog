@@ -1,9 +1,9 @@
 ---
-title: "Short $CAPR"
+title: "short $capr"
 pubDate: "2025-07-31"
 published: true
 pinned: false
-description: "Why Deramiocel will fail to hit its primary endpoint."
+description: "why deramiocel will fail to hit its primary endpoint."
 cat: "biology"
 ---
 

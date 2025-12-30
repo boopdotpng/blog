@@ -6,6 +6,7 @@ const {
   ogType = 'website',
   publishedTime,
   schemaArticle,
+  favoriteSong,
 } = Astro.props;
 
 const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).toString() : Astro.url.toString();
@@ -134,6 +135,29 @@ if (articleSchema && schemaArticle?.imageUrl) {
     font-family: var(--font-mono);
   }
 
+  .home-song {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    color: #8a8a8a;
+    text-transform: none;
+  }
+
+  .song-icon {
+    color: #666;
+  }
+
+  .song-label {
+    color: #666;
+  }
+
+  .song-title {
+    color: #cfcfcf;
+    letter-spacing: 0.02em;
+  }
+
   .site-title {
     font-size: 0.9rem;
     font-weight: 700;
@@ -243,12 +267,21 @@ if (articleSchema && schemaArticle?.imageUrl) {
 </head>
 <body>
   <header>
-    <div class="site-title">
-      <a href="/">
-        {!isHome && <span class="arrow">&#8592;</span>}
-        anuraag
-      </a>
-    </div>
+    {isHome && favoriteSong && (
+      <div class="home-song" aria-label="Favorite song right now">
+        <span class="song-icon" aria-hidden="true">o))</span>
+        <span class="song-label">favorite song rn:</span>
+        <span class="song-title">{favoriteSong}</span>
+      </div>
+    )}
+    {!isHome && (
+      <div class="site-title">
+        <a href="/">
+          <span class="arrow">&#8592;</span>
+          anuraag
+        </a>
+      </div>
+    )}
     <nav>
       <ul>
         <li>

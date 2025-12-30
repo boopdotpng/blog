@@ -21,6 +21,12 @@ const publishedTime = (() => {
   const date = new Date(`${post.data.pubDate}T00:00:00.000Z`);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 })();
+const displayDate = (() => {
+  const date = new Date(`${post.data.pubDate}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime())
+    ? post.data.pubDate
+    : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase();
+})();
 const description = post.data.description ?? 'a short post on something';
 ---
 <style>
@@ -54,16 +60,67 @@ pre {
 .post-title-main {
   font-size: 2.6rem;
   line-height: 1.2;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  font-family: var(--font-mono);
 }
-
 
 .post-date-main {
   color: #777;
+  margin: 0;
+  font-family: var(--font-mono);
+}
+
+.post-description {
+  color: #b5b5b5;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  font-family: var(--font-mono);
+}
+
+.post-subline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.post-subline .post-description {
+  flex: 1;
+}
+
+.post-subline .post-date-main {
+  text-align: right;
+  white-space: nowrap;
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.post-subline .post-date-main::before {
+  content: "/";
+  position: absolute;
+  left: 0;
+  color: #444;
+}
+
+@media (max-width: 600px) {
+  .post-subline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .post-subline .post-date-main {
+    text-align: left;
+    padding-left: 0;
+  }
+
+  .post-subline .post-date-main::before {
+    content: "";
+  }
 }
 
 /* table of contents */
@@ -194,8 +251,13 @@ article.post-plain svg {
   <div class="centered-wrapper">
     <article class="post-plain markdown-body">
       <h1 class="post-title-main">{post.data.title}</h1>
-      <div class="post-date-main">
-        <time datetime={post.data.pubDate}>{post.data.pubDate}</time>
+      <div class="post-subline">
+        {post.data.description && (
+          <p class="post-description">{post.data.description}</p>
+        )}
+        <div class="post-date-main">
+          <time datetime={post.data.pubDate}>{displayDate}</time>
+        </div>
       </div>
       {showContentsTable && tocHeadings.length > 0 && (
         <nav class="toc" aria-label="Table of contents">

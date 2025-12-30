@@ -4,11 +4,13 @@ import Home from '../components/Home.astro';
 import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog', ({ data }) => data.published);
+const favoriteSong = 'violence (original mix) — grimes, i_o';
 ---
 
 <Layout
   title="anuraag — notes" 
   description="Field notes on systems, ML, GPUs, and biology, plus reverse engineering writeups and project updates."
+  favoriteSong={favoriteSong}
 >
   <Home posts={posts} />
 </Layout>

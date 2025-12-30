@@ -3,7 +3,7 @@ title: "nn.conv2d in tinygrad"
 pubDate: "2025-04-16"
 published: false
 pinned: false
-description: "A walkthrough of conv2d math and tensor shapes, with tinygrad-specific context."
+description: "a walkthrough of conv2d math and tensor shapes, with tinygrad-specific context."
 cat: "machine learning"
 ---
 

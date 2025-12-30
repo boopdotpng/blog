@@ -3,7 +3,7 @@ title: "rdna kernel breakdown"
 pubDate: "2025-12-29"
 published: true
 pinned: false
-description: "Breakdown of a very simple RDNA3.5 kernel, with visualizations"
+description: "breakdown of a very simple rdna3.5 kernel, with visualizations"
 cat: "programming"
 ---
 

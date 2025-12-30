@@ -1,10 +1,10 @@
 ---
-title: "Intro to GPU programming: part 1"
+title: "intro to gpu programming: part 1"
 pubDate: "2025-05-10"
 published: true
 contents_table: true
 pinned: false
-description: "A practical intro to GPU architecture and performance, building toward an efficient SGEMM kernel."
+description: "a practical intro to gpu architecture and performance, building toward an efficient sgemm kernel."
 cat: "machine learning"
 ---
 
