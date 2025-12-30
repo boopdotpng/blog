@@ -142,20 +142,23 @@ if (articleSchema && schemaArticle?.imageUrl) {
     font-size: 0.85rem;
     letter-spacing: 0.04em;
     color: #8a8a8a;
-    text-transform: none;
+    text-decoration: none;
+  }
+
+  .home-song:hover .song-title {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .song-icon {
     color: #666;
   }
 
-  .song-label {
-    color: #666;
-  }
-
   .song-title {
     color: #cfcfcf;
     letter-spacing: 0.02em;
+    transition: color 0.15s;
   }
 
   .site-title {
@@ -235,6 +238,12 @@ if (articleSchema && schemaArticle?.imageUrl) {
     transform-origin: center;
   }
 
+  @media (max-width: 600px) {
+    .home-song {
+      display: none;
+    }
+  }
+
   main {
     max-width: 800px;
     margin: 0 auto;
@@ -268,11 +277,10 @@ if (articleSchema && schemaArticle?.imageUrl) {
 <body>
   <header>
     {isHome && favoriteSong && (
-      <div class="home-song" aria-label="Favorite song right now">
+      <a class="home-song" href={favoriteSong.url} target="_blank" aria-label="Favorite song right now">
         <span class="song-icon" aria-hidden="true">o))</span>
-        <span class="song-label">favorite song rn:</span>
-        <span class="song-title">{favoriteSong}</span>
-      </div>
+        <span class="song-title">{favoriteSong.title}</span>
+      </a>
     )}
     {!isHome && (
       <div class="site-title">
@@ -293,7 +301,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
             </svg>
           </a>
         </li>
-        <li><a href="https://twitter.com/boopdotpng" target="_blank">twitter</a></li>
+        <li><a href="https://twitter.com/boopdotpng" target="_blank">@boopdotpng</a></li>
         <li><a href="https://github.com/boopdotpng" target="_blank">github</a></li>
       </ul>
     </nav>

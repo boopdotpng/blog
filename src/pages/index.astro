@@ -4,7 +4,10 @@ import Home from '../components/Home.astro';
 import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog', ({ data }) => data.published);
-const favoriteSong = 'violence (original mix) — grimes, i_o';
+const favoriteSong = {
+  title: 'violence (original mix) — grimes, i_o',
+  url: 'https://open.spotify.com/track/3KeOFns3LGJuh1lapMm9eA',
+};
 ---
 
 <Layout
