@@ -57,8 +57,8 @@ Every wave runs a copy of this kernel, with a copy of the following state:
 | VCCZ    | vcc is zero                                                    | 1-bit         |
 | SCC     | scalar condition code                                          | 1-bit         |
 | VMcnt   | vmem load and sample instructions issued but not yet completed | 6-bit         |
-| VScnt   | vmem store instructions...                                     | 6-bit         |
-| LGKMcnt | lds, gds, constant and message count                           | 6-bit         |
+| VScnt   | issued, not completed vmem store instructions...                                     | 6-bit         |
+| LGKMcnt | outstanding lds, gds, constant and message count                           | 6-bit         |
 
 ## line by line: 
 
