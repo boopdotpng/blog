@@ -203,15 +203,16 @@ Keep in mind that all of these optimizations are run at the AST stage, before th
 
 There are a lot of random environment variables scattered around the tinygrad codebase, and most of these aren't documented at all. These are incredibly useful for debugging, profiling, and understanding what's going on. Here's a list of all the ones I've found so far:
 
-| variable          | range        | description                                                    |
-| ----------------- | ------------ | -------------------------------------------------------------- |
-| IGNORE_BEAM_CACHE | 0 or nonzero | always regenerate BEAM kernels                                 |
-| CACHELEVEL        | 0 or nonzero | 0 disables disk cache                                          |
-| TRACK_MATCH_STATS | 0-3          | 1: basic tracking, 2: detailed trace data, 3: per-match timing |
-| CUDA_PTX          | 0 or nonzero | PTX codegen for Nvidia GPUs, use with `NV=1`                   |
-| NOOPT             | 0 or nonzero | disables optimizations on the AST                              |
-| BEAM              | 0 or nonzero | enables BEAM search (auto-tuning)                              |
-| DEVECTORIZE       | 0 or nonzero | controls whether devectorization happens                       |
+| variable            | range        | description                                                        |
+| ------------------- | ------------ | ------------------------------------------------------------------ |
+| IGNORE_BEAM_CACHE   | 0 or nonzero | always regenerate BEAM kernels                                     |
+| CACHELEVEL          | 0 or nonzero | 0 disables disk cache                                              |
+| TRACK_MATCH_STATS   | 0-3          | 1: basic tracking, 2: detailed trace data, 3: per-match timing     |
+| CUDA_PTX            | 0 or nonzero | PTX codegen for Nvidia GPUs, use with `NV=1`                       |
+| NOOPT               | 0 or nonzero | disables optimizations on the AST                                  |
+| DEVECTORIZE         | 0 or nonzero | controls whether devectorization happens                           |
+| HCQ_VISIBLE_DEVICES | device #     | on amd, choose which device is used by tinygrad. just try each one |
+
 
 You can set some of these using the `with helpers.Context(VAR=n):` pattern, which is useful for only enabling certain features for part of a program, but it's not guaranteed to work with all settings. Either set them using `os.environ["VAR"] = "value"` at the start of the file or pass them when you run the program:
 
