@@ -1,41 +1,125 @@
 ---
+import Layout from '../layouts/Layout.astro';
 ---
-<!DOCTYPE html>
-<html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex,follow" />
-    <title>404 - not found</title>
-    <link rel="stylesheet" href="/katex.min.css" />
-    <style>
-      :root {
-        --bg: #18181b;
-        --fg: #f4f4f5;
-        --accent: #58a6ff;
-      }
-      html, body {
-        margin: 0;
-        padding: 0;
-        background: var(--bg);
-        color: var(--fg);
-        font-family: system-ui, sans-serif;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-      }
-      a {
-        color: var(--accent);
-        text-decoration: underline;
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>404 - you're lost</h1>
-      <p><a href="/">go home</a></p>
+
+<Layout title="404 — not found" description="Page not found.">
+  <section class="not-found">
+    <div class="not-found-card">
+      <div class="not-found-content">
+        <div class="kicker">404</div>
+        <h1 class="title">you drifted off the map</h1>
+        <p class="subtitle">this page doesn't exist, but the void says hi.</p>
+        <a class="home-link" href="/">go home</a>
+      </div>
+      <div class="ascii-art" aria-hidden="true">
+        <span class="stars">        *     *</span>
+<pre class="ufo" set:html={`      .--------.
+   .-'          '-.
+  /   o    o    o  \\
+ '---.___________.--'
+       \\_______/`} />
+      </div>
     </div>
-  </body>
-</html>
+  </section>
+</Layout>
+
+<style>
+  .not-found {
+    padding: 2.5rem 1rem 4rem;
+  }
+
+  .not-found-card {
+    border: 2px solid #fff;
+    padding: 2rem;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: center;
+    font-family: var(--font-mono);
+  }
+
+  .not-found-content {
+    min-width: 0;
+  }
+
+  .kicker {
+    color: var(--accent);
+    letter-spacing: 0.3em;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .title {
+    margin: 0.6rem 0 0.4rem;
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    margin: 0 0 1.5rem;
+    color: #888;
+  }
+
+  .ascii-art {
+    margin: 0;
+    color: var(--accent);
+    font-size: 0.9rem;
+    line-height: 1.15;
+    text-shadow: 0 0 12px rgba(var(--accent-rgb), 0.3);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stars {
+    animation: twinkle 2s ease-in-out infinite;
+    display: block;
+    white-space: pre;
+  }
+
+  .ufo {
+    margin: 0;
+    transition: transform 0.3s ease;
+  }
+
+  .ascii-art:hover .ufo {
+    animation: wobble 0.5s ease-in-out;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-3deg); }
+    75% { transform: rotate(3deg); }
+  }
+
+  .home-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 700px) {
+    .not-found-card {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .ascii-art {
+      justify-self: start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stars, .ufo {
+      animation: none;
+    }
+  }
+</style>

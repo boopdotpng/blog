@@ -185,4 +185,4 @@ This one does the addition.
 
 Remember that `s[2:3]` is the address of `a_out` in our `KernArg` struct. The store works the same way as the float load that we wrote earlier. We use the same offsets (`v1`) to write each float 4 bytes after the previous one. 
 
-And the last `s_waitcnt vmcnt(0)` to wait for the global memory store to finish before ending the program. 
+And the last `s_waitcnt vmcnt(0)` to wait for the global memory store to finish before ending the program.**** 

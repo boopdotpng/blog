@@ -10,492 +10,324 @@ const pinnedPosts = posts
 const regularPosts = posts
   .filter(post => !post.data.pinned)
   .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
-const catColors: Record<string, string> = {
-  life: '#ff595e',        // red
-  misc: '#ff924c',        // orange
-  "machine learning": '#ffca3a',    // yellow
-  biology: '#8ac926',     // green
-  programming: '#1982c4',  // blue
-  fpga: '#8b5cf6'  // violet 
-};
+
 const workingOn = [
   'tinygrad bounties',
   'learning rdna',
-  'building educational resources for both',
-  'compilers / ml stuff',
+  'educational resources',
+  'compilers / ml',
 ];
-const uncategorizedLabel = 'uncategorized';
-const groupedPosts = regularPosts.reduce((acc, post) => {
-  const key = post.data.cat ?? uncategorizedLabel;
-  if (!acc[key]) acc[key] = [];
-  acc[key].push(post);
-  return acc;
-}, {} as Record<string, CollectionEntry<'blog'>[]>);
-const categoryOrder = [
-  'programming',
-  'machine learning',
-  'biology',
-  'fpga',
-  'misc',
-  'life',
-  uncategorizedLabel,
-];
-const orderedCategories = [
-  ...categoryOrder,
-  ...Object.keys(groupedPosts)
-    .filter(cat => !categoryOrder.includes(cat))
-    .sort(),
-].filter(cat => groupedPosts[cat]?.length);
+
 const latestPostDate = posts.reduce((latest, post) => {
   const date = new Date(post.data.pubDate);
   return date > latest ? date : latest;
 }, new Date(0));
 const latestPostLabel = latestPostDate.getTime() ? latestPostDate.toISOString().slice(0, 10) : '—';
+
+// Category mapping: consolidate similar categories
+const catMap: Record<string, string> = {
+  'programming': 'code',
+  'machine learning': 'code',
+  'biology': 'bio',
+  'misc': 'tech',
+};
+const mapCat = (cat?: string) => cat ? (catMap[cat] || cat) : '—';
+
+// Category colors
+const catColors: Record<string, string> = {
+  'code': '#6ee7b7',     // mint green
+  'bio': '#a78bfa',      // soft purple
+  'tech': '#fbbf24',     // amber
+  'hardware': '#f472b6', // pink
+};
+const getCatColor = (cat: string) => catColors[cat] || '#666';
+
+// Get unique mapped categories
+const categories = [...new Set(regularPosts.map(p => mapCat(p.data.cat)).filter(c => c !== '—'))];
 ---
 
-<section class="home-list">
+<section class="brutalist-home">
+  <div class="masthead">
+    <div class="title-block">
+      <h1 class="site-name">ANURAAG</h1>
+      <div class="tagline">systems / ml / gpu</div>
+    </div>
+    <div class="meta-block">
+      <span class="meta-item">{posts.length} posts</span>
+      <span class="meta-sep">/</span>
+      <span class="meta-item">{categories.length} cats</span>
+      <span class="meta-sep">/</span>
+      <span class="meta-item">updated {latestPostLabel}</span>
+    </div>
+  </div>
+
+  <div class="working-strip">
+    <span class="working-label">NOW:</span>
+    {workingOn.map((item, i) => (
+      <span class="working-item">{item}{i < workingOn.length - 1 ? ',' : ''}</span>
+    ))}
+  </div>
+
   {pinnedPosts.length > 0 && (
-    <div class="pinned-bar">
-      <div class="pinned-label">ephemeral</div>
-      <ul class="pinned-list">
-        {pinnedPosts.map(post => (
-          <li class="pinned-item">
-            <a class="pinned-link" href={`/blog/${post.slug}`}>
-              {post.data.title}
-            </a>
-          </li>
-        ))}
-      </ul>
+    <div class="pinned-section">
+      <div class="section-header">PINNED</div>
+      {pinnedPosts.map(post => (
+        <a class="pinned-link" href={`/blog/${post.slug}`}>
+          {post.data.title}
+        </a>
+      ))}
     </div>
   )}
 
-  <div class="home-hero">
-    <div class="home-heading">
-      <h1 class="home-title">posts</h1>
-      <p class="home-blurb">
-        Writeups on systems, ML, and GPU work. Mostly scratchpads and an assortment of notes I've taken in Obsidian. 
-      </p>
-      <div class="hero-meta">
-        <div class="hero-stat">
-          <span class="stat-value">{posts.length}</span>
-          <span class="stat-label">entries</span>
-        </div>
-        <div class="hero-stat">
-          <span class="stat-value">{orderedCategories.length}</span>
-          <span class="stat-label">categories</span>
-        </div>
-        <div class="hero-stat">
-          <span class="stat-value">{latestPostLabel}</span>
-          <span class="stat-label">last update</span>
-        </div>
-      </div>
-      <div class="nyan-stage" aria-hidden="true">
-        <div class="nyan-group">
-          <div class="nyan-rainbow"></div>
-          <svg class="nyan-sprite" viewBox="0 0 64 28" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="10" width="34" height="12" rx="2" fill="#f7cda4" />
-            <rect x="4" y="13" width="26" height="6" fill="#ff9ad1" />
-            <rect x="34" y="12" width="12" height="9" rx="2" fill="#c9c9c9" />
-            <rect x="38" y="14" width="2" height="2" fill="#111827" />
-            <rect x="44" y="14" width="2" height="2" fill="#111827" />
-            <rect x="40" y="18" width="4" height="2" fill="#111827" />
-            <rect x="2" y="8" width="4" height="4" fill="#f7cda4" />
-            <rect x="6" y="8" width="4" height="4" fill="#f7cda4" />
-            <rect x="30" y="14" width="6" height="2" fill="#d28b5b" />
-          </svg>
-        </div>
-        <span class="nyan-star" style="--x: 10%; --y: 26%; --size: 2px; --delay: 0.2s;"></span>
-        <span class="nyan-star" style="--x: 26%; --y: 62%; --size: 3px; --delay: 0.7s;"></span>
-        <span class="nyan-star" style="--x: 44%; --y: 18%; --size: 2px; --delay: 1.1s;"></span>
-        <span class="nyan-star" style="--x: 58%; --y: 48%; --size: 2px; --delay: 0.4s;"></span>
-        <span class="nyan-star" style="--x: 72%; --y: 30%; --size: 3px; --delay: 0.9s;"></span>
-        <span class="nyan-star" style="--x: 88%; --y: 58%; --size: 2px; --delay: 1.3s;"></span>
-      </div>
-    </div>
-    <aside class="working-card">
-      <div class="working-title">currently working on</div>
-      <ul class="working-list">
-        {workingOn.map(item => (
-          <li class="working-item">
-            {item}
-          </li>
-        ))}
-      </ul>
-    </aside>
+  <div class="index-section">
+    <div class="section-header">INDEX</div>
+    <ol class="post-index">
+      {regularPosts.map((post, idx) => (
+        <li class="index-item">
+          <a href={`/blog/${post.slug}`} class="index-link">
+            <span class="index-num">{String(idx + 1).padStart(2, '0')}</span>
+            <span class="index-title">{post.data.title}</span>
+            <span class="index-meta">
+              <span class="index-cat" style={`color: ${getCatColor(mapCat(post.data.cat))}`}>{mapCat(post.data.cat)}</span>
+              <span class="index-date">{post.data.pubDate}</span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ol>
   </div>
 
-  <div class="category-grid">
-    {orderedCategories.map(cat => {
-      const catColor = catColors[cat] ?? '#58a6ff';
-      const prettyCat = cat === uncategorizedLabel ? 'uncategorized' : cat;
-      return (
-        <section class="category-card" style={`--cat-color: ${catColor}`}>
-          <header class="category-header">
-            <h2 class="category-title">{prettyCat}</h2>
-            <span class="category-count">{groupedPosts[cat].length}</span>
-          </header>
-          <ul class="post-list">
-            {groupedPosts[cat].map(post => (
-              <li class="post-list-item" data-cat={post.data.cat ?? undefined}>
-                <a class="post-card-link" href={`/blog/${post.slug}`}>
-                  <div class="post-title-row">
-                    <div class="post-title">{post.data.title}</div>
-                    <div class="post-date">{post.data.pubDate}</div>
-                  </div>
-                  <div class="post-desc">{post.data.description ?? 'no description available'}</div>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      );
-    })}
+  <div class="footer-art" aria-hidden="true">
+    <pre class="ascii-cat" set:html={`  /\\_/\\
+ ( o.o )
+  &gt; ^ &lt;`} />
   </div>
 </section>
 
 <style>
-.home-list {
-  margin: 0 auto;
-  padding: 1.8rem 0 0 0;
-  max-width: 980px;
-  position: relative;
-}
-.home-list::before {
-  content: "";
-  position: absolute;
-  inset: -140px -40px auto -40px;
-  height: 260px;
-  background:
-    radial-gradient(closest-side, rgba(88, 166, 255, 0.18), transparent 70%),
-    radial-gradient(closest-side, rgba(255, 146, 76, 0.12), transparent 75%);
-  z-index: 0;
-  pointer-events: none;
-}
-.home-list > * {
-  position: relative;
-  z-index: 1;
-}
-.home-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  align-items: stretch;
-  gap: 1.4rem;
-  margin-bottom: 1.6rem;
-}
-.home-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-.home-title {
-  font-size: 2.3rem;
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.02em;
-  text-align: left;
-  color: #fff;
-}
-.home-blurb {
-  margin: 0.2rem 0 0.8rem;
-  color: #d3d9e6;
-  font-size: 1rem;
-  line-height: 1.55;
-  max-width: 34rem;
-}
-.hero-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem 1.4rem;
-  margin-bottom: 0.9rem;
-}
-.hero-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 110px;
-}
-.stat-value {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #f8fafc;
-}
-.stat-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #94a3b8;
-}
-.nyan-stage {
-  position: relative;
-  height: 96px;
-  overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.18), transparent 60%),
-    radial-gradient(circle at 70% 60%, rgba(244, 114, 182, 0.16), transparent 55%);
-}
-.nyan-group {
-  position: absolute;
-  top: 50%;
-  left: -220px;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  animation: nyan-fly 7s linear infinite;
-}
-.nyan-rainbow {
-  width: 140px;
-  height: 10px;
-  border-radius: 999px;
-  background: repeating-linear-gradient(
-    90deg,
-    #ff595e 0 12px,
-    #ff924c 12px 24px,
-    #ffca3a 24px 36px,
-    #8ac926 36px 48px,
-    #1982c4 48px 60px,
-    #8b5cf6 60px 72px
-  );
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.18);
-  animation: rainbow-shift 0.6s linear infinite;
-}
-.nyan-sprite {
-  width: 68px;
-  height: 30px;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
-}
-.nyan-star {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: var(--size);
-  height: var(--size);
-  background: rgba(255, 255, 255, 0.75);
-  border-radius: 50%;
-  animation: star-twinkle 2.6s ease-in-out infinite;
-  animation-delay: var(--delay);
-}
-@keyframes nyan-fly {
-  0% {
-    left: -220px;
+  .brutalist-home {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+    font-family: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
-  100% {
-    left: calc(100% + 220px);
+
+  .masthead {
+    border: 2px solid #fff;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
   }
-}
-@keyframes rainbow-shift {
-  0% {
-    background-position: 0 0;
+
+  .title-block {
+    margin-bottom: 1.5rem;
   }
-  100% {
-    background-position: 72px 0;
+
+  .site-name {
+    font-size: clamp(3rem, 12vw, 6rem);
+    font-weight: 800;
+    margin: 0;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: #fff;
   }
-}
-@keyframes star-twinkle {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(0.8);
+
+  .tagline {
+    font-size: 1rem;
+    color: #888;
+    margin-top: 0.5rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
   }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
+
+  .meta-block {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
   }
-}
-.working-card {
-  border-radius: 14px;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgba(88, 166, 255, 0.15);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.5), rgba(30, 41, 59, 0.4));
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(88, 166, 255, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.working-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(88, 166, 255, 0.12);
-}
-.working-title {
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #9aa3b2;
-  margin-bottom: 0.6rem;
-  font-weight: 600;
-}
-.working-list {
-  list-style: disc;
-  padding: 0 0 0 1.1rem;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-.working-item {
-  color: #e2e8f0;
-  font-size: 0.98rem;
-  line-height: 1.35;
-}
-.pinned-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.7rem 0.9rem;
-  margin-bottom: 1.5rem;
-  border-radius: 10px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.pinned-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #cbd5f5;
-}
-.pinned-list {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin: 0;
-  padding: 0;
-}
-.pinned-item {
-  margin: 0;
-}
-.pinned-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #e2e8f0;
-  font-size: 0.95rem;
-  text-decoration: none;
-  transition: transform 0.15s ease, background 0.2s ease;
-}
-.pinned-link:hover {
-  transform: translateY(-1px);
-  background: rgba(30, 41, 59, 0.8);
-}
-.filter-bar, .pill, .pill.active {
-  display: none !important;
-}
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.1rem;
-}
-.category-card {
-  border-radius: 14px;
-  padding: 0.9rem 1rem 0.85rem;
-  background: rgba(24, 24, 27, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-.category-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-.category-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 0.6rem;
-}
-.category-title {
-  margin: 0;
-  font-size: 1.05rem;
-  color: var(--cat-color);
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
-}
-.category-count {
-  font-size: 0.85rem;
-  color: #9ca3af;
-}
-.post-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-.post-list-item {
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-}
-.post-card-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-  transition: background 0.2s;
-  border-radius: 6px;
-  padding: 0.45rem 0.5rem;
-}
-.post-card-link:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-.post-title-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-.post-date {
-  font-size: 0.85rem;
-  color: #8b949e;
-  white-space: nowrap;
-}
-.post-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #f8fafc;
-  margin: 0;
-  line-height: 1.2;
-  text-decoration: none;
-  transition: opacity 0.18s;
-}
-.post-card-link:hover .post-title {
-  opacity: 0.85;
-  text-decoration: none;
-}
-.post-desc {
-  font-size: 0.95rem;
-  color: #b0b7c3;
-  margin: 0.35rem 0 0;
-  line-height: 1.45;
-}
-@media (max-width: 820px) {
-  .home-hero {
-    grid-template-columns: 1fr;
+
+  .meta-sep {
+    color: #444;
   }
-  .hero-stat {
-    min-width: auto;
+
+  .working-strip {
+    background: #fff;
+    color: #000;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
   }
-}
-@media (max-width: 600px) {
-  .post-title-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.2rem;
+
+  .working-label {
+    font-weight: 700;
+    text-transform: uppercase;
   }
-  .nyan-stage {
-    height: 80px;
+
+  .working-item {
+    color: #333;
   }
-  .nyan-rainbow {
-    width: 110px;
+
+  .pinned-section {
+    border-left: 4px solid var(--accent);
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
   }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nyan-group,
-  .nyan-rainbow,
-  .nyan-star {
-    animation: none;
+
+  .section-header {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #666;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
   }
-}
+
+  .pinned-link {
+    display: block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.25rem 0;
+    transition: color 0.1s;
+  }
+
+  .pinned-link:hover {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .index-section {
+    margin-bottom: 3rem;
+  }
+
+  .post-index {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: none;
+  }
+
+  .index-item {
+    border-bottom: 1px solid #333;
+  }
+
+  .index-item:first-child {
+    border-top: 1px solid #333;
+  }
+
+  .index-link {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 1rem 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.1s;
+  }
+
+  .index-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .index-num {
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 600;
+  }
+
+  .index-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #f4f4f5;
+    line-height: 1.3;
+  }
+
+  .index-link:hover .index-title {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .index-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.8rem;
+    color: #666;
+    white-space: nowrap;
+  }
+
+  .index-cat {
+    text-transform: lowercase;
+    min-width: 6rem;
+    text-align: right;
+  }
+
+  .index-date {
+    color: #777;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer-art {
+    text-align: center;
+    padding: 2rem;
+    opacity: 0.3;
+    transition: opacity 0.3s;
+  }
+
+  .footer-art:hover {
+    opacity: 0.8;
+  }
+
+  .ascii-cat {
+    font-size: 1rem;
+    line-height: 1.2;
+    margin: 0;
+    color: #fff;
+  }
+
+  @media (max-width: 600px) {
+    .masthead {
+      padding: 1.5rem;
+    }
+
+    .site-name {
+      font-size: 2.5rem;
+    }
+
+    .index-link {
+      grid-template-columns: 2rem 1fr;
+      grid-template-rows: auto auto;
+      gap: 0.25rem 0.75rem;
+    }
+
+    .index-num {
+      grid-row: 1 / 3;
+      align-self: start;
+      padding-top: 0.1rem;
+    }
+
+    .index-meta {
+      grid-column: 2;
+      justify-content: flex-start;
+      gap: 1rem;
+    }
+
+    .index-cat {
+      min-width: auto;
+      text-align: left;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
 </style>

@@ -68,10 +68,10 @@ pre {
 
 /* table of contents */
 .toc {
-  border-left: 2px solid rgba(88, 166, 255, 0.3);
+  border-left: 2px solid rgba(var(--accent-rgb), 0.35);
   padding-left: 1rem;
   margin: 0 0 2rem;
-  background: rgba(88, 166, 255, 0.03);
+  background: rgba(var(--accent-rgb), 0.06);
   padding: 0.8rem 1rem;
   border-radius: 8px;
 }
@@ -96,13 +96,13 @@ pre {
 }
 
 .toc-item a {
-  color: #58a6ff;
+  color: var(--accent);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .toc-item a:hover {
-  color: #79c0ff;
+  color: var(--accent-hover);
 }
 
 .toc-depth-2 {
@@ -154,7 +154,7 @@ article.post-plain svg {
   width: 100%;               /* ensure full width on mobile */
   margin: 1.5rem auto;       /* vertical spacing, centered */
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(88, 166, 255, 0.07);
+  box-shadow: 0 2px 12px rgba(var(--accent-rgb), 0.12);
   overflow: visible;         /* ensure SVG contents remain visible */
 }
 

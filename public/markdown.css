@@ -268,7 +268,7 @@
 }
 
 .markdown-body a {
-  color: #1e90ff;
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -303,7 +303,7 @@
   width: 100%;
   height: auto;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(88, 166, 255, 0.07);
+  box-shadow: 0 2px 12px rgba(var(--accent-rgb, 79, 209, 255), 0.12);
 }
 
 .md-gallery-thumb__badge {
