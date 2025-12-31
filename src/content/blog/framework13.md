@@ -34,7 +34,7 @@ total power draw is about ~50W between the cpu and gpu. the gpu can pull 40W at 
 ### integrated gpu 
 slow. very slow. 
 
-<img height="80px" src="/public/images/slow-gpu.png"/>
+<img height="80px" src="/images/slow-gpu.png"/>
 
 you basically can't do any real gpu work on the iGPU. elden ring runs at 40fps on the absolute lowest settings.
 
@@ -47,7 +47,7 @@ it's mostly silent when you're using it normally (as long as the bottom vents ar
 
 idle power is not great. i have vs code, chrome, and ghostty open, and i'm in the lowest power profile. 45% screen brightness.
 
-<img src="/public/images/idle-power-power-saver.png">
+<img src="/images/idle-power-power-saver.png">
 
 best case is 5.5 to 6W, which gives you about 10 hours of battery life. the catch is that in this power profile, the max cpu freq has been massively reduced. the computer is noticeably slower. 
 
@@ -61,15 +61,19 @@ cpu/gpu performance on battery vs plugged in is identical!
 the lowest keyboard brightness is too bright. it looks super cool with the transparent keyboard option, but in a completely dark room it will blind you. 
 
 **fingerprint**
+
 super reliable, no issues.
 
 **trackpad**
+
 forgettable. 
 
 **removable ports**
+
 this is actually sort of useful. usb-c charging on both sides, and i can add a usb-a or hdmi port without much hassle. 
 
 **aesthetics**
+
 top-tier. noobs can't use the translucent keyboard, and the translucent purple bezel and ports are fantastic. super unique looking laptop, especially if you can put a dbrand skin on the top. 
 
 ## why buy one? 
