@@ -178,6 +178,10 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   .site-title a:hover {
+    text-decoration: none;
+  }
+
+  .site-title a:hover .site-label {
     text-decoration: underline;
     text-underline-offset: 3px;
   }
@@ -286,7 +290,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
       <div class="site-title">
         <a href="/">
           <span class="arrow">&#8592;</span>
-          anuraag
+          <span class="site-label">anuraagw.me</span>
         </a>
       </div>
     )}
