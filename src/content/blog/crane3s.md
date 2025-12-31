@@ -4,7 +4,7 @@ pubDate: "2025-07-21"
 published: true
 pinned: false
 description: "controlling the crane 3s using raw bluetooth packets."
-cat: "programming"
+cat: "code"
 ---
 
 Short post, but if anyone bought a Crane 3s and wants to control it without using the ZY play app, here's how: [github](https://github.com/boopdotpng/crane3s-reversed).

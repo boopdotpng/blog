@@ -28,6 +28,23 @@ const displayDate = (() => {
     : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase();
 })();
 const description = post.data.description ?? 'a short post on something';
+const readingTimeMinutes = (() => {
+  const body = typeof post.body === 'string' ? post.body.trim() : '';
+  const words = body ? body.split(/\s+/).length : 0;
+  const multiplier = post.data.cat === 'code' ? 1.3 : 1;
+  return Math.max(1, Math.round((words / 140) * multiplier)) || 2;
+})();
+const readingTimeLabel = (() => {
+  if (readingTimeMinutes < 60) {
+    return `approx ${readingTimeMinutes}m read`;
+  }
+
+  const hours = Math.floor(readingTimeMinutes / 60);
+  const minutes = readingTimeMinutes % 60;
+  return minutes
+    ? `approx ${hours}h ${minutes}m read`
+    : `approx ${hours}h read`;
+})();
 ---
 <style>
 :root {
@@ -66,12 +83,6 @@ pre {
   font-family: var(--font-mono);
 }
 
-.post-date-main {
-  color: #777;
-  margin: 0;
-  font-family: var(--font-mono);
-}
-
 .post-description {
   color: #b5b5b5;
   margin: 0;
@@ -81,29 +92,26 @@ pre {
 }
 
 .post-subline {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.post-subline .post-description {
-  flex: 1;
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #777;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  font-family: var(--font-mono);
+  margin: 0 0 0.6rem;
 }
 
-.post-subline .post-date-main {
-  text-align: right;
-  white-space: nowrap;
-  position: relative;
-  padding-left: 1.25rem;
-}
-
-.post-subline .post-date-main::before {
-  content: "/";
-  position: absolute;
-  left: 0;
+.post-meta-sep {
   color: #444;
+}
+
+.post-readtime {
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 600px) {
@@ -113,13 +121,8 @@ pre {
     gap: 0.4rem;
   }
 
-  .post-subline .post-date-main {
-    text-align: left;
-    padding-left: 0;
-  }
-
-  .post-subline .post-date-main::before {
-    content: "";
+  .post-meta {
+    flex-wrap: wrap;
   }
 }
 
@@ -250,14 +253,16 @@ article.post-plain svg {
 >
   <div class="centered-wrapper">
     <article class="post-plain markdown-body">
+      <div class="post-meta">
+        <time datetime={post.data.pubDate}>{displayDate}</time>
+        <span class="post-meta-sep">•</span>
+        <span class="post-readtime">{readingTimeLabel}</span>
+      </div>
       <h1 class="post-title-main">{post.data.title}</h1>
       <div class="post-subline">
         {post.data.description && (
           <p class="post-description">{post.data.description}</p>
         )}
-        <div class="post-date-main">
-          <time datetime={post.data.pubDate}>{displayDate}</time>
-        </div>
       </div>
       {showContentsTable && tocHeadings.length > 0 && (
         <nav class="toc" aria-label="Table of contents">

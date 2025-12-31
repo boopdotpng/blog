@@ -4,7 +4,7 @@ pubDate: "2025-12-29"
 published: true
 pinned: false
 description: "breakdown of a very simple rdna3.5 kernel, with visualizations"
-cat: "programming"
+cat: "code"
 ---
 
 ## our kernel 

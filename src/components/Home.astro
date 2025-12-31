@@ -34,15 +34,6 @@ const latestPostDate = posts.reduce((latest, post) => {
 }, new Date(0));
 const latestPostLabel = latestPostDate.getTime() ? formatLongDate(latestPostDate) : '—';
 
-// Category mapping: consolidate similar categories
-const catMap: Record<string, string> = {
-  'programming': 'code',
-  'machine learning': 'code',
-  'biology': 'bio',
-  'misc': 'tech',
-};
-const mapCat = (cat?: string) => cat ? (catMap[cat] || cat) : '—';
-
 // Category colors
 const catColors: Record<string, string> = {
   'code': '#6ee7b7',     // mint green
@@ -53,7 +44,7 @@ const catColors: Record<string, string> = {
 const getCatColor = (cat: string) => catColors[cat] || '#666';
 
 // Get unique mapped categories
-const categories = [...new Set(regularPosts.map(p => mapCat(p.data.cat)).filter(c => c !== '—'))];
+const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter(c => c !== '—'))];
 ---
 
 <section class="brutalist-home">
@@ -99,6 +90,7 @@ const categories = [...new Set(regularPosts.map(p => mapCat(p.data.cat)).filter(
     <ol class="post-index">
       {regularPosts.map((post, idx) => {
         const indexNum = String(regularPosts.length - idx).padStart(2, '0');
+        const catLabel = post.data.cat ?? '—';
 
         return (
           <li class="index-item">
@@ -106,7 +98,7 @@ const categories = [...new Set(regularPosts.map(p => mapCat(p.data.cat)).filter(
               <span class="index-num">{indexNum}</span>
               <span class="index-title">{post.data.title}</span>
               <span class="index-meta">
-                <span class="index-cat" style={`color: ${getCatColor(mapCat(post.data.cat))}`}>{mapCat(post.data.cat)}</span>
+                <span class="index-cat" style={`color: ${getCatColor(catLabel)}`}>{catLabel}</span>
                 <span class="index-date">{formatPostDate(post.data.pubDate)}</span>
               </span>
             </a>

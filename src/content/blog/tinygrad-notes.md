@@ -5,7 +5,7 @@ published: true
 pinned: true
 contents_table: true
 description: "notes and links while exploring tinygrad."
-cat: "programming"
+cat: "code"
 ---
 
 # rough progression of a tinygrad tensor operation 

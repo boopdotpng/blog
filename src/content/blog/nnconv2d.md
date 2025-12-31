@@ -4,7 +4,7 @@ pubDate: "2025-04-16"
 published: false
 pinned: false
 description: "a walkthrough of conv2d math and tensor shapes, with tinygrad-specific context."
-cat: "machine learning"
+cat: "code"
 ---
 
 ** This blog is a work in progress. **

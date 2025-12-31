@@ -4,7 +4,7 @@ pubDate: "2025-05-09"
 published: false
 pinned: false
 description: "why collapsing academic standards and incentives are producing weaker outcomes."
-cat: "misc"
+cat: "tech"
 ---
 
 > the question: "write a class that stores the points of a triangle and write a method to compute the perimeter and area."<br/>

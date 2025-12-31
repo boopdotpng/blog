@@ -4,7 +4,7 @@ pubDate: "2025-12-25"
 published: true
 pinned: false
 description: "why are there no amdgpu / rdna development tools?"
-cat: "programming"
+cat: "code"
 ---
 
 I’ve started learning RDNA (AMD’s GPU architecture). While doing that, I realized there’s basically no LSP / autocomplete for RDNA/CDNA instructions. I kept having to flip back to the RDNA 3.5 ISA doc every time I wanted to check operand names, argument types, or even what an instruction was called.
