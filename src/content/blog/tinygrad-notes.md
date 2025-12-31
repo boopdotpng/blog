@@ -212,6 +212,7 @@ There are a lot of random environment variables scattered around the tinygrad co
 | NOOPT               | 0 or nonzero | disables optimizations on the AST                                  |
 | DEVECTORIZE         | 0 or nonzero | controls whether devectorization happens                           |
 | HCQ_VISIBLE_DEVICES | device #     | on amd, choose which device is used by tinygrad. just try each one |
+| AMD_LLVM            | 0 or nonzero | on amd, use the LLVM-IR -> machine code path instead of comgr      |
 
 
 You can set some of these using the `with helpers.Context(VAR=n):` pattern, which is useful for only enabling certain features for part of a program, but it's not guaranteed to work with all settings. Either set them using `os.environ["VAR"] = "value"` at the start of the file or pass them when you run the program:
@@ -236,3 +237,14 @@ libLTO.so.21.1: ELF 32-bit LSB shared object, Intel i386, version 1 (SYSV), dyna
 
 The 64-bit libs are actually at `/lib64` or `/usr/lib64/`. You have to patch `c.py` to scan these first, and exclude all 32-bit ELFs by checking the magic numbers. If you installed Cuda, add its libs to scanlist as well. 
 
+## wrong rocm path in amd_disassemble
+
+If you have a non-standard ROCm installation (your ROCm isn't in `/opt/rocm`), you'll get a few errors while running `VIZ=1`, especially during disassembly. You might also encounter this if you run code with `DEBUG>5`.
+
+Patch `compiler_amd.py` and edit `amdgpu_disassemble` to change the default location of `llvm-objdump`. This can point to your system llvm install or to your custom ROCm build of llvm. 
+
+## tinygrad editable install not working with lsp? 
+
+If you install tinygrad with `uv pip install -e .`, it won't generate types and completions for your LSP. 
+
+Run this instead: `uv pip install -e . --config-settings editable_mode=strict`.
