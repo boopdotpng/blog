@@ -86,7 +86,7 @@ v0              : 0 1 2 3 4 5 6 7 .. 31
 thread # in wave: 0 1 2 3 4 5 6 7 .. 31 
 ```
 
-As a data structure: `v0 = vec![u32; num of threads per wave]`.
+As a data structure: `v0: [u32] = vec![0; VGPR_count * num of threads per wave]`, where `VGPR_count` is the number of VGPRs you specify the kernel should allocate.
 
 **exec_lo and exec_hi**
 
@@ -197,6 +197,22 @@ thread # in wave: 0 1 2 03 04 05 .. 15
 Thread 0 loads the first float (0), thread 1 loads the second float (1), etc. 
 
 We can now use these offsets to perform the load from global memory into a VGPR. 
+
+**This is a massive oversimplification**
+
+What actually happens (in architectures that support VGPR packing) is the x,y, and z dimension in your local dispatch are all packed into v0 like this: 
+```
+bit: 31      30 29         20 19         10 9          0
+     ┌─────────┬────────────┬────────────┬────────────┐
+     │ unused  │     Z      │     Y      │     X      │
+     └─────────┴────────────┴────────────┴────────────┘
+      (31..30)   (29..20)     (19..10)     (9..0)
+```
+
+The instruction in this kernel work because in a 1D dispatch, Y and Z are set to 0. For >1D dispatch, you have to manually extract the X,Y, and Z instructions. We'll revisit this later. 
+
+The workgroup id (global) dimensions are stored in SGPRs. The exact SGPR number depends on what you have enabled in your hsaco file. Typically, x,y, and z will be stored in s2,s3, and s4, since s[0:1] is where the pointer to the `KernArg` struct is. 
+
 
 `global_load_b32 v4 (dest), v1 (vector address offset), s[0:1] (global memory address)`
 
