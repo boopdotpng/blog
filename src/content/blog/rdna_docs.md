@@ -4,7 +4,7 @@ pubDate: "2025-12-30"
 published: true 
 pinned: true 
 description: "human readable explained rdna documentation"
-cat: "code"
+cat: "gpu"
 ---
 
 # rdna documentation 

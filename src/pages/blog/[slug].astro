@@ -211,19 +211,6 @@ article.post-plain {
   padding-right: var(--side-gutter);
 }
 
-/* make images and svgs flexible */
-article.post-plain img,
-article.post-plain svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  width: 100%;               /* ensure full width on mobile */
-  margin: 1.5rem auto;       /* vertical spacing, centered */
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(var(--accent-rgb), 0.12);
-  overflow: visible;         /* ensure SVG contents remain visible */
-}
-
 /* tweak typography on small screens if you like */
 @media (max-width: 600px) {
   :root {

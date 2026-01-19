@@ -4,7 +4,7 @@ pubDate: "2025-12-30"
 published: true 
 pinned: false
 description: "framework 13 review!"
-cat: "tech"
+cat: "misc"
 ---
 
 > tl;dr: 
@@ -34,7 +34,7 @@ total power draw is about ~50W between the cpu and gpu. the gpu can pull 40W at 
 ### integrated gpu 
 slow. very slow. 
 
-<img height="80px" src="/images/slow-gpu.png"/>
+<img src="/images/slow-gpu.png"/>
 
 you basically can't do any real gpu work on the iGPU. elden ring runs at 40fps on the absolute lowest settings.
 

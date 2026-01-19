@@ -42,10 +42,11 @@ const latestPostLabel = latestPostDate.getTime() ? formatLongDate(latestPostDate
 
 // Category colors
 const catColors: Record<string, string> = {
-  'code': '#6ee7b7',     // mint green
-  'bio': '#a78bfa',      // soft purple
-  'tech': '#fbbf24',     // amber
+  'gpu': '#6ee7b7',      // mint green
+  'ml': '#fb923c',       // vibrant orange
   'hardware': '#f472b6', // pink
+  'bio': '#a78bfa',      // soft purple
+  'misc': '#94a3b8',     // slate gray
 };
 const getCatColor = (cat: string) => catColors[cat] || '#666';
 
