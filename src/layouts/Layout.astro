@@ -49,7 +49,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
 }
 ---
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -99,13 +99,13 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   :root {
-    --bg: #0a0a0a;
-    --fg: #f4f4f5;
-    --accent: #4fd1ff;
-    --accent-hover: #7be5ff;
-    --accent-rgb: 79, 209, 255;
-    --font-size: 16px;
-    --font-sans: system-ui, sans-serif;
+    --bg: #faf9f7;
+    --fg: #37352f;
+    --accent: #4a7c96;
+    --accent-hover: #3a6580;
+    --accent-rgb: 74, 124, 150;
+    --font-size: 15px;
+    --font-sans: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
     --font-mono: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 
@@ -139,30 +139,30 @@ if (articleSchema && schemaArticle?.imageUrl) {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     letter-spacing: 0.04em;
-    color: #8a8a8a;
+    color: #999;
     text-decoration: none;
   }
 
   .home-song:hover .song-title {
-    color: #fff;
+    color: var(--fg);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
   .song-icon {
-    color: #666;
+    color: #aaa;
   }
 
   .song-title {
-    color: #cfcfcf;
+    color: #666;
     letter-spacing: 0.02em;
     transition: color 0.15s;
   }
 
   .site-title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
     margin: 0;
     text-transform: uppercase;
@@ -193,7 +193,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
     justify-content: center;
     height: 1em;
     line-height: 1;
-    color: #666;
+    color: #aaa;
   }
 
   nav ul {
@@ -208,14 +208,14 @@ if (articleSchema && schemaArticle?.imageUrl) {
   nav a {
     color: #888;
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     padding: 0.35rem 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   nav a:hover {
-    color: #fff;
+    color: var(--fg);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
@@ -229,7 +229,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   .rss-link:hover {
-    color: #fff;
+    color: var(--fg);
   }
 
   .rss-link svg {
@@ -263,13 +263,13 @@ if (articleSchema && schemaArticle?.imageUrl) {
     display: block;
     padding: 1rem;
     margin-bottom: 1rem;
-    border: 1px solid #333;
+    border: 1px solid #e0ddd8;
     text-decoration: none;
     color: inherit;
   }
 
   .post-card:hover {
-    background: #111;
+    background: #f0eeeb;
   }
 </style>
 
