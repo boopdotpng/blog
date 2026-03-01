@@ -40,13 +40,13 @@ const latestPostDate = posts.reduce((latest, post) => {
 }, new Date(0));
 const latestPostLabel = latestPostDate.getTime() ? formatLongDate(latestPostDate) : '—';
 
-// Category colors
+// Category colors (muted for light theme)
 const catColors: Record<string, string> = {
-  'gpu': '#6ee7b7',      // mint green
-  'ml': '#fb923c',       // vibrant orange
-  'hardware': '#f472b6', // pink
-  'bio': '#a78bfa',      // soft purple
-  'misc': '#94a3b8',     // slate gray
+  'gpu': '#3a8a6e',
+  'ml': '#c06a20',
+  'hardware': '#b85a8a',
+  'bio': '#7c6ab8',
+  'misc': '#7a8694',
 };
 const getCatColor = (cat: string) => catColors[cat] || '#666';
 
@@ -58,7 +58,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   <div class="masthead">
     <div class="github-graph">
       <img
-        src="https://ghchart.rshah.org/4fd1ff/boopdotpng"
+        src="https://ghchart.rshah.org/4a7c96/boopdotpng"
         alt="GitHub contribution graph"
         loading="lazy"
       />
@@ -73,7 +73,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   </div>
 
   <div class="working-strip">
-    <span class="working-label">NOW:</span>
+    <span class="working-label">now:</span>
     {workingOn.map((item, i) => (
       <span class="working-item">{item}{i < workingOn.length - 1 ? ',' : ''}</span>
     ))}
@@ -131,13 +131,13 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   }
 
   .masthead {
-    border: 2px solid #fff;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 0 0 1.25rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e8e6e1;
   }
 
   .github-graph {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     overflow-x: auto;
   }
 
@@ -145,58 +145,52 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     width: 100%;
     height: auto;
     display: block;
-    filter: invert(1) hue-rotate(180deg) brightness(1.3);
+    opacity: 0.85;
   }
 
   .meta-block {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    font-size: 0.85rem;
-    color: #666;
+    font-size: 0.78rem;
+    color: #aaa;
   }
 
   .meta-sep {
-    color: #444;
+    color: #ccc;
   }
 
   .working-strip {
-    background: rgba(20, 20, 20, 0.9);
-    color: #e5e5e5;
-    padding: 0.75rem 1rem;
+    color: #999;
+    padding: 0;
     margin-bottom: 1.5rem;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.35rem;
     align-items: center;
-    border: 1px solid #2a2a2a;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
   }
 
   .working-label {
     font-weight: 700;
-    text-transform: uppercase;
+    color: #777;
   }
 
   .working-item {
-    color: #b5b5b5;
+    color: #aaa;
   }
 
   .pinned-section {
-    border: 1px solid #2a2a2a;
-    background: linear-gradient(140deg, rgba(var(--accent-rgb), 0.1), rgba(255, 255, 255, 0.02));
-    padding: 1rem 1.25rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    padding: 0;
+    margin-bottom: 1.5rem;
   }
 
   .section-header {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.2em;
-    color: #666;
-    margin-bottom: 1rem;
+    color: #bbb;
+    margin-bottom: 0.75rem;
     text-transform: uppercase;
   }
 
@@ -216,32 +210,34 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   .pinned-card {
     position: relative;
     display: block;
-    padding: 0.75rem 1rem;
-    border: 1px solid #333;
-    background: rgba(10, 10, 10, 0.6);
+    padding: 0.65rem 0.9rem;
+    border: 1px solid #e0ddd8;
+    background: #faf9f7;
     color: inherit;
     text-decoration: none;
+    border-radius: 4px;
     transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
   }
 
   .pinned-card::before {
     content: "";
     position: absolute;
-    inset: 0.35rem;
-    border: 1px dashed rgba(255, 255, 255, 0.12);
+    inset: 0.3rem;
+    border: 1px dashed rgba(0, 0, 0, 0.06);
     pointer-events: none;
+    border-radius: 2px;
   }
 
   .pinned-card:hover {
-    transform: translateY(-2px);
-    border-color: #555;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+    border-color: #ccc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
 
   .pinned-title {
-    font-size: 1rem;
+    font-size: 0.92rem;
     font-weight: 600;
-    color: #f4f4f5;
+    color: var(--fg);
   }
 
 
@@ -257,11 +253,11 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   }
 
   .index-item {
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #e8e6e1;
   }
 
   .index-item:first-child {
-    border-top: 1px solid #333;
+    border-top: 1px solid #e8e6e1;
   }
 
   .index-link {
@@ -269,26 +265,26 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     grid-template-columns: 2.5rem 1fr auto;
     gap: 1rem;
     align-items: baseline;
-    padding: 1rem 0.5rem;
+    padding: 0.75rem 0.5rem;
     text-decoration: none;
     color: inherit;
     transition: background 0.1s;
   }
 
   .index-link:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.02);
   }
 
   .index-num {
-    font-size: 0.85rem;
-    color: #555;
+    font-size: 0.8rem;
+    color: #bbb;
     font-weight: 600;
   }
 
   .index-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    color: #f4f4f5;
+    color: var(--fg);
     line-height: 1.3;
   }
 
@@ -300,8 +296,8 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   .index-meta {
     display: flex;
     gap: 1.5rem;
-    font-size: 0.8rem;
-    color: #666;
+    font-size: 0.78rem;
+    color: #999;
     white-space: nowrap;
   }
 
@@ -312,7 +308,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   }
 
   .index-date {
-    color: #777;
+    color: #aaa;
     font-variant-numeric: tabular-nums;
   }
 
@@ -331,7 +327,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     font-size: 1rem;
     line-height: 1.2;
     margin: 0;
-    color: #fff;
+    color: var(--fg);
   }
 
   @media (max-width: 600px) {
