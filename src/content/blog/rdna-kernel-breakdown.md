@@ -108,7 +108,7 @@ If you ever manually write to `exec_lo`, save its value to an SGPR so you can re
 
 **s_clause**
 
-A marker that tells the GPU that the next memory ops belong together. On pre-gfx10 hardware, the GPU would implicitly detect soft clauses (runs of adjacent memory instructions of the same general kind). Starting with gfx10, this detection was removed and `s_clause` was introduced so that compilers could explicitly mark a hard clause. 
+A marker that tells the GPU that the next memory ops belong together. On pre-gfx10 hardware, the GPU would implicitly detect soft clauses (runs of adjacent memory instructions of the same general kind). Starting with gfx10, this detection was removed and `s_clause` was introduced so that compilers could explicitly mark a hard clause. ((This is part of a broader trend in RDNA where AMD shifted responsibility for microarchitectural hints from hardware heuristics to explicit compiler-emitted instructions.))
 
 In practice, it tells the memory pipeline to treat the next N eligible memory instructions as one clause. Clausing load instructions can give cache coherency benefits, and the scheduler is expected to line up similar memory instructions. 
 
@@ -229,7 +229,7 @@ Remember that `s[2:3]` is the address of `a_out` in our `KernArg` struct. The st
 `s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)` is part of a family of instructions that send a small message to the GPU control logic so some *side effect* happens. This frees up all per-wave allocated resources, and the only thing you can do after this is end the program. Be careful though, if you deallocate vectors directly after 
 
 
-We don't need a final "wait-for-memory" instruction after our global store; in modern RDNA, `s_endpgm` will automatically wait for all non-atomic stores to complete before exiting the kernel.
+We don't need a final "wait-for-memory" instruction after our global store; in modern RDNA, `s_endpgm` will automatically wait for all non-atomic stores to complete before exiting the kernel. ((Atomic stores are excluded because their completion semantics are more complex — the hardware can't always determine when a remote atomic has taken effect from the issuing wave's perspective.))
 
 ## tinygrad's kernel (LLVM-generated)
 

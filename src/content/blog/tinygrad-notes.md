@@ -152,7 +152,7 @@ This led me down a long rabbit hole into what BEAM actually does. It's one of th
 
 ## What BEAM does
 
-It runs many variants of every AST in your graph to find the one that runs fastest on your hardware. Think of it as auto-tuning at the kernel optimization level.
+It runs many variants of every AST in your graph to find the one that runs fastest on your hardware. Think of it as auto-tuning at the kernel optimization level. ((Results are cached to disk, so subsequent runs with the same model skip the search entirely. This is why first runs with BEAM=1 are slow but warm runs are fast.))
 
 The parameters BEAM adjusts are:
 
@@ -228,7 +228,7 @@ BEAM=1 TRACK_MATCH_STATS=2 python your_script.py
 
 Some Linux distros are multilib, meaning they download and store 32-bit libraries alongside 64-bit ones, for applications like Steam. Fedora is one of them. A lot of tinygrad (essentially all the code that runs your kernels on the GPU) relies on FFI (calling C functions from Python). These libraries are imported in `tinygrad/runtime/support/c.py:42` (findlib). 
 
-The issue is that on Fedora, /lib contains 32-bit libraries: 
+The issue is that on Fedora, /lib contains 32-bit libraries: ((On Debian/Ubuntu this isn't a problem because the multilib libs live under `/lib/i386-linux-gnu/`, so the 64-bit path `/lib/x86_64-linux-gnu/` is unambiguous.))
 
 ```bash
 boop@framework:/lib$ file libLTO.so.21.1

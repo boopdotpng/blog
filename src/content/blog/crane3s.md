@@ -30,7 +30,7 @@ Here's how I think each packet is structured:
 | `12–13`        | CRC-16 (XModem)  | Calculated over **bytes 4–11**, little-endian               |
 
 ## finding the checksum algorithm
-The checksum is a CRC-16 based checksum with polynomial `0x1021` and initial value `0x0`. CRC-16 is by far the most popular checksum used in embedded systems and development (I've used it many times), and the most common polynomial is `0x1021`. Since I had no way of guessing the initial value, I wrote a python script to brute force every possible initial value, and since there are only ~65k possible values, this took almost no time. 
+The checksum is a CRC-16 based checksum with polynomial `0x1021` and initial value `0x0`. CRC-16 is by far the most popular checksum used in embedded systems and development (I've used it many times), and the most common polynomial is `0x1021`. Since I had no way of guessing the initial value, I wrote a python script to brute force every possible initial value, and since there are only ~65k possible values, this took almost no time. ((The XModem variant of CRC-16 uses exactly this polynomial and init=0 — matching the protocol here without any tweaks.))
 
 ```py
 from itertools import product

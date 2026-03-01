@@ -16,43 +16,43 @@ This is a high level chart that shows the hierarchy of components in an Nvidia G
 
 <svg viewBox="0 0 700 580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- GPU Box -->
-  <rect x="20" y="20" width="660" height="540" fill="#121212" stroke="#aaa" stroke-width="1.5"/>
-  <text x="30" y="40" fill="#fff">GPU</text>
+  <rect x="20" y="20" width="660" height="540" fill="#f5f3ef" stroke="#999" stroke-width="1.5"/>
+  <text x="30" y="40" fill="#37352f">GPU</text>
 
   <!-- GPC Box -->
-  <rect x="40" y="60" width="620" height="320" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="50" y="80" fill="#fff">GPC (Graphics Processing Cluster)</text>
+  <rect x="40" y="60" width="620" height="320" fill="#d8d4f0" stroke="#999"/>
+  <text x="50" y="80" fill="#37352f">GPC (Graphics Processing Cluster)</text>
 
   <!-- TPC 1 -->
-  <rect x="60" y="100" width="580" height="120" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="70" y="120" fill="#fff">TPC (Texture Processing Cluster)</text>
+  <rect x="60" y="100" width="580" height="120" fill="#c8e6c8" stroke="#999"/>
+  <text x="70" y="120" fill="#37352f">TPC (Texture Processing Cluster)</text>
   <!-- SM Boxes in TPC 1 -->
-  <rect x="80" y="130" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
-  <text x="90" y="150" fill="#fff">SM (Streaming Multiprocessor)</text>
-  <rect x="360" y="130" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
-  <text x="370" y="150" fill="#fff">SM (Streaming Multiprocessor)</text>
+  <rect x="80" y="130" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
+  <text x="90" y="150" fill="#37352f">SM (Streaming Multiprocessor)</text>
+  <rect x="360" y="130" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
+  <text x="370" y="150" fill="#37352f">SM (Streaming Multiprocessor)</text>
 
   <!-- TPC 2 -->
-  <rect x="60" y="240" width="580" height="120" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="70" y="260" fill="#fff">TPC (Texture Processing Cluster)</text>
+  <rect x="60" y="240" width="580" height="120" fill="#c8e6c8" stroke="#999"/>
+  <text x="70" y="260" fill="#37352f">TPC (Texture Processing Cluster)</text>
   <!-- SM Boxes in TPC 2 -->
-  <rect x="80" y="270" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
-  <text x="90" y="290" fill="#fff">SM (Streaming Multiprocessor)</text>
-  <rect x="360" y="270" width="260" height="80" fill="#4d2d2d" stroke="#aaa"/>
-  <text x="370" y="290" fill="#fff">SM (Streaming Multiprocessor)</text>
+  <rect x="80" y="270" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
+  <text x="90" y="290" fill="#37352f">SM (Streaming Multiprocessor)</text>
+  <rect x="360" y="270" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
+  <text x="370" y="290" fill="#37352f">SM (Streaming Multiprocessor)</text>
 
   <!-- L2 Cache Box -->
-  <rect x="40" y="400" width="620" height="40" fill="#4d4d2d" stroke="#aaa"/>
-  <text x="50" y="425" fill="#fff">L2 Cache — 48 MB, shared across all SMs</text>
+  <rect x="40" y="400" width="620" height="40" fill="#ece6c0" stroke="#999"/>
+  <text x="50" y="425" fill="#37352f">L2 Cache — 48 MB, shared across all SMs</text>
 
   <!-- Global Memory Box -->
-  <rect x="40" y="450" width="620" height="60" fill="#2d4d4d" stroke="#aaa"/>
-  <text x="50" y="480" fill="#fff">Global Memory — 16GB GDDR7, off-chip DRAM</text>
+  <rect x="40" y="450" width="620" height="60" fill="#c0e0e0" stroke="#999"/>
+  <text x="50" y="480" fill="#37352f">Global Memory — 16GB GDDR7, off-chip DRAM</text>
 </svg>
 
 If you want to see a more comprehensive review of GPU architecture check out [High Yield's](https://www.youtube.com/@HighYield) videos on YouTube. He does a great job of showing where each element is on the physical GPU die. 
 
-The purpose of the GPCs and TPCs is to organize SMs (the main compute of the GPU) into modular blocks that have their own memory, cache, instruction dispatch, and texture units. Without this abstraction, there would be excessive contention for global resources and scaling the chip across product tiers would be much more difficult. 
+The purpose of the GPCs and TPCs is to organize SMs (the main compute of the GPU) into modular blocks that have their own memory, cache, instruction dispatch, and texture units.((The exact organization varies by architecture. Blackwell has a different GPC/TPC ratio than Ada Lovelace, for example.)) Without this abstraction, there would be excessive contention for global resources and scaling the chip across product tiers would be much more difficult.
 
 GPCs in traditional consumer GPUs also handle rasterization and graphics functions. In compute-only GPUs like the Nvidia H100, they may be optimized for throughput. For machine learning oriented workloads, this almost never comes into the picture. We're focused entirely on the SMs.
 ### Streaming Multiprocessors 
@@ -78,7 +78,7 @@ A **warp** is a fixed group of 32 threads (all from the same block) that are exe
 
 This is crucial for mitigating memory latency. If memory access is slow for one warp, it can be put aside and executed later once the data is ready. Context switching like this is extremely cheap on a GPU. It's also important to note that memory access requests are done per warp level, not per thread.
 
-A **block** is a group of threads (up to 1024) that execute together and share memory. Blocks are assigned to individual SMs, and multiple blocks can be scheduled on the same SM if there are enough available resources (dependent on register and shared memory usage). The number of active threads and blocks per SM is known as occupancy. 
+A **block** is a group of threads (up to 1024) that execute together and share memory. Blocks are assigned to individual SMs, and multiple blocks can be scheduled on the same SM if there are enough available resources (dependent on register and shared memory usage). The number of active threads and blocks per SM is known as occupancy. ((The maximum number of concurrent blocks per SM is also bounded by hardware limits — on Blackwell, each SM supports up to 32 resident blocks.))
 
 A **grid** is a collection of blocks that covers all blocks and threads launched by the kernel and spans the entire GPU. Blocks within a grid cannot communicate or share memory with each other. 
 
@@ -95,41 +95,41 @@ This is how each part of the execution model maps to CUDA terms. Each parameter 
 | gridDim   | How many total blocks are there?    |
 <svg viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- Outer Grid Box -->
-  <rect x="20" y="20" width="660" height="470" fill="#121212" stroke="#aaa" stroke-width="1.5"/>
-  <text x="30" y="40" fill="#fff">grid (1d) gridDim = 3</text>
+  <rect x="20" y="20" width="660" height="470" fill="#f5f3ef" stroke="#999" stroke-width="1.5"/>
+  <text x="30" y="40" fill="#37352f">grid (1d) gridDim = 3</text>
   
   <!-- Block 0 -->
-  <rect x="60" y="60" width="600" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="70" y="80" fill="#fff">Block 0 (x=0) blockDim = 3</text>
+  <rect x="60" y="60" width="600" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="70" y="80" fill="#37352f">Block 0 (x=0) blockDim = 3</text>
   <!-- Threads in Block 0 -->
-  <rect x="100" y="100" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="110" y="130" fill="#fff">T0</text>
-  <rect x="280" y="100" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="290" y="130" fill="#fff">T1</text>
-  <rect x="460" y="100" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="470" y="130" fill="#fff">T2(threadIdx = 2)</text>
+  <rect x="100" y="100" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="110" y="130" fill="#37352f">T0</text>
+  <rect x="280" y="100" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="290" y="130" fill="#37352f">T1</text>
+  <rect x="460" y="100" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="470" y="130" fill="#37352f">T2(threadIdx = 2)</text>
 
   <!-- Block 1 -->
-  <rect x="60" y="200" width="600" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="70" y="220" fill="#fff">Block 1 (x=1) blockIdx = 1 for all threads</text>
+  <rect x="60" y="200" width="600" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="70" y="220" fill="#37352f">Block 1 (x=1) blockIdx = 1 for all threads</text>
   <!-- Threads in Block 1 -->
-  <rect x="100" y="240" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="110" y="270" fill="#fff">T0 (gid = 3)</text>
-  <rect x="280" y="240" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="290" y="270" fill="#fff">T1(threadIdx = 1)</text>
-  <rect x="460" y="240" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="470" y="270" fill="#fff">T2</text>
+  <rect x="100" y="240" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="110" y="270" fill="#37352f">T0 (gid = 3)</text>
+  <rect x="280" y="240" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="290" y="270" fill="#37352f">T1(threadIdx = 1)</text>
+  <rect x="460" y="240" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="470" y="270" fill="#37352f">T2</text>
 
   <!-- Block 2 -->
-  <rect x="60" y="340" width="600" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="70" y="360" fill="#fff">Block 2</text>
+  <rect x="60" y="340" width="600" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="70" y="360" fill="#37352f">Block 2</text>
   <!-- Threads in Block 2 -->
-  <rect x="100" y="380" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="110" y="410" fill="#fff">T0 (gid = 6)</text>
-  <rect x="280" y="380" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="290" y="410" fill="#fff">T1</text>
-  <rect x="460" y="380" width="160" height="60" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="470" y="410" fill="#fff">T2</text>
+  <rect x="100" y="380" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="110" y="410" fill="#37352f">T0 (gid = 6)</text>
+  <rect x="280" y="380" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="290" y="410" fill="#37352f">T1</text>
+  <rect x="460" y="380" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
+  <text x="470" y="410" fill="#37352f">T2</text>
 </svg>
 
 ### Memory hierarchy
@@ -256,80 +256,80 @@ The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values p
 
 <svg viewBox="0 0 560 580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- Outer Grid Box -->
-  <rect x="20" y="20" width="520" height="540" fill="#121212" stroke="#aaa" stroke-width="1.5"/>
-  <text x="30" y="40" fill="#fff">grid (2d) gridDim = (2,3)</text>
+  <rect x="20" y="20" width="520" height="540" fill="#f5f3ef" stroke="#999" stroke-width="1.5"/>
+  <text x="30" y="40" fill="#37352f">grid (2d) gridDim = (2,3)</text>
 
   <!-- Block (0,0) -->
-  <rect x="40" y="60" width="180" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="50" y="80" fill="#fff">Block (0,0)</text>
-  <rect x="55" y="95" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="60" y="115" fill="#fff">(0,0)</text>
-  <rect x="135" y="95" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="140" y="115" fill="#fff">(0,1)</text>
-  <rect x="55" y="135" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="60" y="155" fill="#fff">(1,0)</text>
-  <rect x="135" y="135" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="140" y="155" fill="#fff">(1,1)</text>
+  <rect x="40" y="60" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="50" y="80" fill="#37352f">Block (0,0)</text>
+  <rect x="55" y="95" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="60" y="115" fill="#37352f">(0,0)</text>
+  <rect x="135" y="95" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="140" y="115" fill="#37352f">(0,1)</text>
+  <rect x="55" y="135" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="60" y="155" fill="#37352f">(1,0)</text>
+  <rect x="135" y="135" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="140" y="155" fill="#37352f">(1,1)</text>
 
   <!-- Block (1,0) -->
-  <rect x="240" y="60" width="180" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="250" y="80" fill="#fff">Block (1,0)</text>
-  <rect x="255" y="95" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="260" y="115" fill="#fff">(0,2)</text>
-  <rect x="335" y="95" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="340" y="115" fill="#fff">(0,3)</text>
-  <rect x="255" y="135" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="260" y="155" fill="#fff">(1,2)</text>
-  <rect x="335" y="135" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="340" y="155" fill="#fff">(1,3)</text>
+  <rect x="240" y="60" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="250" y="80" fill="#37352f">Block (1,0)</text>
+  <rect x="255" y="95" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="260" y="115" fill="#37352f">(0,2)</text>
+  <rect x="335" y="95" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="340" y="115" fill="#37352f">(0,3)</text>
+  <rect x="255" y="135" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="260" y="155" fill="#37352f">(1,2)</text>
+  <rect x="335" y="135" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="340" y="155" fill="#37352f">(1,3)</text>
 
   <!-- Block (0,1) -->
-  <rect x="40" y="200" width="180" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="50" y="220" fill="#fff">Block (0,1)</text>
-  <rect x="55" y="235" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="60" y="255" fill="#fff">(2,0)</text>
-  <rect x="135" y="235" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="140" y="255" fill="#fff">(2,1)</text>
-  <rect x="55" y="275" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="60" y="295" fill="#fff">(3,0)</text>
-  <rect x="135" y="275" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="140" y="295" fill="#fff">(3,1)</text>
+  <rect x="40" y="200" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="50" y="220" fill="#37352f">Block (0,1)</text>
+  <rect x="55" y="235" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="60" y="255" fill="#37352f">(2,0)</text>
+  <rect x="135" y="235" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="140" y="255" fill="#37352f">(2,1)</text>
+  <rect x="55" y="275" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="60" y="295" fill="#37352f">(3,0)</text>
+  <rect x="135" y="275" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="140" y="295" fill="#37352f">(3,1)</text>
 
   <!-- Block (1,1) -->
-  <rect x="240" y="200" width="180" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="250" y="220" fill="#fff">Block (1,1)</text>
-  <rect x="255" y="235" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="260" y="255" fill="#fff">(2,2)</text>
-  <rect x="335" y="235" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="340" y="255" fill="#fff">(2,3)</text>
-  <rect x="255" y="275" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="260" y="295" fill="#fff">(3,2)</text>
-  <rect x="335" y="275" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="340" y="295" fill="#fff">(3,3)</text>
+  <rect x="240" y="200" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="250" y="220" fill="#37352f">Block (1,1)</text>
+  <rect x="255" y="235" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="260" y="255" fill="#37352f">(2,2)</text>
+  <rect x="335" y="235" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="340" y="255" fill="#37352f">(2,3)</text>
+  <rect x="255" y="275" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="260" y="295" fill="#37352f">(3,2)</text>
+  <rect x="335" y="275" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="340" y="295" fill="#37352f">(3,3)</text>
 
   <!-- Block (0,2) -->
-  <rect x="40" y="340" width="180" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="50" y="360" fill="#fff">Block (0,2)</text>
-  <rect x="55" y="375" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="60" y="395" fill="#fff">(4,0)</text>
-  <rect x="135" y="375" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="140" y="395" fill="#fff">(4,1)</text>
-  <rect x="55" y="415" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="60" y="435" fill="#fff">(5,0)</text>
-  <rect x="135" y="415" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="140" y="435" fill="#fff">(5,1)</text>
+  <rect x="40" y="340" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="50" y="360" fill="#37352f">Block (0,2)</text>
+  <rect x="55" y="375" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="60" y="395" fill="#37352f">(4,0)</text>
+  <rect x="135" y="375" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="140" y="395" fill="#37352f">(4,1)</text>
+  <rect x="55" y="415" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="60" y="435" fill="#37352f">(5,0)</text>
+  <rect x="135" y="415" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="140" y="435" fill="#37352f">(5,1)</text>
 
   <!-- Block (1,2) -->
-  <rect x="240" y="340" width="180" height="120" fill="#2d2d4d" stroke="#aaa"/>
-  <text x="250" y="360" fill="#fff">Block (1,2)</text>
-  <rect x="255" y="375" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="260" y="395" fill="#fff">(4,2)</text>
-  <rect x="335" y="375" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="340" y="395" fill="#fff">(4,3)</text>
-  <rect x="255" y="415" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="260" y="435" fill="#fff">(5,2)</text>
-  <rect x="335" y="415" width="70" height="35" fill="#2d4d2d" stroke="#aaa"/>
-  <text x="340" y="435" fill="#fff">(5,3)</text>
+  <rect x="240" y="340" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
+  <text x="250" y="360" fill="#37352f">Block (1,2)</text>
+  <rect x="255" y="375" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="260" y="395" fill="#37352f">(4,2)</text>
+  <rect x="335" y="375" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="340" y="395" fill="#37352f">(4,3)</text>
+  <rect x="255" y="415" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="260" y="435" fill="#37352f">(5,2)</text>
+  <rect x="335" y="415" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
+  <text x="340" y="435" fill="#37352f">(5,3)</text>
 </svg>
 
 To illustrate the `col` and `row` calculations, let's go through the kernel for thread `2,3`.
@@ -365,7 +365,7 @@ All of the examples going forward will be multiplying two 4096x4096 matrices in 
 
 Performance is measured in TFLOPS (trillion floating point operations per second). In order to calculate the theoretical maximum FP32 performance for my GPU (a 5070 Ti): 
 - 70 SMs * 128 Cores per SM = 8960 Cuda Cores
-- Each Cuda core performs 2 operations per clock cycle (FMA = fused multiply-add) 
+- Each Cuda core performs 2 operations per clock cycle (FMA = fused multiply-add) ((FMA means a single instruction computes `a * b + c`, which counts as 2 floating point ops — a multiply and an add.))
 - Boost clock: 2.45 GHz  = 2.45 * 10^9 cycles per second
 - Equals approximately 44 TFLOPS. 
 
@@ -375,7 +375,7 @@ So the total number of operations is `2*4096^3 = 137,438,953,472`.
 
 TFLOPS = `(2*4096^3) / (execution time in seconds × 10^12)`
 
-The `cuBLAS` kernel hovers around 34 TFLOPS on my GPU (77% of theoretical). You'll never get the advertised theoretical performance due to warp scheduling, memory access patterns, and many other factors. We'll compare all future kernels to the 34 TFLOPS max instead of the theoretical 44 TFLOPS because it's a much more realistic estimate of how fast our kernel could be.
+The `cuBLAS` kernel hovers around 34 TFLOPS on my GPU (77% of theoretical). You'll never get the advertised theoretical performance due to warp scheduling, memory access patterns, and many other factors. We'll compare all future kernels to the 34 TFLOPS max instead of the theoretical 44 TFLOPS because it's a much more realistic estimate of how fast our kernel could be. ((cuBLAS uses tensor cores for this benchmark, which operate on reduced precision internally even for FP32 inputs. Our hand-written kernels stick to CUDA cores and FP32 throughout.))
 ### Matrix multiplication on CPU
 The most straightforward `N*N` square matrix multiplication goes like this: 
 ```cpp

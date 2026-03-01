@@ -34,7 +34,7 @@ total power draw is about ~50W between the cpu and gpu. the gpu can pull 40W at 
 ### integrated gpu 
 slow. very slow. 
 
-<img src="/images/slow-gpu.png"/>
+<img src="/images/slow-gpu.png" alt="GPU benchmark showing poor integrated graphics performance"/>
 
 you basically can't do any real gpu work on the iGPU. elden ring runs at 40fps on the absolute lowest settings.
 
@@ -47,7 +47,7 @@ it's mostly silent when you're using it normally (as long as the bottom vents ar
 
 idle power is not great. i have vs code, chrome, and ghostty open, and i'm in the lowest power profile. 45% screen brightness.
 
-<img src="/images/idle-power-power-saver.png">
+<img src="/images/idle-power-power-saver.png" alt="Power consumption at idle in power saver mode showing 5.5-6W draw">
 
 best case is 5.5 to 6W, which gives you about 10 hours of battery life. the catch is that in this power profile, the max cpu freq has been massively reduced. the computer is noticeably slower. 
 
@@ -80,7 +80,7 @@ top-tier. noobs can't use the translucent keyboard, and the translucent purple b
 
 the cost to upgrade is quite high. the HX 370 motherboard itself is $999! imagine how expensive the next-gen top-end motherboard would be. it's almost cheaper to buy a whole new laptop. 
 
-soldered memory is going to be standard going forward. newer AMD cpus like strix halo are requiring soldered memory (see framework desktop), and that reduces the upgradeability of the laptop. the memory bandwidth on this laptop (dual channel ddr5-5600 -- 89GB/s) is one of the main reasons the GPU is so slow. 
+soldered memory is going to be standard going forward. newer AMD cpus like strix halo are requiring soldered memory (see framework desktop), and that reduces the upgradeability of the laptop. the memory bandwidth on this laptop (dual channel ddr5-5600 -- 89GB/s) is one of the main reasons the GPU is so slow. ((Strix Halo with LPDDR5X-8000 in contrast gets ~256 GB/s — nearly 3x — which is why its iGPU is in a different league.))
 
 i don't really see the case for buying a framework *because* it's a framework. buy it because it's a decent laptop. most other laptops miss out on a core area that makes it a terrible experience. i don't feel this way with the framework 13. 
 
@@ -106,6 +106,6 @@ add 2 more 3090s - $5500. you have 96GB of much faster VRAM, and a half-decent t
 
 with a good motherboard, you can potentially have 6 3090s, 144GB of fast VRAM. 
 
-you can undercut the tinybox prices by ~20%, as long as you're willing to sink hours into troubleshooting, setup and building.
+you can undercut the tinybox prices by ~20%, as long as you're willing to sink hours into troubleshooting, setup and building. ((The tinybox red is 6x 7900 XTX, which is a fundamentally better architecture for this use case than 3090s — more memory bandwidth and better ROCm support on recent builds.))
 
 all better options than spending $2,000 on a machine that does AI poorly. save that for a future 3090 machine! 

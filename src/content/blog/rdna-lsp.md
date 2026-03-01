@@ -11,7 +11,7 @@ I’ve started learning RDNA (AMD’s GPU architecture). While doing that, I rea
 
 So I wrote one: https://github.com/boopdotpng/amdgpu-lsp
 
-Codex and Claude Code have gotten really good over the second half of this year. The days of yelling at an LLM because it got something totally wrong are mostly over. Now it barely makes mistakes if you give it clear enough instructions. AMD also helpfully publishes per-architecture XML that includes instructions, operands, and operand types, which made this project pretty straightforward.
+Codex and Claude Code have gotten really good over the second half of this year. The days of yelling at an LLM because it got something totally wrong are mostly over. Now it barely makes mistakes if you give it clear enough instructions. AMD also helpfully publishes per-architecture XML that includes instructions, operands, and operand types, which made this project pretty straightforward. ((This XML lives in the `amdgpu-dis` repo — it's the same data the LLVM disassembler uses, so it's accurate and kept up to date with new ISA revisions.))
 
 Also, Codex’s rate limits feel infinite. I’m only on the Plus plan and I’ve never gone over 50%. You only get to chat with Opus once an hour!
 
