@@ -331,8 +331,12 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   }
 
   @media (max-width: 600px) {
+    .github-graph {
+      display: none;
+    }
+
     .masthead {
-      padding: 1rem;
+      padding: 0 0 1rem;
     }
 
     .index-link {
