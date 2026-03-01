@@ -7,9 +7,9 @@ cat: hardware
 ---
 I bought a Tenstorrent blackhole p100a. The idea of a fully open source toolchain, from the kernel mode driver to the software stack that runs the models, is super exciting. Some parts of the card (like the firmware binaries for certain tiny components) aren't open source because of 3rd party IP, but this is pretty much the best it gets. You own every part of the card above the Verilog. 
 
-The hardware also has potential. Since they haven't raised prices yet (as of 2/28/26), you can get a card with 28GB GDDR6 (yes, it's slow; it's the main bottleneck) that has approximately equal matmul performance to a 5090 for $999! And there's a "buy now" button on the website!!
+The hardware also has potential. Since they haven't raised prices yet (as of 2/28/26), you can get a card with 28GB GDDR6 (yes, it's slow; it's the main bottleneck) that has approximately equal matmul performance to a 5090 for \$999! And there's a "buy now" button on the website!!
 
-Additionally, there is a $2,000 bounty on getting blackhole supported in tinygrad ($1k from tinygrad and $1k from Corsix on Twitter). 
+Additionally, there is a \$2,000 bounty on getting blackhole supported in tinygrad (\$1k from tinygrad and \$1k from Corsix on Twitter).
 
 > Update: the tinygrad bounty has actually disappeared following [this tweet](https://x.com/__tinygrad__/status/2021795839157711325?s=20) from tinygrad. 
 
