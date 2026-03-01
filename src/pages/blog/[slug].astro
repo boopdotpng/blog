@@ -14,8 +14,8 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content, headings } = await post.render();
-const showContentsTable = post.data.contents_table ?? false;
 const tocHeadings = headings.filter(heading => heading.depth >= 1 && heading.depth <= 3);
+const showTocRail = tocHeadings.length >= 3;
 
 const parseLocalDate = (dateString: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
@@ -38,7 +38,7 @@ const readingTimeMinutes = (() => {
   const body = typeof post.body === 'string' ? post.body.trim() : '';
   const words = body ? body.split(/\s+/).length : 0;
   const multiplier = post.data.cat === 'code' ? 1.3 : 1;
-  return Math.max(1, Math.round((words / 140) * multiplier)) || 2;
+  return Math.max(1, Math.round((words / 200) * multiplier)) || 2;
 })();
 const readingTimeLabel = (() => {
   if (readingTimeMinutes < 60) {
@@ -81,18 +81,19 @@ pre {
 
 /* Post title styling */
 .post-title-main {
-  font-size: 2.6rem;
+  font-size: 2.1rem;
   line-height: 1.2;
   margin: 0 0 0.5rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   font-family: var(--font-mono);
+  color: #1a1a1a;
 }
 
 .post-description {
-  color: #b5b5b5;
+  color: #888;
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   line-height: 1.7;
   font-family: var(--font-mono);
 }
@@ -105,15 +106,15 @@ pre {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #777;
-  font-size: 0.9rem;
+  color: #aaa;
+  font-size: 0.85rem;
   letter-spacing: 0.04em;
   font-family: var(--font-mono);
   margin: 0 0 0.6rem;
 }
 
 .post-meta-sep {
-  color: #444;
+  color: #ccc;
 }
 
 .post-readtime {
@@ -132,54 +133,103 @@ pre {
   }
 }
 
-/* table of contents */
-.toc {
-  border-left: 2px solid rgba(var(--accent-rgb), 0.35);
-  padding-left: 1rem;
-  margin: 0 0 2rem;
-  background: rgba(var(--accent-rgb), 0.06);
-  padding: 0.8rem 1rem;
-  border-radius: 8px;
+/* --- Sidebar table of contents --- */
+.toc-rail {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  width: 24px;
+  padding: 1.2rem 0 1.2rem 0.4rem;
+  transition: width 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  border-radius: 0 8px 8px 0;
 }
 
-.toc-title {
-  font-size: 0.85rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #94a3b8;
-  margin-bottom: 0.6rem;
-  font-weight: 600;
+.toc-rail:hover {
+  width: 280px;
+  background: #faf9f7;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.06);
+  padding: 1.2rem 0.8rem 1.2rem 0.8rem;
 }
 
-.toc-list {
+.toc-entries {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.toc-item {
-  margin: 0.3rem 0;
+.toc-entry {
+  margin: 0;
 }
 
-.toc-item a {
-  color: var(--accent);
+.toc-entry a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   text-decoration: none;
-  transition: color 0.2s ease;
+  padding: 0.25rem 0;
+  transition: color 0.15s;
 }
 
-.toc-item a:hover {
-  color: var(--accent-hover);
+.toc-tick {
+  flex-shrink: 0;
+  height: 2px;
+  background: #d0cdc6;
+  border-radius: 1px;
+  transition: background 0.2s, width 0.2s;
 }
 
-.toc-depth-2 {
-  margin-left: 1rem;
-  font-size: 0.95em;
+.toc-entry-title .toc-tick { width: 18px; height: 3px; }
+.toc-entry-title .toc-label { font-weight: 700; color: var(--fg); }
+.toc-entry-title { margin-bottom: 0.3rem; }
+
+.toc-d1 .toc-tick { width: 14px; }
+.toc-d2 .toc-tick { width: 10px; }
+.toc-d3 .toc-tick { width: 6px; }
+
+.toc-label {
+  opacity: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  color: #999;
+  transition: opacity 0.2s ease 0.1s;
 }
 
-.toc-depth-3 {
-  margin-left: 2rem;
-  font-size: 0.9em;
-  opacity: 0.85;
+.toc-rail:hover .toc-label {
+  opacity: 1;
+}
+
+/* Active heading */
+.toc-entry.toc-active .toc-tick {
+  background: var(--accent);
+}
+
+.toc-entry.toc-active .toc-label {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Hover on individual items */
+.toc-entry a:hover .toc-label {
+  color: var(--accent);
+}
+
+.toc-entry a:hover .toc-tick {
+  background: var(--accent);
+}
+
+/* Depth indentation (only visible when expanded) */
+.toc-d2 a { padding-left: 0.6rem; }
+.toc-d3 a { padding-left: 1.2rem; }
+
+/* Hidden on mobile/narrow screens */
+@media (max-width: 1024px) {
+  .toc-rail { display: none; }
 }
 
 /* Perfect centering wrapper */
@@ -218,7 +268,7 @@ article.post-plain {
   }
   
   .post-title-main {
-    font-size: 2.2rem;  /* Slightly tighter for mobile */
+    font-size: 1.8rem;
     margin-top: 0.5rem;
   }
   .post-date-main {
@@ -244,6 +294,26 @@ article.post-plain {
     publishedTime,
   }}
 >
+  {showTocRail && (
+    <nav class="toc-rail" aria-label="Table of contents">
+      <ol class="toc-entries">
+        <li class="toc-entry toc-entry-title" data-target="top">
+          <a href="#">
+            <span class="toc-tick"></span>
+            <span class="toc-label">{post.data.title}</span>
+          </a>
+        </li>
+        {tocHeadings.map(heading => (
+          <li class={`toc-entry toc-d${heading.depth}`} data-target={heading.slug}>
+            <a href={`#${heading.slug}`}>
+              <span class="toc-tick"></span>
+              <span class="toc-label">{heading.text}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )}
   <div class="centered-wrapper">
     <article class="post-plain markdown-body">
       <div class="post-meta">
@@ -257,20 +327,84 @@ article.post-plain {
           <p class="post-description">{post.data.description}</p>
         )}
       </div>
-      {showContentsTable && tocHeadings.length > 0 && (
-        <nav class="toc" aria-label="Table of contents">
-          <div class="toc-title">Contents</div>
-          <ol class="toc-list">
-            {tocHeadings.map(heading => (
-              <li class={`toc-item toc-depth-${heading.depth}`}>
-                <a href={`#${heading.slug}`}>{heading.text}</a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-      )}
       <Content />
     </article>
   </div>
   <script type="module" src={galleryScriptUrl}></script>
+  <script>
+    const tocEntries = [...document.querySelectorAll('.toc-entry')];
+    if (tocEntries.length) {
+      const topEntry = tocEntries.find((entry) => entry.dataset.target === 'top') ?? null;
+      const sectionItems = tocEntries
+        .map((entry) => {
+          const id = entry.dataset.target;
+          if (!id || id === 'top') return null;
+          const heading = document.getElementById(id);
+          if (!heading) return null;
+          return { id, entry, heading };
+        })
+        .filter(Boolean);
+
+      let active = null;
+      let scheduled = false;
+      let lockUntil = 0;
+
+      const setActive = (entry) => {
+        if (entry === active) return;
+        if (active) active.classList.remove('toc-active');
+        active = entry;
+        if (active) active.classList.add('toc-active');
+      };
+
+      const resolveActiveEntry = () => {
+        if (!sectionItems.length) return topEntry;
+        const scrollTop = window.scrollY;
+        if (scrollTop <= 24) return topEntry;
+
+        let current = topEntry;
+        for (const item of sectionItems) {
+          const headingTop = window.scrollY + item.heading.getBoundingClientRect().top;
+          if (headingTop <= scrollTop + 96) current = item.entry;
+          else break;
+        }
+        return current;
+      };
+
+      const updateActive = () => {
+        scheduled = false;
+        if (Date.now() < lockUntil) return;
+        setActive(resolveActiveEntry());
+      };
+
+      const scheduleUpdate = () => {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(updateActive);
+      };
+
+      window.addEventListener('scroll', scheduleUpdate, { passive: true });
+      window.addEventListener('resize', scheduleUpdate, { passive: true });
+      window.addEventListener('load', scheduleUpdate, { once: true });
+      scheduleUpdate();
+
+      for (const entry of tocEntries) {
+        entry.querySelector('a')?.addEventListener('click', (event) => {
+          const target = entry.dataset.target;
+          if (!target) return;
+
+          event.preventDefault();
+          setActive(entry);
+          lockUntil = Date.now() + 800;
+
+          if (target === 'top') {
+            window.scrollTo({ top: 0 });
+          } else {
+            const heading = document.getElementById(target);
+            if (!heading) return;
+            heading.scrollIntoView({ block: 'start' });
+          }
+        });
+      }
+    }
+  </script>
 </Layout>
