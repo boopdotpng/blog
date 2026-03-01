@@ -1,10 +1,10 @@
-/* markdown.css - Moved to public directory for GitHub Pages access */
+/* markdown.css */
 .markdown-body {
   font-family: var(--font-sans, system-ui, sans-serif);
-  color: #e0e0e0;
+  color: #444;
   background: transparent;
   line-height: 1.7;
-  font-size: 1.08rem;
+  font-size: 1.02rem;
   --media-max-width: 720px;
 }
 
@@ -17,33 +17,33 @@
   font-weight: 700;
   margin-top: 1.2em;
   margin-bottom: 0.6em;
-  color: #fff;
+  color: #1a1a1a;
   line-height: 1.25;
 }
 
 .markdown-body h1 {
-  font-size: 2rem;
+  font-size: 1.8rem;
   margin-top: 1.8em;
 }
 
 .markdown-body h2 {
-  font-size: 1.6rem;
+  font-size: 1.45rem;
 }
 
 .markdown-body h3 {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
 }
 
 .markdown-body h4 {
-  font-size: 1.15rem;
+  font-size: 1.08rem;
 }
 
 .markdown-body h5 {
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .markdown-body h6 {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   letter-spacing: 0.01em;
 }
 
@@ -57,8 +57,7 @@
   margin: 1em 0 1em 0.5em;
 }
 
-/* Add reduced indentation for nested lists */
-.markdown-body ul ul, 
+.markdown-body ul ul,
 .markdown-body ol ol,
 .markdown-body ul ol,
 .markdown-body ol ul {
@@ -67,26 +66,27 @@
 
 .markdown-body code, .markdown-body pre {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
-  background: #23272e;
-  color: #c9d1d9;
+  background: #f5f3ef !important;
+  color: #37352f;
   border-radius: 4px;
 }
 
 .markdown-body pre {
-  padding: 0.5em;
+  padding: 1em 1.2em;
   overflow-x: auto;
   margin: 1.5em 0;
   text-indent: 0;
-  line-height: 1.35;
+  line-height: 1.4;
+  border: 1px solid #e8e6e1;
 }
 
 .markdown-body pre code {
   text-indent: 0;
   margin-left: 0;
   display: block;
-  font-size: 0.9em;
+  font-size: 0.84em;
   padding: 0;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .markdown-body pre > code {
@@ -96,15 +96,14 @@
 }
 
 .markdown-body code {
-  padding: 0.1em 0.2em;
-  font-size: 0.9em;
+  padding: 0.15em 0.3em;
+  font-size: 0.85em;
 }
 
 .markdown-body pre, .markdown-body code, .markdown-body pre code {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
-  font-size: 0.9em;
 }
 
 .markdown-body table {
@@ -131,13 +130,13 @@
 
 .markdown-body th {
   font-weight: 600;
-  font-size: 1rem;
-  border-bottom: 2px solid #888; /* bold underline for header */
-  color: #ffffff;
+  font-size: 0.95rem;
+  border-bottom: 2px solid #ccc;
+  color: #1a1a1a;
 }
 
 .markdown-body tr:not(:first-child) td {
-  border-top: 1px solid #444; /* lighter horizontal lines between rows */
+  border-top: 1px solid #e0ddd8;
 }
 
 .markdown-body td:first-child,
@@ -150,17 +149,15 @@
   padding-right: 0;
 }
 
-/* On desktop, allow tables to "bleed" wider than the post column when there's room. */
 @media (min-width: 1024px) {
   .markdown-body table {
-    --table-bleed-width: min(1100px, calc(100vw - 2rem));
+    --table-bleed-width: min(1000px, calc(100vw - 6rem));
     width: var(--table-bleed-width);
     margin-left: calc((100% - var(--table-bleed-width)) / 2);
     margin-right: calc((100% - var(--table-bleed-width)) / 2);
   }
 }
 
-/* Mobile table optimizations */
 @media (max-width: 768px) {
   .markdown-body table {
     display: block;
@@ -170,53 +167,45 @@
     max-width: 100%;
     white-space: normal;
     -webkit-overflow-scrolling: touch;
-    border: 1px solid #444;
+    border: 1px solid #e0ddd8;
     border-radius: 6px;
     margin: 0.7em 0;
   }
-  
-  /* Scrollbar styling for all browsers */
+
   .markdown-body table {
     scrollbar-width: thin;
-    scrollbar-color: #666 #2a2a2a;
+    scrollbar-color: #ccc #f0eeeb;
   }
-  
-  /* Webkit browsers (Chrome, Safari, Edge) */
+
   .markdown-body table::-webkit-scrollbar {
     height: 10px;
     width: 10px;
   }
-  
+
   .markdown-body table::-webkit-scrollbar-track {
-    background: #2a2a2a;
+    background: #f0eeeb;
     border-radius: 6px;
     margin: 2px;
   }
-  
+
   .markdown-body table::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #666 0%, #555 100%);
+    background: #ccc;
     border-radius: 6px;
-    border: 1px solid #444;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid #e0ddd8;
   }
-  
+
   .markdown-body table::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #777 0%, #666 100%);
+    background: #bbb;
   }
-  
-  .markdown-body table::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(180deg, #555 0%, #444 100%);
-  }
-  
-  /* Firefox scrollbar */
+
   @supports (scrollbar-width: thin) {
     .markdown-body table {
       scrollbar-width: thin;
-      scrollbar-color: #666 #2a2a2a;
+      scrollbar-color: #ccc #f0eeeb;
     }
   }
-  
-  .markdown-body th, 
+
+  .markdown-body th,
   .markdown-body td {
     padding: 0.4em 0.5em;
     font-size: 0.85rem;
@@ -228,20 +217,20 @@
     line-height: 1.3;
     vertical-align: top;
   }
-  
+
   .markdown-body th:first-child,
   .markdown-body td:first-child {
     width: 70px;
     padding-left: 0.5em;
     font-size: 0.8rem;
   }
-  
+
   .markdown-body th:nth-child(2),
   .markdown-body td:nth-child(2) {
     width: 110px;
     font-size: 0.8rem;
   }
-  
+
   .markdown-body th:last-child,
   .markdown-body td:last-child {
     width: 300px;
@@ -253,15 +242,14 @@
 }
 
 .markdown-body blockquote {
-  border-left: 3px solid rgba(255, 255, 255, 0.8);
+  border-left: 3px solid #d0cdc6;
   background: transparent;
-  color: inherit;
+  color: #666;
   margin: 1.5em 0;
   padding: 0.5em 0 0.5em 0.75em;
   font-style: normal;
 }
 
-/* Remove margins from paragraphs inside blockquotes */
 .markdown-body blockquote p {
   margin-top: 0;
   margin-bottom: 0;
@@ -292,16 +280,16 @@
   height: auto;
   width: auto;
   margin: 1.5rem auto;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(var(--accent-rgb, 79, 209, 255), 0.12);
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
 }
 
 .markdown-body svg {
   height: auto;
   width: 100%;
   margin: 1.5rem auto;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(var(--accent-rgb, 79, 209, 255), 0.12);
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
   overflow: visible;
 }
 
@@ -311,7 +299,7 @@
   }
 }
 
-/* Markdown galleries (```gallery fenced blocks) */
+/* Markdown galleries */
 .md-gallery {
   margin: 1.5rem 0;
 }
@@ -330,18 +318,14 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(var(--accent-rgb, 79, 209, 255), 0.12);
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
 }
 
 @media (min-width: 1024px) {
   .markdown-body img {
-    --media-bleed-width: min(1100px, calc(100vw - 2rem));
-    max-width: var(--media-bleed-width);
+    max-width: var(--media-max-width);
     width: auto;
-    margin-left: 50%;
-    margin-right: 0;
-    transform: translateX(-50%);
   }
 
   .markdown-body .md-gallery-thumb img {
@@ -380,7 +364,7 @@
 .md-gallery-overlay__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
+  background: rgba(0, 0, 0, 0.72);
 }
 
 .md-gallery-overlay__panel {
@@ -458,4 +442,117 @@
 
 .md-gallery-overlay__nav--next {
   right: 1rem;
+}
+
+/* --- Callout blockquotes --- */
+.markdown-body .callout {
+  border-left-width: 3px;
+  border-radius: 0 4px 4px 0;
+  padding: 0.6em 0.9em;
+  background: #f7f6f3;
+}
+
+.markdown-body .callout .callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.markdown-body .callout-update {
+  border-left-color: #4a7c96;
+}
+.markdown-body .callout-update .callout-label { color: #4a7c96; }
+
+.markdown-body .callout-tldr {
+  border-left-color: #7c6ab8;
+}
+.markdown-body .callout-tldr .callout-label { color: #7c6ab8; }
+
+.markdown-body .callout-note {
+  border-left-color: #3a8a6e;
+}
+.markdown-body .callout-note .callout-label { color: #3a8a6e; }
+
+.markdown-body .callout-warning {
+  border-left-color: #c06a20;
+}
+.markdown-body .callout-warning .callout-label { color: #c06a20; }
+
+/* --- Tufte-style sidenotes --- */
+.markdown-body {
+  counter-reset: sidenote-counter;
+}
+
+.sidenote-number {
+  counter-increment: sidenote-counter;
+  cursor: pointer;
+}
+
+.sidenote-number::after {
+  content: counter(sidenote-counter);
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--accent, #4a7c96);
+  font-family: var(--font-mono);
+  margin-left: 1px;
+}
+
+.sidenote-toggle {
+  display: none;
+}
+
+/* Default: inline collapsible (mobile + medium screens) */
+.sidenote {
+  display: none;
+  float: none;
+  width: auto;
+  margin: 0.4em 0 0.4em 1em;
+  padding: 0.4em 0.75em;
+  background: #f7f6f3;
+  border-left: 2px solid #e0ddd8;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #777;
+}
+
+.sidenote::before {
+  content: counter(sidenote-counter) ". ";
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--accent, #4a7c96);
+}
+
+.sidenote-toggle:checked + .sidenote {
+  display: block;
+}
+
+/* Wide screens: float into the right margin */
+@media (min-width: 1280px) {
+  .sidenote {
+    display: block;
+    float: right;
+    clear: right;
+    width: 200px;
+    margin: 0.2rem 0 0.5rem -200px;
+    margin-right: calc(-200px - 2rem);
+    padding: 0;
+    background: none;
+    border-left: none;
+    border-radius: 0;
+    font-size: 0.8rem;
+    color: #999;
+    position: relative;
+  }
+
+  .sidenote-number {
+    cursor: default;
+  }
+
+  /* Hide checkbox behavior — always visible */
+  .sidenote-toggle:checked + .sidenote {
+    display: block;
+  }
 }
