@@ -33,7 +33,7 @@ This article serves as a reference to the low level workings of the Blackhole p1
 You don't need to know anything about the device firmware to figure out how the card works (we're only touching above this layer). The only reason this section is included is because I spent 5 or 6 hours in Ghidra trying to decompile the firmware bundle in `tt-firmware` to search for the fan control logic. This card has a single-fan blower style cooler, and by default the fan curve is set very high (40% when the temp is under 49c). Shortly afterwards, I realized `tt-zephyr-platforms` (their firmware) was open source. I made a [quick change](https://github.com/tenstorrent/tt-zephyr-platforms/compare/main...boopdotpng:tt-zephyr-platforms:fan-curve-adjust?diff=split&w), flashed the new firmware, and then the noise was gone! You can also change the fan speed dynamically by sending a message to the ARC tile: [this is a short python script to do that](https://gist.github.com/boopdotpng/1ebe5d5aa4f658240798e2b2253707fe). 
 ## hardware / programming model: Everything is tile.
 
-<img src="/images/blackhole-tile-layout.png" alt="Blackhole p150b tile layout showing Tensix, DRAM, ETH, PCIe, and ARC tiles on a grid">
+<img src="/images/tensix-tile-map.svg" alt="Blackhole p150b tile layout showing Tensix, DRAM, ETH, PCIe, and ARC tiles on a grid">
 
 This is the tile diagram / layout for the p150b (the full non-binned card). All tiles in this grid can communicate with each other via 2 NoCs (network on chips). Communication to host is routed through the PCIe tile (PCIe 0 on p100a and PCIe 1 on p150b). 
 
@@ -104,7 +104,7 @@ Functionally, a single PCIe tile handles all host communication. It translates M
 Given that one tile is sufficient, it’s unclear why the design includes two instead of having both SKUs use the same one. The second tile seems to exist for layout, binning, or SKU flexibility rather than for concurrent use.
 ### tensix (T)
 
-<img src="/images/blackhole-tensix-tile.png" alt="Tensix tile internals: 5 RISC-V cores, Tensix coprocessor, SFPU, and 1.5MB L1 memory">
+<img src="/images/tensix-l1-map.svg" alt="Tensix tile internals: 5 RISC-V cores, Tensix coprocessor, SFPU, and 1.5MB L1 memory">
 These tiles are responsible for *all* AI compute. Inside each Tensix tile there are **5** baby RISC-V cores, a Tensix coprocessor, and 1.5 MB of L1 memory. It's called L1 because of the memory speed; it's not cache. There is no cache anywhere on this card. 
 
 A kernel executes similarly to how it would on a GPU, but with notable differences in how the computation is actually done.
@@ -374,7 +374,7 @@ Every kernel is actually 5 kernels (you only have to write 3). A dataflow kernel
 
 With that said, here's the simplest possible 3-set of tt-metal kernels that adds 1 to an array of 65,536 `f16` values stored in dram. The long-term goal is to autogenerate these types of kernels based on tinygrad's IR (a graph of Ops). There is a little extra complexity because you have to write three separate kernels for one operation, but the kernels themselves are short. Most of this code is boilerplate -- the actual compute part is only a few lines. 
 
-<img src="/images/blackhole-kernel-anatomy.png" alt="Anatomy of a tt-metal kernel: data-in (ncrisc), compute (trisc), and data-out (brisc) phases">
+<img src="/images/kernel-execution-pipeline.svg" alt="Anatomy of a tt-metal kernel: data-in (ncrisc), compute (trisc), and data-out (brisc) phases">
 
 This example kernel runs on *one* Tensix tile (core). That one core is responsible for processing all 64 input tiles. If you wanted to run this on 64 cores there would be no inner loop, because every core would process exactly one tile of the input. 
 

@@ -261,6 +261,18 @@ article.post-plain {
   padding-right: var(--side-gutter);
 }
 
+article.post-plain :global(img) {
+  max-width: 600px;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5rem auto;
+}
+article.post-plain :global(img[width]) {
+  width: auto;
+  max-width: 100%;
+}
+
 /* tweak typography on small screens if you like */
 @media (max-width: 600px) {
   :root {
