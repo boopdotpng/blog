@@ -5,6 +5,8 @@ import sitemap from '@astrojs/sitemap';
 import fs from 'node:fs';
 import path from 'node:path';
 import remarkGallery from './scripts/remark-gallery.mjs';
+import remarkCallout from './scripts/remark-callout.mjs';
+import remarkSidenote from './scripts/remark-sidenote.mjs';
 
 function parseBlogFrontmatter(file) {
   const publishedMatch = file.match(/^\s*published:\s*["']?(true|false)["']?\s*$/m);
@@ -81,7 +83,10 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [remarkMath, remarkGallery],
+    remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote],
     rehypePlugins: [rehypeKatex],
+    shikiConfig: {
+      theme: 'github-light',
+    },
   },
 });
