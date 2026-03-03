@@ -131,14 +131,39 @@
   overflow-wrap: break-word;
 }
 
-.markdown-body table {
-  border-collapse: collapse;
+.markdown-body .md-table-wrap {
+  --table-right-bleed: 0px;
+  --table-base-width: calc(100% - var(--table-right-bleed));
+  width: 100%;
   margin: 0.7em 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--surface-elev);
+}
+
+@media (min-width: 1024px) {
+  .markdown-body .md-table-wrap {
+    --table-edge-gap: calc(var(--side-gutter, 1rem) * 2);
+    --table-right-bleed: max(0px, calc((100vw - var(--content-max-width, 800px)) / 2 + var(--side-gutter, 1rem) - var(--table-edge-gap)));
+    width: calc(100% + var(--table-right-bleed));
+    max-width: calc(100vw - var(--table-edge-gap));
+  }
+}
+
+.markdown-body .md-table-wrap::-webkit-scrollbar { height: 8px; }
+.markdown-body .md-table-wrap::-webkit-scrollbar-track { background: var(--surface-elev); border-radius: 6px; }
+.markdown-body .md-table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
+.markdown-body .md-table-wrap::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
+
+.markdown-body .md-table-wrap > table {
+  border-collapse: collapse;
+  margin: 0;
   background: none;
   color: inherit;
-  width: 100%;
+  width: max-content;
+  min-width: var(--table-base-width);
   table-layout: auto;
-  white-space: normal;
 }
 
 .markdown-body th, .markdown-body td {
@@ -146,10 +171,8 @@
   text-align: left;
   border: none;
   background: none;
-  white-space: normal;
+  white-space: nowrap;
   overflow: visible;
-  word-wrap: break-word;
-  hyphens: auto;
   width: auto;
 }
 
@@ -174,37 +197,20 @@
   padding-right: 0;
 }
 
-@media (min-width: 1024px) {
-  .markdown-body table {
-    --table-bleed-width: min(1000px, calc(100vw - 6rem));
-    width: var(--table-bleed-width);
-    margin-left: calc((100% - var(--table-bleed-width)) / 2);
-    margin-right: calc((100% - var(--table-bleed-width)) / 2);
-  }
-}
-
 @media (max-width: 768px) {
-  .markdown-body table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  .markdown-body .md-table-wrap {
     border: 1px solid var(--border-muted);
     border-radius: 6px;
-    margin: 0.7em 0;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) var(--surface-elev);
   }
 
-  .markdown-body table::-webkit-scrollbar { height: 8px; }
-  .markdown-body table::-webkit-scrollbar-track { background: var(--surface-elev); border-radius: 6px; }
-  .markdown-body table::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
-  .markdown-body table::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
+  .markdown-body .md-table-wrap > table {
+    min-width: 100%;
+  }
 
   .markdown-body th,
   .markdown-body td {
     padding: 0.35em 0.5em;
     font-size: 0.85rem;
-    white-space: nowrap;
   }
 
   .markdown-body th:first-child,

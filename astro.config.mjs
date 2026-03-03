@@ -7,6 +7,7 @@ import path from 'node:path';
 import remarkGallery from './scripts/remark-gallery.mjs';
 import remarkCallout from './scripts/remark-callout.mjs';
 import remarkSidenote from './scripts/remark-sidenote.mjs';
+import remarkTableWrap from './scripts/remark-table-wrap.mjs';
 
 function parseBlogFrontmatter(file) {
   const publishedMatch = file.match(/^\s*published:\s*["']?(true|false)["']?\s*$/m);
@@ -83,7 +84,7 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote],
+    remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote, remarkTableWrap],
     rehypePlugins: [rehypeKatex],
     shikiConfig: {
       themes: {
