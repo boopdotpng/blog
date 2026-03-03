@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && bun scripts/postbuild-seo.ts",
+    "build": "bun run update:github-heat && astro build && bun scripts/postbuild-seo.ts",
+    "update:github-heat": "bun scripts/update-github-heat.ts",
     "preview": "astro preview",
     "astro": "astro"
   },

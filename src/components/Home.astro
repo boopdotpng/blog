@@ -39,8 +39,8 @@ const latestPostDate = posts.reduce((latest, post) => {
   return date && date > latest ? date : latest;
 }, new Date(0));
 const latestPostLabel = latestPostDate.getTime() ? formatLongDate(latestPostDate) : '—';
-const githubGraphLightSrc = 'https://gh-heat.anishroy.com/api/boopdotpng/svg?theme=blue&darkMode=false&transparent=true';
-const githubGraphDarkSrc = 'https://gh-heat.anishroy.com/api/boopdotpng/svg?darkMode=true&transparent=true&colors=2a2f3c,2e5752,397a73,52a69d,8bd9cd&textColor=%23b8b2c8';
+const githubGraphLightSrc = '/images/github-heat-light.svg';
+const githubGraphDarkSrc = '/images/github-heat-dark.svg';
 
 // Category colors (theme-aware CSS variables)
 const catColors: Record<string, string> = {
