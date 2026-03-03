@@ -87,11 +87,11 @@ pre {
   font-weight: 700;
   letter-spacing: -0.03em;
   font-family: var(--font-mono);
-  color: #1a1a1a;
+  color: var(--fg-strong);
 }
 
 .post-description {
-  color: #888;
+  color: var(--fg-muted);
   margin: 0;
   font-size: 0.98rem;
   line-height: 1.7;
@@ -106,7 +106,7 @@ pre {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #aaa;
+  color: var(--fg-subtle);
   font-size: 0.85rem;
   letter-spacing: 0.04em;
   font-family: var(--font-mono);
@@ -114,7 +114,7 @@ pre {
 }
 
 .post-meta-sep {
-  color: #ccc;
+  color: var(--border-strong);
 }
 
 .post-readtime {
@@ -149,8 +149,8 @@ pre {
 
 .toc-rail:hover {
   width: 280px;
-  background: #faf9f7;
-  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.06);
+  background: var(--bg);
+  box-shadow: 2px 0 16px rgba(var(--shadow-rgb), 0.24);
   padding: 1.2rem 0.8rem 1.2rem 0.8rem;
 }
 
@@ -176,7 +176,7 @@ pre {
 .toc-tick {
   flex-shrink: 0;
   height: 2px;
-  background: #d0cdc6;
+  background: var(--border-strong);
   border-radius: 1px;
   transition: background 0.2s, width 0.2s;
 }
@@ -196,7 +196,7 @@ pre {
   text-overflow: ellipsis;
   font-size: 0.78rem;
   font-family: var(--font-mono);
-  color: #999;
+  color: var(--fg-faint);
   transition: opacity 0.2s ease 0.1s;
 }
 

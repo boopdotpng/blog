@@ -51,36 +51,47 @@ if (articleSchema && schemaArticle?.imageUrl) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
-    <meta
-      name="robots"
-      content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
-    />
-  
-    <title>{title}</title>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="preload" href="/fonts/GoogleSansCode-Variable.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="stylesheet" href="/katex.min.css" />
-    <link rel="stylesheet" href="/markdown.css" />
-    <link rel="canonical" href={canonicalUrl} />
-    <link rel="alternate" type="application/rss+xml" title="anuraag — notes" href="/rss.xml" />
-  
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content={ogType} />
-    <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content={ogImageUrl} />
-    <meta property="og:site_name" content="anuraag" />
-    {publishedTime && <meta property="article:published_time" content={publishedTime} />}
-  
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={ogImageUrl} />
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <meta
+    name="robots"
+    content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+  />
+
+  <title>{title}</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="preload" href="/fonts/GoogleSansCode-Variable.ttf" as="font" type="font/ttf" crossorigin />
+  <link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.ttf" as="font" type="font/ttf" crossorigin />
+  <link rel="stylesheet" href="/katex.min.css" />
+  <link rel="stylesheet" href="/markdown.css" />
+  <link rel="canonical" href={canonicalUrl} />
+  <link rel="alternate" type="application/rss+xml" title="anuraag — notes" href="/rss.xml" />
+
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:image" content={ogImageUrl} />
+  <meta property="og:site_name" content="anuraag" />
+  {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImageUrl} />
+
+  <script is:inline>
+    (() => {
+      const storedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = storedTheme === 'light' || storedTheme === 'dark'
+        ? storedTheme
+        : (prefersDark ? 'dark' : 'light');
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+
 <style>
   @font-face {
     font-family: "Google Sans Code";
@@ -101,12 +112,66 @@ if (articleSchema && schemaArticle?.imageUrl) {
   :root {
     --bg: #faf9f7;
     --fg: #37352f;
+    --fg-strong: #1a1a1a;
+    --fg-soft: #666055;
+    --fg-muted: #888178;
+    --fg-faint: #999188;
+    --fg-subtle: #aaa39b;
     --accent: #4a7c96;
     --accent-hover: #3a6580;
     --accent-rgb: 74, 124, 150;
+    --border-soft: #e8e6e1;
+    --border-muted: #e0ddd8;
+    --border-strong: #d0cdc6;
+    --surface-soft: #f5f3ef;
+    --surface-elev: #f0eeeb;
+    --surface-note: #f7f6f3;
+    --cat-gpu: #3a8a6e;
+    --cat-ml: #c06a20;
+    --cat-hardware: #b85a8a;
+    --cat-bio: #7c6ab8;
+    --cat-misc: #7a8694;
+    --shadow-rgb: 0, 0, 0;
+    --overlay-bg: rgba(0, 0, 0, 0.72);
+    --overlay-control-bg: rgba(0, 0, 0, 0.55);
+    --overlay-control-border: rgba(255, 255, 255, 0.18);
+    --overlay-text: rgba(255, 255, 255, 0.9);
+    --overlay-text-muted: rgba(255, 255, 255, 0.75);
     --font-size: 16px;
     --font-sans: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
     --font-mono: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    color-scheme: light;
+  }
+
+  :root[data-theme='dark'] {
+    --bg: #15161b;
+    --fg: #d2ced8;
+    --fg-strong: #f3f1fb;
+    --fg-soft: #9993a3;
+    --fg-muted: #7b7489;
+    --fg-faint: #6d667c;
+    --fg-subtle: #5f596f;
+    --accent: #9f89d6;
+    --accent-hover: #b39cea;
+    --accent-rgb: 159, 137, 214;
+    --border-soft: #33353d;
+    --border-muted: #3c3e49;
+    --border-strong: #484b57;
+    --surface-soft: #1c1d23;
+    --surface-elev: #22232a;
+    --surface-note: #272832;
+    --cat-gpu: #79c8a8;
+    --cat-ml: #e9b16f;
+    --cat-hardware: #e1a3c5;
+    --cat-bio: #b8a6ee;
+    --cat-misc: #a4afc1;
+    --shadow-rgb: 8, 9, 12;
+    --overlay-bg: rgba(10, 12, 17, 0.8);
+    --overlay-control-bg: rgba(20, 22, 30, 0.72);
+    --overlay-control-border: rgba(220, 216, 232, 0.26);
+    --overlay-text: rgba(243, 239, 252, 0.94);
+    --overlay-text-muted: rgba(213, 204, 232, 0.8);
+    color-scheme: dark;
   }
 
   html, body {
@@ -117,6 +182,14 @@ if (articleSchema && schemaArticle?.imageUrl) {
     font-family: var(--font-sans);
     line-height: 1.5;
     font-size: var(--font-size);
+    transition: background-color 0.42s ease, color 0.42s ease;
+  }
+
+  html.theme-changing,
+  html.theme-changing * {
+    transition-property: color, background-color, border-color, box-shadow, text-shadow, fill, stroke;
+    transition-duration: 0.42s;
+    transition-timing-function: ease;
   }
 
   code, pre, kbd, samp {
@@ -141,7 +214,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
     gap: 0.5rem;
     font-size: 0.82rem;
     letter-spacing: 0.04em;
-    color: #999;
+    color: var(--fg-faint);
     text-decoration: none;
   }
 
@@ -152,13 +225,13 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   .song-icon {
-    color: #aaa;
+    color: var(--fg-subtle);
   }
 
   .song-title {
-    color: #666;
+    color: var(--fg-soft);
     letter-spacing: 0.02em;
-    transition: color 0.15s;
+    transition: color 0.42s ease;
   }
 
   .site-title {
@@ -193,7 +266,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
     justify-content: center;
     height: 1em;
     line-height: 1;
-    color: #aaa;
+    color: var(--fg-subtle);
   }
 
   nav ul {
@@ -206,7 +279,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   nav a {
-    color: #888;
+    color: var(--fg-muted);
     text-decoration: none;
     font-size: 0.82rem;
     padding: 0.35rem 0.6rem;
@@ -225,7 +298,7 @@ if (articleSchema && schemaArticle?.imageUrl) {
     align-items: center;
     justify-content: center;
     padding: 0.35rem;
-    color: #888;
+    color: var(--fg-muted);
   }
 
   .rss-link:hover {
@@ -242,9 +315,51 @@ if (articleSchema && schemaArticle?.imageUrl) {
     transform-origin: center;
   }
 
+  .theme-toggle {
+    border: 1px solid var(--border-muted);
+    background: var(--surface-soft);
+    color: var(--fg-muted);
+    font-size: 0.78rem;
+    line-height: 1;
+    width: 1.95rem;
+    height: 1.95rem;
+    border-radius: 999px;
+    padding: 0;
+    cursor: pointer;
+    display: inline-grid;
+    place-items: center;
+    transition: border-color 0.42s ease, color 0.42s ease, background-color 0.42s ease;
+  }
+
+  .theme-toggle:hover {
+    color: var(--fg);
+    border-color: var(--accent);
+  }
+
+  .theme-toggle:focus-visible {
+    outline: 2px solid rgba(var(--accent-rgb), 0.35);
+    outline-offset: 2px;
+  }
+
+  .theme-toggle-icon {
+    font-size: 0.92rem;
+    transform: translateY(-0.5px);
+  }
+
   @media (max-width: 600px) {
     .home-song {
       display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html,
+    body,
+    html.theme-changing,
+    html.theme-changing *,
+    .song-title,
+    .theme-toggle {
+      transition: none !important;
     }
   }
 
@@ -263,13 +378,13 @@ if (articleSchema && schemaArticle?.imageUrl) {
     display: block;
     padding: 1rem;
     margin-bottom: 1rem;
-    border: 1px solid #e0ddd8;
+    border: 1px solid var(--border-muted);
     text-decoration: none;
     color: inherit;
   }
 
   .post-card:hover {
-    background: #f0eeeb;
+    background: var(--surface-elev);
   }
 </style>
 
@@ -297,6 +412,18 @@ if (articleSchema && schemaArticle?.imageUrl) {
     <nav>
       <ul>
         <li>
+          <button
+            type="button"
+            class="theme-toggle"
+            data-theme-toggle
+            aria-label="Switch to dark mode"
+            aria-pressed="false"
+            title="Toggle theme"
+          >
+            <span class="theme-toggle-icon" aria-hidden="true">◐</span>
+          </button>
+        </li>
+        <li>
           <a class="rss-link" href="/rss.xml" aria-label="RSS feed">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M6.2 17.8a1.6 1.6 0 1 1-3.2 0 1.6 1.6 0 0 1 3.2 0Z" class="rss-dot"></path>
@@ -313,5 +440,29 @@ if (articleSchema && schemaArticle?.imageUrl) {
   <main>
     <slot />
   </main>
+  <script is:inline>
+    (() => {
+      const root = document.documentElement;
+      const button = document.querySelector('[data-theme-toggle]');
+      if (!(button instanceof HTMLButtonElement)) return;
+
+      const setTheme = (theme) => {
+        root.dataset.theme = theme;
+        const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+        button.setAttribute('aria-label', label);
+        button.setAttribute('aria-pressed', String(theme === 'dark'));
+      };
+
+      setTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
+
+      button.addEventListener('click', () => {
+        root.classList.add('theme-changing');
+        const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+        localStorage.setItem('theme', nextTheme);
+        window.setTimeout(() => root.classList.remove('theme-changing'), 460);
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -39,16 +39,18 @@ const latestPostDate = posts.reduce((latest, post) => {
   return date && date > latest ? date : latest;
 }, new Date(0));
 const latestPostLabel = latestPostDate.getTime() ? formatLongDate(latestPostDate) : '—';
+const githubGraphLightSrc = 'https://gh-heat.anishroy.com/api/boopdotpng/svg?theme=blue&darkMode=false&transparent=true';
+const githubGraphDarkSrc = 'https://gh-heat.anishroy.com/api/boopdotpng/svg?darkMode=true&transparent=true&colors=2a2f3c,2e5752,397a73,52a69d,8bd9cd&textColor=%23b8b2c8';
 
-// Category colors (muted for light theme)
+// Category colors (theme-aware CSS variables)
 const catColors: Record<string, string> = {
-  'gpu': '#3a8a6e',
-  'ml': '#c06a20',
-  'hardware': '#b85a8a',
-  'bio': '#7c6ab8',
-  'misc': '#7a8694',
+  'gpu': 'var(--cat-gpu)',
+  'ml': 'var(--cat-ml)',
+  'hardware': 'var(--cat-hardware)',
+  'bio': 'var(--cat-bio)',
+  'misc': 'var(--cat-misc)',
 };
-const getCatColor = (cat: string) => catColors[cat] || '#666';
+const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 
 // Get unique mapped categories
 const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter(c => c !== '—'))];
@@ -58,7 +60,11 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   <div class="masthead">
     <div class="github-graph">
       <img
-        src="https://ghchart.rshah.org/4a7c96/boopdotpng"
+        class="github-graph-img"
+        data-github-graph
+        data-light-src={githubGraphLightSrc}
+        data-dark-src={githubGraphDarkSrc}
+        src={githubGraphLightSrc}
         alt="GitHub contribution graph"
         loading="lazy"
       />
@@ -133,19 +139,24 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   .masthead {
     padding: 0 0 1.25rem;
     margin-bottom: 1rem;
-    border-bottom: 1px solid #e8e6e1;
+    border-bottom: 1px solid var(--border-soft);
   }
 
   .github-graph {
     margin-bottom: 0.5rem;
     overflow-x: auto;
+    background: var(--surface-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 0.45rem;
   }
 
-  .github-graph img {
+  .github-graph-img {
     width: 100%;
     height: auto;
     display: block;
-    opacity: 0.85;
+    opacity: 0.95;
+    transition: opacity 0.24s ease;
   }
 
   .meta-block {
@@ -153,15 +164,15 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     flex-wrap: wrap;
     gap: 0.5rem;
     font-size: 0.78rem;
-    color: #aaa;
+    color: var(--fg-subtle);
   }
 
   .meta-sep {
-    color: #ccc;
+    color: var(--border-strong);
   }
 
   .working-strip {
-    color: #999;
+    color: var(--fg-faint);
     padding: 0;
     margin-bottom: 1.5rem;
     font-size: 0.82rem;
@@ -173,11 +184,11 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
 
   .working-label {
     font-weight: 700;
-    color: #777;
+    color: var(--fg-soft);
   }
 
   .working-item {
-    color: #aaa;
+    color: var(--fg-subtle);
   }
 
   .pinned-section {
@@ -189,7 +200,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.2em;
-    color: #bbb;
+    color: var(--fg-subtle);
     margin-bottom: 0.75rem;
     text-transform: uppercase;
   }
@@ -211,8 +222,8 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     position: relative;
     display: block;
     padding: 0.65rem 0.9rem;
-    border: 1px solid #e0ddd8;
-    background: #faf9f7;
+    border: 1px solid var(--border-muted);
+    background: var(--bg);
     color: inherit;
     text-decoration: none;
     border-radius: 4px;
@@ -223,15 +234,15 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     content: "";
     position: absolute;
     inset: 0.3rem;
-    border: 1px dashed rgba(0, 0, 0, 0.06);
+    border: 1px dashed rgba(var(--shadow-rgb), 0.2);
     pointer-events: none;
     border-radius: 2px;
   }
 
   .pinned-card:hover {
     transform: translateY(-1px);
-    border-color: #ccc;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    border-color: var(--border-strong);
+    box-shadow: 0 4px 12px rgba(var(--shadow-rgb), 0.24);
   }
 
   .pinned-title {
@@ -253,11 +264,11 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   }
 
   .index-item {
-    border-bottom: 1px solid #e8e6e1;
+    border-bottom: 1px solid var(--border-soft);
   }
 
   .index-item:first-child {
-    border-top: 1px solid #e8e6e1;
+    border-top: 1px solid var(--border-soft);
   }
 
   .index-link {
@@ -272,12 +283,12 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   }
 
   .index-link:hover {
-    background: rgba(0, 0, 0, 0.02);
+    background: rgba(var(--shadow-rgb), 0.12);
   }
 
   .index-num {
     font-size: 0.8rem;
-    color: #bbb;
+    color: var(--fg-subtle);
     font-weight: 600;
   }
 
@@ -297,7 +308,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     display: flex;
     gap: 1.5rem;
     font-size: 0.78rem;
-    color: #999;
+    color: var(--fg-faint);
     white-space: nowrap;
   }
 
@@ -308,7 +319,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   }
 
   .index-date {
-    color: #aaa;
+    color: var(--fg-subtle);
     font-variant-numeric: tabular-nums;
   }
 
@@ -369,3 +380,25 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     }
   }
 </style>
+
+<script>
+  (() => {
+    const graph = document.querySelector('[data-github-graph]');
+    if (!(graph instanceof HTMLImageElement)) return;
+    const root = document.documentElement;
+    const lightSrc = graph.dataset.lightSrc;
+    const darkSrc = graph.dataset.darkSrc;
+    if (!lightSrc || !darkSrc) return;
+
+    const syncGraphTheme = () => {
+      const nextSrc = root.dataset.theme === 'dark' ? darkSrc : lightSrc;
+      if (graph.src !== nextSrc) graph.src = nextSrc;
+    };
+
+    syncGraphTheme();
+    new MutationObserver(syncGraphTheme).observe(root, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+  })();
+</script>

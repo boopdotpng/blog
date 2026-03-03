@@ -86,7 +86,11 @@ export default defineConfig({
     remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote],
     rehypePlugins: [rehypeKatex],
     shikiConfig: {
-      theme: 'github-light',
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark-dimmed',
+      },
+      defaultColor: false,
     },
   },
 });
