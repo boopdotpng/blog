@@ -144,33 +144,33 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   :root[data-theme='dark'] {
-    --bg: #15161b;
-    --fg: #d2ced8;
-    --fg-strong: #f3f1fb;
-    --fg-soft: #9993a3;
-    --fg-muted: #7b7489;
-    --fg-faint: #6d667c;
-    --fg-subtle: #5f596f;
-    --accent: #9f89d6;
-    --accent-hover: #b39cea;
-    --accent-rgb: 159, 137, 214;
-    --border-soft: #33353d;
-    --border-muted: #3c3e49;
-    --border-strong: #484b57;
-    --surface-soft: #1c1d23;
-    --surface-elev: #22232a;
-    --surface-note: #272832;
-    --cat-gpu: #79c8a8;
-    --cat-ml: #e9b16f;
-    --cat-hardware: #e1a3c5;
-    --cat-bio: #b8a6ee;
-    --cat-misc: #a4afc1;
-    --shadow-rgb: 8, 9, 12;
-    --overlay-bg: rgba(10, 12, 17, 0.8);
-    --overlay-control-bg: rgba(20, 22, 30, 0.72);
-    --overlay-control-border: rgba(220, 216, 232, 0.26);
-    --overlay-text: rgba(243, 239, 252, 0.94);
-    --overlay-text-muted: rgba(213, 204, 232, 0.8);
+    --bg: #181818;
+    --fg: #c8c4be;
+    --fg-strong: #e8e5df;
+    --fg-soft: #9a9590;
+    --fg-muted: #7a7570;
+    --fg-faint: #6a6560;
+    --fg-subtle: #5a5550;
+    --accent: #8ab4cc;
+    --accent-hover: #a0c8dd;
+    --accent-rgb: 138, 180, 204;
+    --border-soft: #2a2a28;
+    --border-muted: #333330;
+    --border-strong: #444440;
+    --surface-soft: #1e1e1c;
+    --surface-elev: #242422;
+    --surface-note: #282826;
+    --cat-gpu: #6dba98;
+    --cat-ml: #daa86a;
+    --cat-hardware: #d49ab8;
+    --cat-bio: #a89cd6;
+    --cat-misc: #98a4b0;
+    --shadow-rgb: 8, 8, 6;
+    --overlay-bg: rgba(12, 12, 10, 0.8);
+    --overlay-control-bg: rgba(22, 22, 20, 0.72);
+    --overlay-control-border: rgba(200, 196, 190, 0.2);
+    --overlay-text: rgba(232, 229, 223, 0.94);
+    --overlay-text-muted: rgba(200, 196, 190, 0.75);
     color-scheme: dark;
   }
 
@@ -316,24 +316,20 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   .theme-toggle {
-    border: 1px solid var(--border-muted);
-    background: var(--surface-soft);
+    border: none;
+    background: none;
     color: var(--fg-muted);
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     line-height: 1;
-    width: 1.95rem;
-    height: 1.95rem;
-    border-radius: 999px;
-    padding: 0;
+    padding: 0.35rem 0.3rem;
     cursor: pointer;
     display: inline-grid;
     place-items: center;
-    transition: border-color 0.42s ease, color 0.42s ease, background-color 0.42s ease;
+    transition: color 0.42s ease;
   }
 
   .theme-toggle:hover {
     color: var(--fg);
-    border-color: var(--accent);
   }
 
   .theme-toggle:focus-visible {
@@ -342,8 +338,8 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 
   .theme-toggle-icon {
-    font-size: 0.92rem;
-    transform: translateY(-0.5px);
+    width: 16px;
+    height: 16px;
   }
 
   @media (max-width: 600px) {
@@ -420,7 +416,9 @@ if (articleSchema && schemaArticle?.imageUrl) {
             aria-pressed="false"
             title="Toggle theme"
           >
-            <span class="theme-toggle-icon" aria-hidden="true">◐</span>
+            <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18V4a8 8 0 1 1 0 16Z"/>
+            </svg>
           </button>
         </li>
         <li>
