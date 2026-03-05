@@ -49,6 +49,7 @@ const BLOG_METADATA_BY_PATHNAME = getBlogMetadataByPathname();
 export default defineConfig({
   site: process.env.SITE_URL ?? 'https://anuraagw.me',
   trailingSlash: 'never',
+  build: { format: 'file' },
   integrations: [
     sitemap({
       filter: (page) => {
