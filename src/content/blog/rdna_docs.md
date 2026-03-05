@@ -7,7 +7,7 @@ description: "human readable explained rdna documentation"
 cat: "gpu"
 ---
 
-# rdna documentation 
+## rdna documentation 
 This was taken from the RDNA3.5 ISA pdf. 
 
 ## states we need to keep track of 

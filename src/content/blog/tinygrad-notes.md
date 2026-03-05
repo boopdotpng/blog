@@ -8,7 +8,7 @@ description: "notes and links while exploring tinygrad."
 cat: "ml"
 ---
 
-# rough progression of a tinygrad tensor operation 
+## rough progression of a tinygrad tensor operation 
 
 **1) Tensors are just thin wrappers over UOps**
 
@@ -137,7 +137,7 @@ Files involved:
 
 `get_runner` memoizes compiled programs based on the AST + context (including `BEAM`, `NOOPT`, `DEVECTORIZE` settings). If `TinyJit` is used, it captures kernels and replays them without recompiling. 
 
-# BEAM search 
+## BEAM search 
 
 > https://github.com/tinygrad/tinygrad/pull/13836
 
@@ -197,9 +197,9 @@ Keep in mind that all of these optimizations are run at the AST stage, before th
 
 ## Examples of kernels optimized with BEAM
 
-# pattern matchers + graph rewrites (the non-BEAM optimization path)
+## pattern matchers + graph rewrites (the non-BEAM optimization path)
 
-# undocumented environment variables
+## undocumented environment variables
 
 There are a lot of random environment variables scattered around the tinygrad codebase, and most of these aren't documented at all. These are incredibly useful for debugging, profiling, and understanding what's going on. Here's a list of all the ones I've found so far:
 
@@ -222,7 +222,7 @@ BEAM=1 TRACK_MATCH_STATS=2 python your_script.py
 ```
 
 
-# random tweaks and issues
+## random tweaks and issues
 
 ## multilib handled poorly in c.py
 

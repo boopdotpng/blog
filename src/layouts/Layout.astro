@@ -1,22 +1,30 @@
 ---
 const isHome = Astro.url.pathname === '/';
 const {
-  title = 'ml, bio, coding | anuraag',
+  title = 'ml, bio, coding',
   description = 'thoughts on neural nets, chips, and cells',
   ogType = 'website',
   publishedTime,
   schemaArticle,
+  schema,
   favoriteSong,
+  robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
 } = Astro.props;
 
+const siteName = 'anuraag';
+const siteHandle = '@boopdotpng';
+const authorName = 'Anuraag Warudkar';
+const fullTitle = title.toLowerCase().includes(siteName) ? title : `${title} | ${siteName}`;
 const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).toString() : Astro.url.toString();
 const siteUrl = Astro.site ? new URL('/', Astro.site).toString() : canonicalUrl;
 const ogImageUrl = Astro.site ? new URL('/favicon.ico', Astro.site).toString() : '/favicon.ico';
+const twitterCard = ogImageUrl.endsWith('/favicon.ico') ? 'summary' : 'summary_large_image';
+const extraSchemas = Array.isArray(schema) ? schema : schema ? [schema] : [];
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
   "@id": `${siteUrl}#person`,
-  "name": "Anuraag Warudkar",
+  "name": authorName,
   "alternateName": ["anuraag", "anuraagw"],
   "url": siteUrl,
   "sameAs": [
@@ -25,14 +33,25 @@ const personSchema = {
   ],
   "jobTitle": "Software Engineer"
 };
-const websiteSchema = isHome ? {
+const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "@id": `${siteUrl}#website`,
-  "name": "anuraag",
+  "name": siteName,
   "url": siteUrl,
   "publisher": { "@id": `${siteUrl}#person` }
-} : null;
+};
+const pageSchema = {
+  "@context": "https://schema.org",
+  "@type": isHome ? "CollectionPage" : "WebPage",
+  "@id": `${canonicalUrl}#webpage`,
+  "url": canonicalUrl,
+  "name": fullTitle,
+  "description": description,
+  "inLanguage": "en-US",
+  "isPartOf": { "@id": `${siteUrl}#website` },
+  "about": { "@id": `${siteUrl}#person` }
+};
 let articleSchema = schemaArticle ? {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -42,10 +61,18 @@ let articleSchema = schemaArticle ? {
   "dateModified": schemaArticle.updatedTime ?? schemaArticle.publishedTime,
   "mainEntityOfPage": { "@type": "WebPage", "@id": canonicalUrl },
   "author": { "@id": `${siteUrl}#person` },
-  "publisher": { "@id": `${siteUrl}#person` }
+  "publisher": { "@id": `${siteUrl}#person` },
+  "inLanguage": "en-US",
+  "isPartOf": { "@id": `${siteUrl}#website` }
 } : null;
 if (articleSchema && schemaArticle?.imageUrl) {
   articleSchema = { ...articleSchema, image: [schemaArticle.imageUrl] };
+}
+if (articleSchema && schemaArticle?.section) {
+  articleSchema = { ...articleSchema, articleSection: schemaArticle.section };
+}
+if (articleSchema && schemaArticle?.wordCount) {
+  articleSchema = { ...articleSchema, wordCount: schemaArticle.wordCount };
 }
 ---
 <!DOCTYPE html>
@@ -54,30 +81,35 @@ if (articleSchema && schemaArticle?.imageUrl) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content={description} />
-  <meta
-    name="robots"
-    content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
-  />
+  <meta name="author" content={authorName} />
+  <meta name="robots" content={robots} />
 
-  <title>{title}</title>
+  <title>{fullTitle}</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon" />
   <link rel="preload" href="/fonts/GoogleSansCode-Variable.ttf" as="font" type="font/ttf" crossorigin />
   <link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.ttf" as="font" type="font/ttf" crossorigin />
   <link rel="stylesheet" href="/katex.min.css" />
   <link rel="stylesheet" href="/markdown.css" />
   <link rel="canonical" href={canonicalUrl} />
+  <link rel="alternate" hreflang="en-US" href={canonicalUrl} />
   <link rel="alternate" type="application/rss+xml" title="anuraag — notes" href="/rss.xml" />
 
-  <meta property="og:title" content={title} />
+  <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={description} />
   <meta property="og:type" content={ogType} />
   <meta property="og:url" content={canonicalUrl} />
   <meta property="og:image" content={ogImageUrl} />
+  <meta property="og:image:alt" content={fullTitle} />
+  <meta property="og:locale" content="en_US" />
   <meta property="og:site_name" content="anuraag" />
   {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+  {schemaArticle?.updatedTime && <meta property="article:modified_time" content={schemaArticle.updatedTime} />}
+  {schemaArticle?.section && <meta property="article:section" content={schemaArticle.section} />}
 
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content={title} />
+  <meta name="twitter:card" content={twitterCard} />
+  <meta name="twitter:site" content={siteHandle} />
+  <meta name="twitter:creator" content={siteHandle} />
+  <meta name="twitter:title" content={fullTitle} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={ogImageUrl} />
 
@@ -384,9 +416,13 @@ if (articleSchema && schemaArticle?.imageUrl) {
   }
 </style>
 
-  <script type="application/ld+json">{JSON.stringify(personSchema)}</script>
-  {websiteSchema && <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>}
-  {articleSchema && <script type="application/ld+json">{JSON.stringify(articleSchema)}</script>}
+  <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(pageSchema)} />
+  {articleSchema && <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />}
+  {extraSchemas.map((entry) => (
+    <script type="application/ld+json" set:html={JSON.stringify(entry)} />
+  ))}
 
 </head>
 <body>

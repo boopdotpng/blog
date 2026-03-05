@@ -35,7 +35,7 @@ local = (16, 1, 1)
 global_ = (16, 1, 1) 
 ```
 
-# launch kernel 
+## launch kernel 
 
 ```py
 prg(a._buf, out._buf, global_size=global_, local_size=local, wait=True)
@@ -234,7 +234,7 @@ We don't need a final "wait-for-memory" instruction after our global store; in m
 ## tinygrad's kernel (LLVM-generated)
 
 ```py
-# DEBUG=7, AMD_LLVM=1
+## DEBUG=7, AMD_LLVM=1
 from tinygrad import Tensor, dtypes
 a = Tensor.arange(15, dtype=dtypes.float32).realize()
 print((a+1.0).realize().numpy()) # we're disassembling this kernel

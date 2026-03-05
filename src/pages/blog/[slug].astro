@@ -23,10 +23,15 @@ const parseLocalDate = (dateString: string) => {
   const [, year, month, day] = match;
   return new Date(Number(year), Number(month) - 1, Number(day));
 };
+const parseIsoDate = (dateString?: string) => {
+  if (!dateString) return undefined;
+  const date = new Date(`${dateString}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
 const publishedTime = (() => {
-  const date = parseLocalDate(post.data.pubDate);
-  return date ? date.toISOString() : undefined;
+  return parseIsoDate(post.data.pubDate);
 })();
+const updatedTime = parseIsoDate(post.data.updatedDate);
 const displayDate = (() => {
   const date = parseLocalDate(post.data.pubDate);
   return date
@@ -39,6 +44,10 @@ const readingTimeMinutes = (() => {
   const words = body ? body.split(/\s+/).length : 0;
   const multiplier = post.data.cat === 'code' ? 1.3 : 1;
   return Math.max(1, Math.round((words / 200) * multiplier)) || 2;
+})();
+const wordCount = (() => {
+  const body = typeof post.body === 'string' ? post.body.trim() : '';
+  return body ? body.split(/\s+/).length : undefined;
 })();
 const readingTimeLabel = (() => {
   if (readingTimeMinutes < 60) {
@@ -304,6 +313,9 @@ article.post-plain :global(img[width]) {
     title: post.data.title,
     description,
     publishedTime,
+    updatedTime,
+    section: post.data.cat,
+    wordCount,
   }}
 >
   {showTocRail && (

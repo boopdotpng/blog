@@ -4,6 +4,29 @@ import Home from '../components/Home.astro';
 import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog', ({ data }) => data.published);
+const sortedPosts = [...posts].sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
+const site = Astro.site ?? new URL('https://anuraagw.me');
+const homeUrl = new URL('/', site).toString();
+const homeSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  '@id': `${homeUrl}#collection`,
+  url: homeUrl,
+  name: 'anuraag — notes',
+  description: 'Field notes on systems, ML, GPUs, and biology, plus reverse engineering writeups and project updates.',
+  mainEntity: {
+    '@type': 'ItemList',
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    numberOfItems: sortedPosts.length,
+    itemListElement: sortedPosts.map((post, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: new URL(`/blog/${post.slug}`, site).toString(),
+      name: post.data.title,
+      description: post.data.description,
+    })),
+  },
+};
 const favoriteSong = {
   title: 'miss atomic bomb — the killers',
   url: 'https://open.spotify.com/track/1XsS266JiQtoqqLdlgD17V',
@@ -13,6 +36,7 @@ const favoriteSong = {
 <Layout
   title="anuraag — notes" 
   description="Field notes on systems, ML, GPUs, and biology, plus reverse engineering writeups and project updates."
+  schema={homeSchema}
   favoriteSong={favoriteSong}
 >
   <Home posts={posts} />
