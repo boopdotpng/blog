@@ -448,7 +448,7 @@
   font-family: var(--font-mono);
   font-size: 0.82em;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: lowercase;
   transition: color 0.68s ease;
 }
 

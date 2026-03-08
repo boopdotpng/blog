@@ -88,7 +88,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
 
   {pinnedPosts.length > 0 && (
     <div class="pinned-section">
-      <div class="section-header">PINNED</div>
+      <div class="section-header">pinned</div>
       <div class="pinned-grid">
         {pinnedPosts.map((post, idx) => (
           <a class="pinned-card" href={`/blog/${post.slug}`}>
@@ -100,7 +100,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   )}
 
   <div class="index-section">
-    <div class="section-header">INDEX</div>
+    <div class="section-header">index</div>
     <ol class="post-index">
       {regularPosts.map((post, idx) => {
         const indexNum = String(regularPosts.length - idx).padStart(2, '0');
@@ -215,7 +215,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     letter-spacing: 0.2em;
     color: var(--fg-subtle);
     margin-bottom: 0.75rem;
-    text-transform: uppercase;
+    text-transform: lowercase;
   }
 
   .pinned-grid {
