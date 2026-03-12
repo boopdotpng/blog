@@ -93,6 +93,7 @@ This is how each part of the execution model maps to CUDA terms. Each parameter 
 | blockDim  | How many threads are in each block? |
 | threadIdx | Where in the block is this thread?  |
 | gridDim   | How many total blocks are there?    |
+
 <svg viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
   <!-- Outer Grid Box -->
   <rect x="20" y="20" width="660" height="470" fill="#f5f3ef" stroke="#999" stroke-width="1.5"/>

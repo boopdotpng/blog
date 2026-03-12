@@ -143,6 +143,7 @@ There are two computation paths: the SFPU and the Matrix engine. They ultimately
 | ---------- | ------------------------- | ------------------------ | ----------------------------- |
 | dst16b     | 1024 rows × 16 cols × 16b | 16 tiles (8 per half)    | bfloat16/float16 accumulation |
 | dst32b     | 512 rows × 16 cols × 32b  | 8 tiles (4 per half)<br> | fp32 accumulation             |
+
 In 32-bit mode, each logical row spans two physical rows (high 16b in row R, low 16b in row R+8), so same physical storage, half the logical rows. 
 #### matrix engine / fpu 
 The FPU uses 4 registers, 2 srcA and 2 srcB. Both are 64 rows by 16 cols, 19 bits per entry. The entries are 19 bits wide to accommodate tf32 inputs. In 16-bit datatypes, the low 3 mantissa bits are zeroed. Interestingly, the bits are stored in a shuffled layout: {Sign, Mantissa, Exponent}, not the typical IEEE order.
@@ -176,6 +177,7 @@ If the FPU tries to read from a bank that the unpackers haven't finished writing
 | SHIFTXA     | shift 16 srcA rows by 1 column. the vacated lane is zero-filled.                                                                                                                                                                    |                                  |
 | SHIFTXB     | shifts a single configurable row of srcB left by 1 column. `ShiftInZero=0` rotates cyclically; `ShiftInZero=1` zero-fills. 2-cycle latency, 1-cycle dead after each.                                                                |                                  |
 | TRNSPSRCB   | In-place matrix transpose of SrcB rows 16-31. Hardwired. 1-cycle latency.                                                                                                                                                           |                                  |
+
 The AddDst flag on `ELWADD` and `ELWSUB` gives you `dst += srcA + srcB` at 2x the throughput of the non-accumulating version. 
 
 `GMPOOL` also supports `ArgMax=true` for getting the index of the max element.
@@ -208,6 +210,7 @@ Each phase just replays the same `MVMUL` instructions again, with a register con
 | `SFPSHFT2`     | Lane rotation/shift (move data between SIMD lanes)           | 1 cycle                   |
 | `SFPLOADI`     | Load immediate constant → LReg (BF16, FP16, INT, etc.)       | 1 cycle                   |
 | `SFPCONFIG`    | Write LReg[0] lane 0 → constant register LReg[11–14]         | 1 cycle                   |
+
 **SFPLoad format conversion**
 `SFPLOAD` also converts from Dst's shuffled bit layout to proper F32 in Lreg:
 
@@ -251,6 +254,7 @@ There are a lot of core instructions that are missing from the FPU op-set; for t
 | Unary math           | `abs`, `neg`, `sign`, `square`, `power`, `clamp`                                                      |
 | Reductions (non-max) | `cumsum`, `reduce_sum`, Welford's mean/variance                                                       |
 | Special              | `dropout` (PRNG), `topk`, `polyval`, `fill`                                                           |
+
 ### MOP (micro-op processor) and the replay buffer
 
 These are **two separate hardware stages** in the Tensix frontend pipeline that work together to keep the FPU fed at 1 instruction/cycle without the RISC-V core having to push every single instruction manually.
