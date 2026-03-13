@@ -131,6 +131,21 @@
   overflow-wrap: break-word;
 }
 
+/* --- KaTeX display math: scrollable on overflow --- */
+.markdown-body .katex-display {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--surface-elev);
+  padding: 0.5em 0;
+}
+
+.markdown-body .katex-display::-webkit-scrollbar { height: 8px; }
+.markdown-body .katex-display::-webkit-scrollbar-track { background: var(--surface-elev); border-radius: 6px; }
+.markdown-body .katex-display::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
+.markdown-body .katex-display::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
+
 .markdown-body .md-table-wrap {
   --table-right-bleed: 0px;
   --table-base-width: calc(100% - var(--table-right-bleed));
@@ -282,6 +297,22 @@
 :root[data-theme='dark'] .markdown-body img[src$='.svg'],
 :root[data-theme='dark'] .markdown-body img[src*='.svg?'] {
   filter: invert(0.94) hue-rotate(180deg) saturate(0.92) contrast(0.95);
+}
+
+/* Keep KaTeX's internal delimiter SVGs on KaTeX's own layout rules. */
+.markdown-body .katex svg {
+  display: block;
+  width: 100%;
+  height: inherit;
+  margin: 0;
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+:root[data-theme='dark'] .markdown-body .katex svg {
+  filter: none;
 }
 
 @media (max-width: 600px) {

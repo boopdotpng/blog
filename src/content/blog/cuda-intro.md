@@ -593,17 +593,13 @@ a_{20} & a_{21} & a_{22} & a_{23} \\
 a_{30} & a_{31} & a_{32} & a_{33}
 \end{array}
 \right]
-$$
-$$
-\left[
-\begin{array}{cc}
+\qquad
+\begin{bmatrix}
 b_{00} & b_{01} \\
 b_{10} & b_{11} \\
-\hline
 b_{20} & b_{21} \\
 b_{30} & b_{31}
-\end{array}
-\right]
+\end{bmatrix}
 $$
 Each thread in the block loads and multiplies elements from these tiles to calculate the value of C at the global row and column. During the first iteration where `tile_idx = 0` we load tiles: 
 $$
