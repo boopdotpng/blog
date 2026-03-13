@@ -49,8 +49,21 @@ async function fetchSvg(url: string) {
   return body;
 }
 
+async function hasCachedGraphs() {
+  for (const graph of graphs) {
+    if (!(await fileExists(graph.outputPath))) return false;
+  }
+
+  return true;
+}
+
 async function main() {
   await mkdir(path.resolve('public/images'), { recursive: true });
+
+  if (process.env.GITHUB_ACTIONS === 'true' && (await hasCachedGraphs())) {
+    console.log('[github-heat] using committed graph files in GitHub Actions');
+    return;
+  }
 
   let usedFallback = false;
 
