@@ -21,7 +21,7 @@ const homeSchema = {
     itemListElement: sortedPosts.map((post, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: new URL(`/blog/${post.slug}`, site).toString(),
+      url: new URL(`/blog/${post.id}`, site).toString(),
       name: post.data.title,
       description: post.data.description,
     })),

@@ -9,7 +9,7 @@ export async function GET(context) {
       title: post.data.title,
       pubDate: new Date(post.data.pubDate),
       description: post.data.description ?? '',
-      link: `/blog/${post.slug}`,
+      link: `/blog/${post.id}`,
     }));
 
   return rss({

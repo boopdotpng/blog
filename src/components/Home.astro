@@ -91,7 +91,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
       <div class="section-header">pinned</div>
       <div class="pinned-grid">
         {pinnedPosts.map((post, idx) => (
-          <a class="pinned-card" href={`/blog/${post.slug}`}>
+          <a class="pinned-card" href={`/blog/${post.id}`}>
             <span class="pinned-title">{post.data.title}</span>
           </a>
         ))}
@@ -108,7 +108,7 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
 
         return (
           <li class="index-item">
-            <a href={`/blog/${post.slug}`} class="index-link">
+            <a href={`/blog/${post.id}`} class="index-link">
               <span class="index-num">{indexNum}</span>
               <span class="index-title">{post.data.title}</span>
               <span class="index-meta">
