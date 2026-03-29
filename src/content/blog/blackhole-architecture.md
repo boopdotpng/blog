@@ -2,7 +2,7 @@
 title: tenstorrent blackhole architecture guide
 pubDate: "2026-02-28"
 published: true
-description: "a deep dive into the Tenstorrent Blackhole p100a: tile architecture, NoC, Tensix coprocessor, SFPU, and writing bare-metal kernels"
+description: "test"
 cat: hardware
 ---
 I bought a Tenstorrent blackhole p100a. The idea of a fully open source toolchain, from the kernel mode driver to the software stack that runs the models, is super exciting. Some parts of the card (like the firmware binaries for certain tiny components) aren't open source because of 3rd party IP, but this is pretty much the best it gets. You own every part of the card above the Verilog. 
