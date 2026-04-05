@@ -3,7 +3,7 @@ title: "rdna docs"
 pubDate: "2025-12-30"
 published: true 
 pinned: true 
-description: "human readable explained rdna documentation"
+description: "human-readable RDNA3 documentation — instruction set reference, wavefront execution, register layout, and memory model explained with examples."
 cat: "gpu"
 ---
 

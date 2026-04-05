@@ -5,6 +5,7 @@ published: false
 pinned: false
 description: "why collapsing academic standards and incentives are producing weaker outcomes."
 cat: "misc"
+useKatex: true
 ---
 
 > the question: "write a class that stores the points of a triangle and write a method to compute the perimeter and area."<br/>

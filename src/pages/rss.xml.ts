@@ -9,7 +9,8 @@ export async function GET(context) {
       title: post.data.title,
       pubDate: new Date(post.data.pubDate),
       description: post.data.description ?? '',
-      link: `/blog/${post.id}`,
+      link: new URL(`/blog/${post.id}`, context.site ?? 'https://anuraagw.me').href,
+      categories: post.data.cat ? [post.data.cat] : undefined,
     }));
 
   return rss({

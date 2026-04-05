@@ -5,6 +5,7 @@ published: false
 pinned: false
 description: "a walkthrough of conv2d math and tensor shapes, with tinygrad-specific context."
 cat: "ml"
+useKatex: true
 ---
 
 ** This blog is a work in progress. **

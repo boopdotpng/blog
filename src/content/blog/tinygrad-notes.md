@@ -4,7 +4,7 @@ pubDate: "2025-12-26"
 published: true
 pinned: true
 contents_table: true
-description: "notes and links while exploring tinygrad."
+description: "annotated notes on tinygrad internals — the scheduler, linearizer, codegen pipeline, and how the lazy tensor graph compiles to GPU kernels."
 cat: "ml"
 ---
 

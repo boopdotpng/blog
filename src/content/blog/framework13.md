@@ -3,8 +3,9 @@ title: "framework 13 review"
 pubDate: "2025-12-30"
 published: true 
 pinned: false
-description: "framework 13 review!"
+description: "hands-on review of the framework laptop 13 — build quality, repairability, linux support, and whether the modular dream holds up."
 cat: "misc"
+useKatex: true
 ---
 
 > tl;dr: 

@@ -14,6 +14,7 @@ const blog = defineCollection({
     pinned: z.boolean().optional().default(false),
     description: z.string().min(1).optional(),
     cat: z.string().optional(),
+    useKatex: z.boolean().optional().default(false),
   }).superRefine((data, ctx) => {
     if (data.published && !data.description?.trim()) {
       ctx.addIssue({

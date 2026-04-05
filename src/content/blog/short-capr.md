@@ -5,6 +5,7 @@ published: true
 pinned: false
 description: "why deramiocel will fail to hit its primary endpoint."
 cat: "bio"
+useKatex: true
 ---
 
 The full report can be found [here](https://anuraagw.me/reports/capricor.pdf). 

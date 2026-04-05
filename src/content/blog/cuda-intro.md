@@ -6,6 +6,7 @@ contents_table: true
 pinned: false
 description: "a practical intro to gpu architecture and performance, building toward an efficient sgemm kernel."
 cat: "gpu"
+useKatex: true
 ---
 
 This post is an in depth overview on GPU architecture and how to write performant GPU code. It covers execution hierarchy, memory layout, scheduling, memory access patterns, and basic profiling. The goal is to build enough knowledge to write a SGEMM (single precision general matrix multiply) kernel that achieves 50% of theoretical GPU FLOPS. 

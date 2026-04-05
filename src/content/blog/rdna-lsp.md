@@ -3,7 +3,7 @@ title: "amdgpu lsp + vs code extension"
 pubDate: "2025-12-25"
 published: true
 pinned: false
-description: "why are there no amdgpu / rdna development tools?"
+description: "building an LSP and VS Code extension for RDNA assembly — autocomplete, hover docs, and diagnostics for AMD GPU shader development."
 cat: "gpu"
 ---
 

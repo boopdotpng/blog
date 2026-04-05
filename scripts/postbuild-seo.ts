@@ -18,9 +18,9 @@ async function main() {
   const sitemapZero = path.join(distDir, 'sitemap-0.xml');
   const sitemap = path.join(distDir, 'sitemap.xml');
 
-  if (await fileExists(sitemapIndex)) {
-    await copyFile(sitemapIndex, sitemap);
-  } else if (await fileExists(sitemapZero)) {
+  if (await fileExists(sitemapZero)) {
+    await copyFile(sitemapZero, sitemap);
+  } else if (await fileExists(sitemapIndex)) {
     await copyFile(sitemapZero, sitemap);
   } else {
     throw new Error(
