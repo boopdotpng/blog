@@ -11,7 +11,7 @@ const { id, name, docCount } = Astro.props as Props;
 <a class="folder-card" href={`/folder/${id}`}>
   <div class="folder-icon">📁</div>
   <div class="folder-content">
-    <span class="folder-name">{name}</span>
+    <span class="folder-name">{name.toLowerCase()}</span>
     <span class="folder-meta">{docCount} doc{docCount !== 1 ? 's' : ''}</span>
   </div>
 </a>
@@ -37,8 +37,10 @@ const { id, name, docCount } = Astro.props as Props;
   }
 
   .folder-icon {
-    font-size: 1.5rem;
+    font-size: 0.9rem;
     flex-shrink: 0;
+    font-family: var(--font-mono);
+    color: var(--fg-subtle);
   }
 
   .folder-content {

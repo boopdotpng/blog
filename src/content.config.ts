@@ -27,7 +27,7 @@ const blog = defineCollection({
 });
 
 const folders = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/folders' }),
+  loader: glob({ pattern: '**/*.md', base: './src/content/folders', ignore: ['**/CLAUDE.md'] }),
   schema: z.object({
     title: z.string(),
     pubDate: isoDate,

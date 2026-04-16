@@ -63,7 +63,7 @@ const readingTimeLabel = (() => {
 })();
 
 const folderName = folderId ? folderId.replace(/-/g, ' ') : '';
-const folderTitle = folderName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+const folderTitle = folderName; // lowercase
 const pageTitle = `${doc.data.title} — ${folderTitle}`;
 ---
 
