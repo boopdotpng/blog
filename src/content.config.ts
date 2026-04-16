@@ -26,4 +26,25 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+const folders = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/folders' }),
+  schema: z.object({
+    title: z.string(),
+    pubDate: isoDate,
+    updatedDate: isoDate.optional(),
+    published: z.boolean().optional().default(true),
+    contents_table: z.boolean().optional().default(false),
+    description: z.string().min(1).optional(),
+    useKatex: z.boolean().optional().default(false),
+  }).superRefine((data, ctx) => {
+    if (data.published && !data.description?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Published documents must include a description for SEO.',
+        path: ['description'],
+      });
+    }
+  }),
+});
+
+export const collections = { blog, folders };

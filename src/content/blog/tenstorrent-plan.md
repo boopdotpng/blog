@@ -1,7 +1,7 @@
 ---
 title: the tenstorrent plan
 pubDate: "2026-03-28"
-published: false
+published: true
 description: "a vision"
 cat: hardware
 ---
@@ -13,7 +13,7 @@ It also has decent profiling through two independent systems, which you can look
 - Hardware profile counters that show FPU/SFPU/MATH/UNPACK/PACK utilization, along with lots of misc statistics 
 - Cycle counts of instructions with `DeviceZoneScopedN("DRAM_READ_IN1")`. This just copies start/end cycle pairs to L1, which are then read back to host after the kernel ends. There's enough space for ~120 pairs in L1, but this can be increased if your CBs don't occupy the entire L1. 
 
-Together, you can get a pretty good idea of why your kernel is slow, but I don't think this is necessary, for the following reason: there's only one way to write a given operation. There's almost no knobs to optimize or tweak. Consider a matmul+add kernel. You have to run a `MVMUL` instruction, then `SFPADD`. No other combinations. The only thing we have control over is how many kernels we can fuse together. From that standpoint, profiling is not necessary at all, because how are you going to write the kernel differently? 
+Together, you can get a pretty good idea of why your kernel is slow, but I don't think this is necessary for the following reason: there's only one way to write a given operation. There's almost no knobs to optimize or tweak. Consider a matmul+add kernel. You have to run a `MVMUL` instruction, then `SFPADD`. No other combinations. The only thing we have control over is how many kernels we can fuse together. From that standpoint, profiling is not necessary at all, because how are you going to write the kernel differently? 
 
 Reader dataflow kernels can be hardcoded based on the number and datatypes of input+output tensors. Because of the limited L1 space, you're limited to 3-4 tensors per kernel (CBs).
 

@@ -44,7 +44,46 @@ function getBlogMetadataByPathname() {
   return byPathname;
 }
 
+function getFoldersMetadataByPathname() {
+  const byPathname = new Map();
+  const foldersDir = path.resolve('src/content/folders');
+
+  try {
+    const folderEntries = fs.readdirSync(foldersDir, { withFileTypes: true });
+    for (const folderEntry of folderEntries) {
+      if (!folderEntry.isDirectory()) continue;
+
+      const folderId = folderEntry.name;
+      const folderPath = path.join(foldersDir, folderId);
+      const fileEntries = fs.readdirSync(folderPath, { withFileTypes: true });
+
+      // Add folder index page
+      const folderPathname = `/folder/${folderId}`;
+      byPathname.set(folderPathname, { published: true, pubDate: undefined });
+
+      // Add individual documents
+      for (const fileEntry of fileEntries) {
+        if (!fileEntry.isFile()) continue;
+        if (!fileEntry.name.endsWith('.md') && !fileEntry.name.endsWith('.mdx')) continue;
+
+        const slug = fileEntry.name.replace(/\.(md|mdx)$/, '');
+        const filePath = path.join(folderPath, fileEntry.name);
+        const file = fs.readFileSync(filePath, 'utf8');
+
+        const { published, pubDate } = parseBlogFrontmatter(file);
+        const docPathname = `/folder/${folderId}/${slug}`;
+        byPathname.set(docPathname, { published, pubDate });
+      }
+    }
+  } catch {
+    // Best-effort only; sitemap generation still works without per-post lastmod.
+  }
+
+  return byPathname;
+}
+
 const BLOG_METADATA_BY_PATHNAME = getBlogMetadataByPathname();
+const FOLDERS_METADATA_BY_PATHNAME = getFoldersMetadataByPathname();
 
 export default defineConfig({
   site: process.env.SITE_URL ?? 'https://anuraagw.me',
@@ -59,25 +98,38 @@ export default defineConfig({
 
         const normalizedPathname = pathname.replace(/\/$/, '') || '/';
         const blogMeta = BLOG_METADATA_BY_PATHNAME.get(normalizedPathname);
+        const foldersMeta = FOLDERS_METADATA_BY_PATHNAME.get(normalizedPathname);
+
         if (blogMeta && !blogMeta.published) return false;
+        if (foldersMeta && !foldersMeta.published) return false;
 
         return true;
       },
       serialize: (item) => {
         const pathname = new URL(item.url).pathname.replace(/\/$/, '') || '/';
         const blogMeta = BLOG_METADATA_BY_PATHNAME.get(pathname);
-        const blogLastmod = (() => {
-          if (!blogMeta?.pubDate) return undefined;
-          const lastmod = new Date(`${blogMeta.pubDate}T00:00:00.000Z`);
-          return Number.isNaN(lastmod.getTime()) ? undefined : lastmod.toISOString();
-        })();
+        const foldersMeta = FOLDERS_METADATA_BY_PATHNAME.get(pathname);
 
-        if (blogLastmod) {
-          return { ...item, lastmod: blogLastmod, changefreq: 'monthly', priority: 0.7 };
+        const getLastmod = (meta) => {
+          if (!meta?.pubDate) return undefined;
+          const lastmod = new Date(`${meta.pubDate}T00:00:00.000Z`);
+          return Number.isNaN(lastmod.getTime()) ? undefined : lastmod.toISOString();
+        };
+
+        const blogLastmod = getLastmod(blogMeta);
+        const foldersLastmod = getLastmod(foldersMeta);
+        const lastmod = blogLastmod || foldersLastmod;
+
+        if (lastmod) {
+          return { ...item, lastmod, changefreq: 'monthly', priority: 0.7 };
         }
 
         if (pathname === '/') {
           return { ...item, changefreq: 'weekly', priority: 1.0 };
+        }
+
+        if (pathname.startsWith('/folder/')) {
+          return { ...item, changefreq: 'weekly', priority: 0.6 };
         }
 
         return { ...item, changefreq: 'monthly', priority: 0.5 };
