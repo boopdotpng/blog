@@ -34,37 +34,20 @@ const parseIsoDate = (dateString?: string) => {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 };
 const publishedTime = parseIsoDate(doc.data.pubDate);
-const updatedTime = parseIsoDate(doc.data.updatedDate);
-const displayDate = (() => {
-  const date = parseLocalDate(doc.data.pubDate);
-  return date
-    ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase()
-    : doc.data.pubDate;
-})();
+const pubDate = parseLocalDate(doc.data.pubDate);
+const displayDate = pubDate
+  ? pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase()
+  : doc.data.pubDate;
 const description = doc.data.description ?? 'a document';
-const readingTimeMinutes = (() => {
-  const body = typeof doc.body === 'string' ? doc.body.trim() : '';
-  const words = body ? body.split(/\s+/).length : 0;
-  return Math.max(1, Math.round(words / 200)) || 2;
-})();
-const wordCount = (() => {
-  const body = typeof doc.body === 'string' ? doc.body.trim() : '';
-  return body ? body.split(/\s+/).length : undefined;
-})();
-const readingTimeLabel = (() => {
-  if (readingTimeMinutes < 60) {
-    return `approx ${readingTimeMinutes}m read`;
-  }
-  const hours = Math.floor(readingTimeMinutes / 60);
-  const minutes = readingTimeMinutes % 60;
-  return minutes
-    ? `approx ${hours}h ${minutes}m read`
-    : `approx ${hours}h read`;
-})();
+const body = typeof doc.body === 'string' ? doc.body.trim() : '';
+const words = body ? body.split(/\s+/).length : 0;
+const readingTimeMinutes = Math.max(1, Math.round(words / 200));
+const readingTimeLabel = readingTimeMinutes < 60
+  ? `approx ${readingTimeMinutes}m read`
+  : `approx ${Math.floor(readingTimeMinutes / 60)}h${readingTimeMinutes % 60 ? ` ${readingTimeMinutes % 60}m` : ''} read`;
 
 const folderName = folderId ? folderId.replace(/-/g, ' ') : '';
-const folderTitle = folderName; // lowercase
-const pageTitle = `${doc.data.title} — ${folderTitle}`;
+const pageTitle = `${doc.data.title} — ${folderName}`;
 ---
 
 <style>
@@ -300,14 +283,13 @@ article.post-plain :global(img[width]) {
   title={pageTitle}
   description={description}
   ogType="article"
-  publishedTime={publishedTime}
   useKatex={doc.data.useKatex}
   schema={{
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "home", "item": "https://anuraagw.me" },
-      { "@type": "ListItem", "position": 2, "name": folderTitle, "item": `https://anuraagw.me/folder/${folderId}` },
+      { "@type": "ListItem", "position": 2, "name": folderName, "item": `https://anuraagw.me/folder/${folderId}` },
       { "@type": "ListItem", "position": 3, "name": doc.data.title },
     ],
   }}
@@ -341,7 +323,7 @@ article.post-plain :global(img[width]) {
         <span class="post-meta-sep">•</span>
         <a href={`/folder/${folderId}`} class="folder-context">
           <span class="folder-icon">📁</span>
-          <span>{folderTitle}</span>
+          <span>{folderName}</span>
         </a>
       </div>
       <h1 class="post-title-main">{doc.data.title}</h1>

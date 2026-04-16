@@ -1,8 +1,8 @@
 ---
-title: "Fpu Operations"
+title: "fpu operations"
 pubDate: "2025-04-16"
 published: true
-description: "The **Matrix Unit (FPU)** is one of the nine shared backend execution units in the Tensix"
+description: "Matrix Unit (FPU) operations on SrcA/SrcB/Dest register files, supporting MVMUL, elementwise ops, MOV*, and gated operations with register-write counter (RWC) addressing."
 ---
 
 # FPU (Matrix Unit) Operations

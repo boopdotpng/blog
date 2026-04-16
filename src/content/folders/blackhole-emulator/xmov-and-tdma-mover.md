@@ -1,8 +1,8 @@
 ---
-title: "Xmov And Tdma Mover"
+title: "xmov and tdma mover"
 pubDate: "2025-04-16"
 published: true
-description: "The Mover is a hardware DMA block inside every Tensix tile that performs bulk data transfers between L1, the Tensix Back"
+description: "Mover hardware DMA block accessible via XMOV instruction or TDMA-RISC registers: 16-byte aligned transfers between L1, backend config space, and instruction RAM."
 ---
 
 # XMOV Instruction and TDMA Mover

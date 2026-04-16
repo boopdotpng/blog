@@ -1,8 +1,8 @@
 ---
-title: "Logical To Virtual Coordinates"
+title: "logical to virtual coordinates"
 pubDate: "2025-04-16"
 published: true
-description: "Blackhole firmware operates with three coordinate systems for Tensix worker tiles. This document specifies the runtime t"
+description: "Three coordinate systems for Tensix tiles: physical (NOC mesh), virtual (post-NIU translation), and logical (sequential, harvesting-agnostic) with runtime translation tables."
 ---
 
 # Logical-to-Virtual Coordinate Mapping

@@ -3,6 +3,17 @@ import { glob } from 'astro/loaders';
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD dates');
 
+const requireDescriptionWhenPublished = (label: string) =>
+  (data: { published?: boolean; description?: string }, ctx: z.RefinementCtx) => {
+    if (data.published && !data.description?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Published ${label} must include a description for SEO.`,
+        path: ['description'],
+      });
+    }
+  };
+
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
   schema: z.object({
@@ -10,20 +21,10 @@ const blog = defineCollection({
     pubDate: isoDate,
     updatedDate: isoDate.optional(),
     published: z.boolean().optional().default(true),
-    contents_table: z.boolean().optional().default(false),
-    pinned: z.boolean().optional().default(false),
     description: z.string().min(1).optional(),
     cat: z.string().optional(),
     useKatex: z.boolean().optional().default(false),
-  }).superRefine((data, ctx) => {
-    if (data.published && !data.description?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Published posts must include a description for SEO.',
-        path: ['description'],
-      });
-    }
-  }),
+  }).superRefine(requireDescriptionWhenPublished('posts')),
 });
 
 const folders = defineCollection({
@@ -33,18 +34,9 @@ const folders = defineCollection({
     pubDate: isoDate,
     updatedDate: isoDate.optional(),
     published: z.boolean().optional().default(true),
-    contents_table: z.boolean().optional().default(false),
     description: z.string().min(1).optional(),
     useKatex: z.boolean().optional().default(false),
-  }).superRefine((data, ctx) => {
-    if (data.published && !data.description?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Published documents must include a description for SEO.',
-        path: ['description'],
-      });
-    }
-  }),
+  }).superRefine(requireDescriptionWhenPublished('documents')),
 });
 
 export const collections = { blog, folders };

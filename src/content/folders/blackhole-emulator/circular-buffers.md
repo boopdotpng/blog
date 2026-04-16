@@ -1,8 +1,8 @@
 ---
-title: "Circular Buffers"
+title: "circular buffers"
 pubDate: "2025-04-16"
 published: true
-description: "Circular Buffers (CBs) are the primary data-passing mechanism between RISC-V data movement cores and the Tensix compute "
+description: "Circular Buffers (CBs) are hardware-tracked FIFOs in L1 memory that pass data between RISC-V data-movement cores and Tensix compute pipeline, with 64 CBs per tile."
 ---
 
 # Circular Buffers and Tile Headers

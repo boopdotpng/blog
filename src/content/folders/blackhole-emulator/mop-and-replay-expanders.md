@@ -1,8 +1,8 @@
 ---
-title: "Mop And Replay Expanders"
+title: "mop and replay expanders"
 pubDate: "2025-04-16"
 published: true
-description: "Two per-thread frontend units that expand single instructions into long sequences,"
+description: "MOP Expander and Replay Expander chain: MOP instruction expands to up to 32639 instructions, Replay Expander further expands REPLAY to up to 64 instructions."
 ---
 
 # MOP Expander and Replay Expander

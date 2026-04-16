@@ -1,8 +1,8 @@
 ---
-title: "Additional Scalar Unit Instructions"
+title: "additional scalar unit instructions"
 pubDate: "2025-04-16"
 published: true
-description: "Four additional Scalar Unit (ThCon) instructions operate on the GPR file. They are used infrequently in LLK kernels (~40"
+description: "Four additional Scalar Unit (ThCon) instructions (SHIFTDMAREG, BITWOPDMAREG, CMPDMAREG, SUBDMAREG) that operate on the GPR file, used infrequently but required for modeling completeness."
 ---
 
 # Additional Scalar Unit Instructions

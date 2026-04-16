@@ -1,8 +1,8 @@
 ---
-title: "Sfpu Operations"
+title: "sfpu operations"
 pubDate: "2025-04-16"
 published: true
-description: "The Vector Unit (SFPU) is a 32-lane SIMD unit inside the Tensix coprocessor. Each lane operates on 32-bit values indepen"
+description: "32-lane Vector Unit (SFPU) with 5 sub-units (Load, Simple, MAD, Round, Store) operating on 32-bit LRegs, supporting arithmetic, transcendental, and LUT-based operations."
 ---
 
 # Vector Unit (SFPU) Operations

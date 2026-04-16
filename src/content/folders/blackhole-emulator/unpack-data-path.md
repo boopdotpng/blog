@@ -1,8 +1,8 @@
 ---
-title: "Unpack Data Path"
+title: "unpack data path"
 pubDate: "2025-04-16"
 published: true
-description: "The Tensix coprocessor has **two unpackers**: Unpacker 0 (moves L1 data to SrcA or directly to Dest) and Unpacker 1 (mov"
+description: "Two unpackers that read L1 tile data, perform format conversion, and write to SrcA/SrcB register files, with address and data path configuration for tiling operations."
 ---
 
 # Unpack Data Path

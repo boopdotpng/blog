@@ -1,8 +1,8 @@
 ---
-title: "Noc Atomics"
+title: "noc atomics"
 pubDate: "2025-04-16"
 published: true
-description: "The NIU (Network Interface Unit) supports atomic read-modify-write operations against L1 memory of Tensix and Ethernet t"
+description: "NIU atomic operations on L1 memory: INCR_GET, INCR_GET_PTR, SWAP, CAS, ACC (accumulate), GET_TILE_MAP, STORE_IND, and RISC-V Zaamo via NOC."
 ---
 
 # NOC Atomic Operations

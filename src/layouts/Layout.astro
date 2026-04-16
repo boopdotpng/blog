@@ -4,7 +4,6 @@ const {
   title = 'ml, bio, coding',
   description = 'thoughts on neural nets, chips, and cells',
   ogType = 'website',
-  publishedTime,
   schemaArticle,
   schema,
   favoriteSong,
@@ -100,7 +99,6 @@ if (articleSchema && schemaArticle?.wordCount) {
   {useKatex && <link rel="stylesheet" href="/katex.min.css" />}
   <link rel="stylesheet" href="/markdown.css" />
   <link rel="canonical" href={canonicalUrl} />
-  <link rel="alternate" hreflang="en-US" href={canonicalUrl} />
   <link rel="alternate" type="application/rss+xml" title="anuraag — notes" href="/rss.xml" />
 
   <meta property="og:title" content={fullTitle} />
@@ -113,7 +111,7 @@ if (articleSchema && schemaArticle?.wordCount) {
   {ogImage && <meta property="og:image:height" content="630" />}
   <meta property="og:locale" content="en_US" />
   <meta property="og:site_name" content="anuraag" />
-  {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+  {schemaArticle?.publishedTime && <meta property="article:published_time" content={schemaArticle.publishedTime} />}
   {schemaArticle?.updatedTime && <meta property="article:modified_time" content={schemaArticle.updatedTime} />}
   {schemaArticle?.section && <meta property="article:section" content={schemaArticle.section} />}
 
@@ -419,18 +417,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     padding-bottom: 4rem;
   }
 
-  .post-card {
-    display: block;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--border-muted);
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .post-card:hover {
-    background: var(--surface-elev);
-  }
 </style>
 
   <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
@@ -504,7 +490,10 @@ if (articleSchema && schemaArticle?.wordCount) {
         button.setAttribute('aria-pressed', String(theme === 'dark'));
       };
 
-      setTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
+      // Sync ARIA state with theme set by the head script
+      const initial = root.dataset.theme === 'dark' ? 'dark' : 'light';
+      button.setAttribute('aria-label', initial === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      button.setAttribute('aria-pressed', String(initial === 'dark'));
 
       button.addEventListener('click', () => {
         root.classList.add('theme-changing');

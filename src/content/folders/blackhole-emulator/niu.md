@@ -1,8 +1,8 @@
 ---
-title: "Niu"
+title: "niu"
 pubDate: "2025-04-16"
 published: true
-description: "Each Tensix tile has **2 NIU instances** (NoC0 and NoC1), memory-mapped into the tile's private address space:"
+description: "NIU (Network Interface Unit) with 2 instances per tile (NoC0/NoC1), 4 command buffers, configuration, status counters; handles NOC transaction generation and routing."
 ---
 
 # NIU Emulator Specification (Blackhole)

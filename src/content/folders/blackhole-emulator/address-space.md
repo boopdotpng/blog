@@ -1,8 +1,8 @@
 ---
-title: "Address Space"
+title: "address space"
 pubDate: "2025-04-16"
 published: true
-description: "Complete address map for a single Tensix tile, from the perspective of the 5 on-tile RISC-V cores (BRISC, NCRISC, TRISC0"
+description: "Complete 32-bit address map for Tensix tile memory: L1 scratchpad, LDM, MMIO registers, instruction buffers, and semaphore windows visible to on-tile RISC-V cores."
 ---
 
 # Blackhole Tensix Tile Address Space

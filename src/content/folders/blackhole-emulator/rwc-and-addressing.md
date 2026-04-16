@@ -1,8 +1,8 @@
 ---
-title: "Rwc And Addressing"
+title: "rwc and addressing"
 pubDate: "2025-04-16"
 published: true
-description: "This document specifies how the Tensix coprocessor tracks position within tiles during"
+description: "RWC (Read-Write Counters) and ADC (Address Counters) for tile addressing: RWCs track register-file row positions, ADCs track L1 coordinates during pack/unpack operations."
 ---
 
 # RWC and Addressing — Blackhole Tensix Coprocessor

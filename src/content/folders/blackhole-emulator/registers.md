@@ -1,8 +1,8 @@
 ---
-title: "Registers"
+title: "registers"
 pubDate: "2025-04-16"
 published: true
-description: "Analysis of which CSRs and tile control/debug registers the emulator actually"
+description: "Which CSRs and tile registers the emulator must model: cfg0 (BFloat mode), SOFT_RESET_0 (core reset), and various control registers with firmware-observable effects."
 ---
 
 # Registers: What to Emulate

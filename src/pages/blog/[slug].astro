@@ -28,38 +28,20 @@ const parseIsoDate = (dateString?: string) => {
   const date = new Date(`${dateString}T00:00:00.000Z`);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 };
-const publishedTime = (() => {
-  return parseIsoDate(post.data.pubDate);
-})();
+const publishedTime = parseIsoDate(post.data.pubDate);
 const updatedTime = parseIsoDate(post.data.updatedDate);
-const displayDate = (() => {
-  const date = parseLocalDate(post.data.pubDate);
-  return date
-    ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase()
-    : post.data.pubDate;
-})();
+const pubDate = parseLocalDate(post.data.pubDate);
+const displayDate = pubDate
+  ? pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase()
+  : post.data.pubDate;
 const description = post.data.description ?? 'a short post on something';
-const readingTimeMinutes = (() => {
-  const body = typeof post.body === 'string' ? post.body.trim() : '';
-  const words = body ? body.split(/\s+/).length : 0;
-  const multiplier = post.data.cat === 'code' ? 1.3 : 1;
-  return Math.max(1, Math.round((words / 200) * multiplier)) || 2;
-})();
-const wordCount = (() => {
-  const body = typeof post.body === 'string' ? post.body.trim() : '';
-  return body ? body.split(/\s+/).length : undefined;
-})();
-const readingTimeLabel = (() => {
-  if (readingTimeMinutes < 60) {
-    return `approx ${readingTimeMinutes}m read`;
-  }
-
-  const hours = Math.floor(readingTimeMinutes / 60);
-  const minutes = readingTimeMinutes % 60;
-  return minutes
-    ? `approx ${hours}h ${minutes}m read`
-    : `approx ${hours}h read`;
-})();
+const body = typeof post.body === 'string' ? post.body.trim() : '';
+const wordCount = body ? body.split(/\s+/).length : 0;
+const multiplier = post.data.cat === 'code' ? 1.3 : 1;
+const readingTimeMinutes = Math.max(1, Math.round((wordCount / 200) * multiplier));
+const readingTimeLabel = readingTimeMinutes < 60
+  ? `approx ${readingTimeMinutes}m read`
+  : `approx ${Math.floor(readingTimeMinutes / 60)}h${readingTimeMinutes % 60 ? ` ${readingTimeMinutes % 60}m` : ''} read`;
 ---
 <style>
 :root {
@@ -308,7 +290,6 @@ article.post-plain :global(img[width]) {
   title={post.data.title}
   description={description}
   ogType="article"
-  publishedTime={publishedTime}
   useKatex={post.data.useKatex}
   ogImage={`/og/${post.id}.png`}
   schemaArticle={{
@@ -317,7 +298,7 @@ article.post-plain :global(img[width]) {
     publishedTime,
     updatedTime,
     section: post.data.cat,
-    wordCount,
+    wordCount: wordCount || undefined,
     imageUrl: new URL(`/og/${post.id}.png`, Astro.site ?? 'https://anuraagw.me').href,
   }}
   schema={{

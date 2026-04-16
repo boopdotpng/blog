@@ -1,8 +1,8 @@
 ---
-title: "Execution Model"
+title: "execution model"
 pubDate: "2025-04-16"
 published: true
-description: "The emulator is a cycle-approximate, single-threaded Python program that models the entire Blackhole device. No OS threa"
+description: "Cycle-approximate Python emulator using single-threaded round-robin scheduling: RISC-V cores step once, Tensix coprocessor processes one per-thread instruction, NOC ticks."
 ---
 
 # Execution Model and Scheduling

@@ -1,8 +1,8 @@
 ---
-title: "Firmware Upload"
+title: "firmware upload"
 pubDate: "2025-04-16"
 published: true
-description: "Each Tensix tile has **5 RISC-V cores**:"
+description: "Firmware upload and core boot process for 5 RISC-V cores (BRISC, NCRISC, TRISC0/1/2) on each tile, including reset sequencing and instruction cache invalidation."
 ---
 
 # Firmware Upload and Core Boot Process

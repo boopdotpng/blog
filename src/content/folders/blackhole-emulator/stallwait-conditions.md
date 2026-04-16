@@ -1,8 +1,8 @@
 ---
-title: "Stallwait Conditions"
+title: "stallwait conditions"
 pubDate: "2025-04-16"
 published: true
-description: "`STALLWAIT` (opcode `0xA2`) and `SEMWAIT` (opcode `0xA6`) are the primary synchronization instructions in the Tensix cop"
+description: "STALLWAIT and SEMWAIT synchronization instructions that install wait gates in the Tensix frontend pipeline to hold instructions until conditions are met."
 ---
 
 # STALLWAIT and SEMWAIT — Wait Gate Conditions

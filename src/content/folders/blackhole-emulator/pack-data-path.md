@@ -1,8 +1,8 @@
 ---
-title: "Pack Data Path"
+title: "pack data path"
 pubDate: "2025-04-16"
 published: true
-description: "This document covers the full data path of the `PACR` instruction: from reading Dest register file"
+description: "PACR packer data path: Dest register file → ADC addressing → format conversion → ReLU/activation → histogram → thresholding → quantization → L1 tile write."
 ---
 
 # PACR — Packer Data Path Specification (Blackhole)

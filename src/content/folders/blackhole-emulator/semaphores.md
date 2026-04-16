@@ -1,8 +1,8 @@
 ---
-title: "Semaphores"
+title: "semaphores"
 pubDate: "2025-04-16"
 published: true
-description: "There are two completely separate semaphore systems. They share the name but have nothing in common architecturally."
+description: "Two semaphore systems: Tensix hardware semaphores (8 counting, 4-bit value/max) and software semaphores (NOC atomics via semaphore window in PCBuf space)."
 ---
 
 # Semaphores

@@ -1,8 +1,8 @@
 ---
-title: "Instruction Push"
+title: "instruction push"
 pubDate: "2025-04-16"
 published: true
-description: "How RISC-V cores push 32-bit opcodes into the Tensix coprocessor's instruction FIFOs. See `tensix-coprocessor-pipeline.m"
+description: "Two mechanisms to push Tensix opcodes: MMIO stores to INSTRN_BUF_BASE and .ttinsn inline instructions (up to 4-way fusion), both feeding per-thread instruction FIFOs."
 ---
 
 # Instruction Push Mechanism

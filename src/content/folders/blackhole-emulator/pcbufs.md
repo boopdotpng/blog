@@ -1,8 +1,8 @@
 ---
-title: "Pcbufs"
+title: "pcbufs"
 pubDate: "2025-04-16"
 published: true
-description: "3 PCBufs per Tensix tile. Each is a 16-entry FIFO of 32-bit values from BRISC to one TRISC. They serve as the control/di"
+description: "3 PC Buffers (16-entry FIFOs) for control/dispatch from BRISC to each TRISC, with semaphore access window and coprocessor/MOP done check addresses."
 ---
 
 # PCBufs (PC Buffers)

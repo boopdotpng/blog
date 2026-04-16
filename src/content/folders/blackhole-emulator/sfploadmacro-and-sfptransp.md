@@ -1,8 +1,8 @@
 ---
-title: "Sfploadmacro And Sfptransp"
+title: "sfploadmacro and sfptransp"
 pubDate: "2025-04-16"
 published: true
-description: "Two SFPU instructions that are mentioned in the existing sfpu-operations.md but lack full functional models there. SFPLO"
+description: "SFPLOADMACRO enables IPC > 1 by scheduling pipelined operations; SFPTRANSP performs cross-lane data movement for row-wise reduction and transpose in Vector Unit."
 ---
 
 # SFPLOADMACRO and SFPTRANSP

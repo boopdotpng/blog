@@ -1,8 +1,8 @@
 ---
-title: "Specialty Fpu Operations"
+title: "specialty fpu operations"
 pubDate: "2025-04-16"
 published: true
-description: "Additional Matrix Unit instructions beyond MVMUL, ELWADD/SUB/MUL, GMPOOL, ZEROACC, ZEROSRC, and the MOV* family document"
+description: "Specialty Matrix Unit instructions: legacy neutered ops (CONV3S1/S2, APOOL3S1/S2, MPOOL3S1/S2) and functional specialties (GAPOOL, GATESRCRST, SHIFTXA/B, CLREXPHIST)."
 ---
 
 # Specialty FPU (Matrix Unit) Operations

@@ -1,8 +1,8 @@
 ---
-title: "Config Sync Instructions"
+title: "config sync instructions"
 pubDate: "2025-04-16"
 published: true
-description: "Four instructions that interact with the backend configuration registers and the NoC overlay stream system. CFGSHIFTMASK"
+description: "Four instructions (CFGSHIFTMASK, STREAMWRCFG, STREAMWAIT, REG2FLOP) that interact with backend configuration registers and NoC overlay stream system for synchronized updates."
 ---
 
 # Configuration Unit and Sync Unit: Additional Instructions

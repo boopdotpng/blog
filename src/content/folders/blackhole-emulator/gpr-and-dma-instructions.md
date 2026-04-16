@@ -1,8 +1,8 @@
 ---
-title: "Gpr And Dma Instructions"
+title: "gpr and dma instructions"
 pubDate: "2025-04-16"
 published: true
-description: "The Tensix coprocessor has a 192-register GPR (General Purpose Register) file that serves as a staging area for values d"
+description: "GPR file (192 registers, 64 per thread) as staging for config values, Scalar Unit (ThCon) instructions for arithmetic, and Configuration Unit for register read-modify-write."
 ---
 
 # Tensix GPRs, Scalar Unit, and Configuration Unit Instructions

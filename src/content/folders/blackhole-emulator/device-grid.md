@@ -1,8 +1,8 @@
 ---
-title: "Device Grid"
+title: "device grid"
 pubDate: "2025-04-16"
 published: true
-description: "This document describes the NOC grid layout for the Blackhole P100A and P150 boards as the emulator must model it. All c"
+description: "NOC grid topology for P100A and P150 boards: 2D grid with Tensix columns, DRAM controllers, PCIe endpoint, and ARC router tile coordinates in virtual NOC space."
 ---
 
 # Blackhole Device Grid Topology — Emulator Specification

@@ -1,8 +1,8 @@
 ---
-title: "Dest Srca Srcb Registers"
+title: "dest srca srcb registers"
 pubDate: "2025-04-16"
 published: true
-description: "The Tensix coprocessor has three named register files that hold tile data during"
+description: "Three register files for tile data: Dest (1024 rows × 16 cols, 16-bit or 32-bit dual view), SrcA/SrcB (64 rows × 16 cols × 2 banks, 19-bit shuffled format)."
 ---
 
 # Dest, SrcA, and SrcB Register Files

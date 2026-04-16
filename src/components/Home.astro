@@ -7,8 +7,6 @@ interface Props {
   posts: CollectionEntry<'blog'>[];
 }
 const { posts } = Astro.props as Props;
-const regularPosts = posts
-  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
 
 // Get folders data
 const folderDocs = await getCollection('folders', ({ data }) => data.published);
@@ -22,16 +20,9 @@ folderDocs.forEach(doc => {
 });
 const folders = Array.from(folderMap.entries()).map(([id, docs]) => ({
   id,
-  name: id.replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+  name: id.replace(/-/g, ' '),
   docCount: docs.length,
 }));
-
-const workingOn = [
-  'tinygrad bounties',
-  'learning rdna',
-  'educational resources',
-  'compilers / ml',
-];
 
 const formatLongDate = (date: Date) => date.toLocaleDateString('en-US', {
   year: 'numeric',
@@ -68,7 +59,7 @@ const catColors: Record<string, string> = {
 const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 
 // Get unique mapped categories
-const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter(c => c !== '—'))];
+const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
 ---
 
 <section class="brutalist-home">
@@ -88,19 +79,12 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     <div class="meta-block">
       <span class="meta-item">{posts.length} posts</span>
       <span class="meta-sep">/</span>
-      <span class="meta-item">{categories.length} categories</span>
+      <span class="meta-item">{categoryCount} categories</span>
       <span class="meta-sep">/</span>
       <span class="meta-item">{folders.length} folders</span>
       <span class="meta-sep">/</span>
       <span class="meta-item">updated {latestPostLabel}</span>
     </div>
-  </div>
-
-  <div class="working-strip">
-    <span class="working-label">now:</span>
-    {workingOn.map((item, i) => (
-      <span class="working-item">{item}{i < workingOn.length - 1 ? ',' : ''}</span>
-    ))}
   </div>
 
   {folders.length > 0 && (
@@ -117,8 +101,8 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
   <div class="index-section">
     <div class="section-header">index</div>
     <ol class="post-index">
-      {regularPosts.map((post, idx) => {
-        const indexNum = String(regularPosts.length - idx).padStart(2, '0');
+      {posts.map((post, idx) => {
+        const indexNum = String(posts.length - idx).padStart(2, '0');
         const catLabel = post.data.cat ?? '—';
 
         return (
@@ -199,26 +183,6 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     color: var(--border-strong);
   }
 
-  .working-strip {
-    color: var(--fg-faint);
-    padding: 0;
-    margin-bottom: 1.5rem;
-    font-size: 0.82rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    align-items: center;
-  }
-
-  .working-label {
-    font-weight: 700;
-    color: var(--fg-soft);
-  }
-
-  .working-item {
-    color: var(--fg-subtle);
-  }
-
   .folders-section {
     padding: 0;
     margin-bottom: 1.5rem;
@@ -254,7 +218,6 @@ const categories = [...new Set(regularPosts.map(p => p.data.cat ?? '—').filter
     list-style: none;
     padding: 0;
     margin: 0;
-    counter-reset: none;
   }
 
   .index-item {

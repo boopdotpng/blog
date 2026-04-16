@@ -1,8 +1,8 @@
 ---
-title: "Ldm Layouts"
+title: "ldm layouts"
 pubDate: "2025-04-16"
 published: true
-description: "Each Tensix tile on Blackhole contains five RISC-V cores: BRISC (data-movement manager), NCRISC (NOC/DRAM data-mover), a"
+description: "Local Data Memory (LDM) layouts for five RISC-V cores per tile: BRISC and NCRISC have 8 KiB each, TRISC0/1/2 have 4 KiB each, holding per-core state and lookup tables."
 ---
 
 # LDM (Local Data Memory) Per-Core Layouts

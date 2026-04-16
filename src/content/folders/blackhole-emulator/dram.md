@@ -1,8 +1,8 @@
 ---
-title: "Dram"
+title: "dram"
 pubDate: "2025-04-16"
 published: true
-description: "DRAM and PCIe are **not separate buses**. Both are NoC endpoints — nodes on the existing NoC grid with fixed XY coordina"
+description: "DRAM and PCIe as NOC endpoints: tile format (32×32 faces in Z-order), DRAM bank geometry/interleaving, address generation, and PCIe endpoint for host memory access."
 ---
 
 # DRAM and PCIe Endpoint Emulator Specification (Blackhole)

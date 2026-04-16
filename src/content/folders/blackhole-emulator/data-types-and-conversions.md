@@ -1,8 +1,8 @@
 ---
-title: "Data Types And Conversions"
+title: "data types and conversions"
 pubDate: "2025-04-16"
 published: true
-description: "The Blackhole Tensix coprocessor uses several numeric formats internally. Values move between L1 memory, the SrcA/SrcB r"
+description: "Numeric formats used in Tensix coprocessor internals: shuffled 19-bit register format for SrcA/SrcB, conversions to/from IEEE FP32, and BFP/FP8 expansion rules."
 ---
 
 # Data Types and Format Conversions

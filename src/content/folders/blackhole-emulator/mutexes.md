@@ -1,8 +1,8 @@
 ---
-title: "Mutexes"
+title: "mutexes"
 pubDate: "2025-04-16"
 published: true
-description: "Hardware mutexes in the Tensix Sync Unit provide exclusive mutual exclusion among the three coprocessor threads (T0, T1,"
+description: "Hardware mutexes in Tensix Sync Unit for exclusive mutual exclusion between threads: 4 mutexes (math, unpack0, unpack1, pack0) with ATGETM/ATRELM acquire/release instructions."
 ---
 
 # Mutexes

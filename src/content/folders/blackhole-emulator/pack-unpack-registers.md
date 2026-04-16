@@ -1,8 +1,8 @@
 ---
-title: "Pack Unpack Registers"
+title: "pack unpack registers"
 pubDate: "2025-04-16"
 published: true
-description: "All pack/unpack configuration lives in the **Tensix Config Register space**, a dedicated register file separate from L1 "
+description: "Pack/Unpack configuration registers in Tensix Config Register space with double-buffered ping-pong state, supporting multiple data formats (FP32, BF16, BFP, INT, etc.)."
 ---
 
 # Pack/Unpack Configuration Registers

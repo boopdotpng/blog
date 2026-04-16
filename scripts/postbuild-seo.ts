@@ -21,7 +21,7 @@ async function main() {
   if (await fileExists(sitemapZero)) {
     await copyFile(sitemapZero, sitemap);
   } else if (await fileExists(sitemapIndex)) {
-    await copyFile(sitemapZero, sitemap);
+    await copyFile(sitemapIndex, sitemap);
   } else {
     throw new Error(
       `No sitemap found in dist (expected sitemap-index.xml or sitemap-0.xml). Did the build run @astrojs/sitemap?`,

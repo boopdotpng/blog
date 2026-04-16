@@ -1,8 +1,8 @@
 ---
-title: "Stream Registers"
+title: "stream registers"
 pubDate: "2025-04-16"
 published: true
-description: "64 streams per tile at base `0xFFB40000`, stride `0x1000` per stream, total 256 KiB."
+description: "Stream/NOC overlay registers: 64 streams per tile, CB-to-stream mapping (CB N → stream N on Blackhole), synchronization registers for CB push/pop/wait operations."
 ---
 
 # Stream / NOC Overlay Registers — Blackhole Tensix Emulation

@@ -1,8 +1,8 @@
 ---
-title: "Tensix Coprocessor Pipeline"
+title: "tensix coprocessor pipeline"
 pubDate: "2025-04-16"
 published: true
-description: "The Tensix coprocessor is a multi-threaded instruction-driven accelerator embedded in each Tensix tile. It has **3 indep"
+description: "Multi-threaded Tensix coprocessor with 3 independent frontend threads (T0/T1/T2) feeding 9 shared backend units: Unpack, Pack, Matrix, Vector, Mover, Misc, Sync, Config, Parity."
 ---
 
 # Tensix Coprocessor Pipeline
