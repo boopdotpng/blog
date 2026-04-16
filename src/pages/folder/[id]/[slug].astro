@@ -34,6 +34,7 @@ const parseIsoDate = (dateString?: string) => {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 };
 const publishedTime = parseIsoDate(doc.data.pubDate);
+const updatedTime = parseIsoDate(doc.data.updatedDate);
 const pubDate = parseLocalDate(doc.data.pubDate);
 const displayDate = pubDate
   ? pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase()
@@ -284,6 +285,16 @@ article.post-plain :global(img[width]) {
   description={description}
   ogType="article"
   useKatex={doc.data.useKatex}
+  ogImage={`/og/folder/${folderId}/${doc.id.split('/').slice(1).join('/')}.png`}
+  schemaArticle={{
+    title: doc.data.title,
+    description,
+    publishedTime,
+    updatedTime,
+    section: folderName,
+    wordCount: words || undefined,
+    imageUrl: new URL(`/og/folder/${folderId}/${doc.id.split('/').slice(1).join('/')}.png`, Astro.site ?? 'https://anuraagw.me').href,
+  }}
   schema={{
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

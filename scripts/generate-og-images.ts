@@ -1,9 +1,10 @@
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
-import { readFileSync, mkdirSync, writeFileSync, readdirSync } from 'fs';
+import { readFileSync, mkdirSync, writeFileSync, readdirSync, existsSync } from 'fs';
 import path from 'path';
 
 const BLOG_DIR = path.resolve('src/content/blog');
+const FOLDERS_DIR = path.resolve('src/content/folders');
 const OUT_DIR = path.resolve('public/og');
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -117,4 +118,99 @@ for (const file of files) {
   const png = new Resvg(svg, { fitTo: { mode: 'width', value: WIDTH } }).render().asPng();
   writeFileSync(path.join(OUT_DIR, `${slug}.png`), png);
   console.log(`  ${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
+}
+
+// Generate OG images for folder documents
+if (existsSync(FOLDERS_DIR)) {
+  const folderIds = readdirSync(FOLDERS_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name);
+
+  for (const folderId of folderIds) {
+    const folderDir = path.join(FOLDERS_DIR, folderId);
+    const folderOutDir = path.join(OUT_DIR, 'folder', folderId);
+    mkdirSync(folderOutDir, { recursive: true });
+    const folderName = folderId.replace(/-/g, ' ');
+
+    const docs = readdirSync(folderDir).filter(f => f.endsWith('.md'));
+    for (const file of docs) {
+      const slug = file.replace(/\.md$/, '');
+      const content = readFileSync(path.join(folderDir, file), 'utf8');
+      const fm = parseFrontmatter(content);
+
+      if (fm.published === 'false') continue;
+
+      const title = fm.title ?? slug;
+
+      const svg = await satori(
+        {
+          type: 'div',
+          props: {
+            style: {
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              padding: '60px 80px',
+              background: '#0d1117',
+              fontFamily: 'Inter',
+            },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    color: '#8b949e',
+                    fontSize: 22,
+                    letterSpacing: '0.08em',
+                    marginBottom: 20,
+                  },
+                  children: `📁 ${folderName}`,
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    color: '#e6edf3',
+                    fontSize: title.length > 40 ? 48 : 56,
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                    letterSpacing: '-0.03em',
+                  },
+                  children: title,
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    color: '#484f58',
+                    fontSize: 20,
+                    marginTop: 'auto',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  },
+                  children: [
+                    { type: 'span', props: { children: 'anuraagw.me' } },
+                    fm.pubDate ? { type: 'span', props: { children: fm.pubDate } } : null,
+                  ].filter(Boolean),
+                },
+              },
+            ],
+          },
+        },
+        {
+          width: WIDTH,
+          height: HEIGHT,
+          fonts: [{ name: 'Inter', data: fontData, weight: 400, style: 'normal' as const }],
+        },
+      );
+
+      const png = new Resvg(svg, { fitTo: { mode: 'width', value: WIDTH } }).render().asPng();
+      writeFileSync(path.join(folderOutDir, `${slug}.png`), png);
+      console.log(`  folder/${folderId}/${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
+    }
+  }
 }
