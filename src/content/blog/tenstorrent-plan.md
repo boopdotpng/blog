@@ -1,7 +1,7 @@
 ---
 title: the tenstorrent plan
 pubDate: "2026-03-28"
-published: true
+published: false
 description: "a vision"
 cat: hardware
 ---
