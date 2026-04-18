@@ -15,7 +15,7 @@ const {
 const siteName = 'anuraag';
 const siteHandle = '@boopdotpng';
 const authorName = 'Anuraag Warudkar';
-const fullTitle = title.toLowerCase().includes(siteName) ? title : `${title} | ${siteName}`;
+const fullTitle = title;
 const cleanPath = Astro.url.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
 const canonicalUrl = Astro.site ? new URL(cleanPath, Astro.site).toString() : Astro.url.toString();
 const siteUrl = Astro.site ? new URL('/', Astro.site).toString() : canonicalUrl;
