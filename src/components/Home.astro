@@ -1,28 +1,25 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
-import FolderCard from './FolderCard.astro';
+import BookCard from './BookCard.astro';
+import { getBookConfigs } from '../data/books';
+import { resolveBookFromDocs } from '../lib/books';
 
 interface Props {
   posts: CollectionEntry<'blog'>[];
 }
 const { posts } = Astro.props as Props;
 
-// Get folders data
-const folderDocs = await getCollection('folders', ({ data }) => data.published);
-const folderMap = new Map<string, CollectionEntry<'folders'>[]>();
-folderDocs.forEach(doc => {
-  const [folderId] = doc.id.split('/');
-  if (!folderMap.has(folderId)) {
-    folderMap.set(folderId, []);
-  }
-  folderMap.get(folderId)!.push(doc);
+const bookDocs = await getCollection('books', ({ data }) => data.published);
+const books = getBookConfigs().map((config) => {
+  const resolved = resolveBookFromDocs(config.id, bookDocs);
+  return {
+    id: config.id,
+    name: config.title,
+    description: config.shortDescription ?? config.description,
+    chapterCount: resolved.chapters.length,
+  };
 });
-const folders = Array.from(folderMap.entries()).map(([id, docs]) => ({
-  id,
-  name: id.replace(/-/g, ' '),
-  docCount: docs.length,
-}));
 
 const formatLongDate = (date: Date) => date.toLocaleDateString('en-US', {
   year: 'numeric',
@@ -81,18 +78,18 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
       <span class="meta-sep">/</span>
       <span class="meta-item">{categoryCount} categories</span>
       <span class="meta-sep">/</span>
-      <span class="meta-item">{folders.length} folders</span>
+      <span class="meta-item">{books.length} books</span>
       <span class="meta-sep">/</span>
       <span class="meta-item">updated {latestPostLabel}</span>
     </div>
   </div>
 
-  {folders.length > 0 && (
-    <div class="folders-section">
-      <div class="section-header">folders</div>
-      <div class="folders-grid">
-        {folders.map((folder) => (
-          <FolderCard id={folder.id} name={folder.name} docCount={folder.docCount} />
+  {books.length > 0 && (
+    <div class="books-section">
+      <div class="section-header">books</div>
+      <div class="books-grid">
+        {books.map((book) => (
+          <BookCard id={book.id} name={book.name} chapterCount={book.chapterCount} description={book.description} />
         ))}
       </div>
     </div>
@@ -183,7 +180,7 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
     color: var(--border-strong);
   }
 
-  .folders-section {
+  .books-section {
     padding: 0;
     margin-bottom: 1.5rem;
   }
@@ -197,14 +194,14 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
     text-transform: lowercase;
   }
 
-  .folders-grid {
+  .books-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 0.75rem;
   }
 
   @media (max-width: 600px) {
-    .folders-grid {
+    .books-grid {
       grid-template-columns: repeat(2, 1fr);
     }
   }

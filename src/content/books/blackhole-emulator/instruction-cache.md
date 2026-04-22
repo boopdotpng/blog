@@ -1,7 +1,7 @@
 ---
 title: "instruction cache"
 pubDate: "2025-04-16"
-published: true
+published: false
 description: "L0 instruction cache per RISC-V core (2 KiB for BRISC/TRISC0/TRISC2, 512 B for TRISC1/NCRISC) with hardware prefetch, 1 instr/cycle bandwidth, and invalidation support."
 ---
 

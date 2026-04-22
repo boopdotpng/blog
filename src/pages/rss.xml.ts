@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 export async function GET(context) {
   const site = context.site ?? 'https://anuraagw.me';
   const posts = await getCollection('blog', ({ data }) => data.published);
-  const folderDocs = await getCollection('folders', ({ data }) => data.published);
+  const bookDocs = await getCollection('books', ({ data }) => data.published);
 
   const blogItems = posts.map(post => ({
     title: post.data.title,
@@ -14,20 +14,20 @@ export async function GET(context) {
     categories: post.data.cat ? [post.data.cat] : undefined,
   }));
 
-  const folderItems = folderDocs.map(doc => {
-    const [folderId, ...slugParts] = doc.id.split('/');
+  const bookItems = bookDocs.map(doc => {
+    const [bookId, ...slugParts] = doc.id.split('/');
     const slug = slugParts.join('/');
-    const folderName = folderId.replace(/-/g, ' ');
+    const bookName = bookId.replace(/-/g, ' ');
     return {
-      title: `${doc.data.title} — ${folderName}`,
+      title: `${doc.data.title} — ${bookName}`,
       pubDate: new Date(doc.data.pubDate),
       description: doc.data.description ?? '',
-      link: new URL(`/folder/${folderId}/${slug}`, site).href,
-      categories: [folderName],
+      link: new URL(`/book/${bookId}/${slug}`, site).href,
+      categories: [bookName],
     };
   });
 
-  const items = [...blogItems, ...folderItems]
+  const items = [...blogItems, ...bookItems]
     .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
 
   return rss({

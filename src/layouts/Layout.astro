@@ -10,6 +10,8 @@ const {
   robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
   useKatex = false,
   ogImage,
+  fullBleed = false,
+  hideBackLink = false,
 } = Astro.props;
 
 const siteName = 'anuraag';
@@ -243,7 +245,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     font-family: var(--font-mono);
   }
 
-  header {
+  .site-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -253,6 +255,13 @@ if (articleSchema && schemaArticle?.wordCount) {
     margin: 0 auto;
     width: 100%;
     font-family: var(--font-mono);
+  }
+
+  .site-header.full-bleed {
+    max-width: none;
+    margin: 0;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   .home-song {
@@ -406,14 +415,20 @@ if (articleSchema && schemaArticle?.wordCount) {
     }
   }
 
-  main {
+  .page-main {
     max-width: 800px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 4vw, 2rem);
   }
 
+  .page-main.full-bleed {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
   /* Blog post pages get slightly different treatment */
-  main:has(.post-content) {
+  .page-main:has(.post-content) {
     padding-bottom: 4rem;
   }
 
@@ -429,14 +444,14 @@ if (articleSchema && schemaArticle?.wordCount) {
 
 </head>
 <body>
-  <header>
+  <header class:list={['site-header', { 'full-bleed': fullBleed }]}>
     {isHome && favoriteSong && (
       <a class="home-song" href={favoriteSong.url} target="_blank" aria-label="Favorite song right now">
         <span class="song-icon" aria-hidden="true">o))</span>
         <span class="song-title">{favoriteSong.title}</span>
       </a>
     )}
-    {!isHome && (
+    {!isHome && !hideBackLink && (
       <div class="site-title">
         <a href="/">
           <span class="arrow">&#8592;</span>
@@ -444,6 +459,7 @@ if (articleSchema && schemaArticle?.wordCount) {
         </a>
       </div>
     )}
+    {!isHome && hideBackLink && <div class="site-title-spacer" aria-hidden="true"></div>}
     <nav>
       <ul>
         <li>
@@ -474,7 +490,7 @@ if (articleSchema && schemaArticle?.wordCount) {
       </ul>
     </nav>
   </header>
-  <main>
+  <main class:list={['page-main', { 'full-bleed': fullBleed }]}>
     <slot />
   </main>
   <script is:inline>

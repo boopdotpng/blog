@@ -44,35 +44,34 @@ function getBlogMetadataByPathname() {
   return byPathname;
 }
 
-function getFoldersMetadataByPathname() {
+function getBooksMetadataByPathname() {
   const byPathname = new Map();
-  const foldersDir = path.resolve('src/content/folders');
+  const booksDir = path.resolve('src/content/books');
 
   try {
-    const folderEntries = fs.readdirSync(foldersDir, { withFileTypes: true });
-    for (const folderEntry of folderEntries) {
-      if (!folderEntry.isDirectory()) continue;
+    const bookEntries = fs.readdirSync(booksDir, { withFileTypes: true });
+    for (const bookEntry of bookEntries) {
+      if (!bookEntry.isDirectory()) continue;
 
-      const folderId = folderEntry.name;
-      const folderPath = path.join(foldersDir, folderId);
-      const fileEntries = fs.readdirSync(folderPath, { withFileTypes: true });
+      const bookId = bookEntry.name;
+      const bookPath = path.join(booksDir, bookId);
+      const fileEntries = fs.readdirSync(bookPath, { withFileTypes: true });
 
-      // Add folder index page
-      const folderPathname = `/folder/${folderId}`;
-      byPathname.set(folderPathname, { published: true, pubDate: undefined });
+      const bookPathname = `/book/${bookId}`;
+      byPathname.set(bookPathname, { published: true, pubDate: undefined });
 
-      // Add individual documents
+      // Add individual chapters
       for (const fileEntry of fileEntries) {
         if (!fileEntry.isFile()) continue;
         if (!fileEntry.name.endsWith('.md') && !fileEntry.name.endsWith('.mdx')) continue;
 
         const slug = fileEntry.name.replace(/\.(md|mdx)$/, '');
-        const filePath = path.join(folderPath, fileEntry.name);
+        const filePath = path.join(bookPath, fileEntry.name);
         const file = fs.readFileSync(filePath, 'utf8');
 
         const { published, pubDate } = parseBlogFrontmatter(file);
-        const docPathname = `/folder/${folderId}/${slug}`;
-        byPathname.set(docPathname, { published, pubDate });
+        const chapterPathname = `/book/${bookId}/${slug}`;
+        byPathname.set(chapterPathname, { published, pubDate });
       }
     }
   } catch {
@@ -83,7 +82,7 @@ function getFoldersMetadataByPathname() {
 }
 
 const BLOG_METADATA_BY_PATHNAME = getBlogMetadataByPathname();
-const FOLDERS_METADATA_BY_PATHNAME = getFoldersMetadataByPathname();
+const BOOKS_METADATA_BY_PATHNAME = getBooksMetadataByPathname();
 
 export default defineConfig({
   site: process.env.SITE_URL ?? 'https://anuraagw.me',
@@ -98,17 +97,17 @@ export default defineConfig({
 
         const normalizedPathname = pathname.replace(/\/$/, '') || '/';
         const blogMeta = BLOG_METADATA_BY_PATHNAME.get(normalizedPathname);
-        const foldersMeta = FOLDERS_METADATA_BY_PATHNAME.get(normalizedPathname);
+        const booksMeta = BOOKS_METADATA_BY_PATHNAME.get(normalizedPathname);
 
         if (blogMeta && !blogMeta.published) return false;
-        if (foldersMeta && !foldersMeta.published) return false;
+        if (booksMeta && !booksMeta.published) return false;
 
         return true;
       },
       serialize: (item) => {
         const pathname = new URL(item.url).pathname.replace(/\/$/, '') || '/';
         const blogMeta = BLOG_METADATA_BY_PATHNAME.get(pathname);
-        const foldersMeta = FOLDERS_METADATA_BY_PATHNAME.get(pathname);
+        const booksMeta = BOOKS_METADATA_BY_PATHNAME.get(pathname);
 
         const getLastmod = (meta) => {
           if (!meta?.pubDate) return undefined;
@@ -117,8 +116,8 @@ export default defineConfig({
         };
 
         const blogLastmod = getLastmod(blogMeta);
-        const foldersLastmod = getLastmod(foldersMeta);
-        const lastmod = blogLastmod || foldersLastmod;
+        const booksLastmod = getLastmod(booksMeta);
+        const lastmod = blogLastmod || booksLastmod;
 
         if (lastmod) {
           return { ...item, lastmod, changefreq: 'monthly', priority: 0.7 };
@@ -128,7 +127,7 @@ export default defineConfig({
           return { ...item, changefreq: 'weekly', priority: 1.0 };
         }
 
-        if (pathname.startsWith('/folder/')) {
+        if (pathname.startsWith('/book/')) {
           return { ...item, changefreq: 'weekly', priority: 0.6 };
         }
 

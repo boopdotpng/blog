@@ -4,7 +4,7 @@ import { readFileSync, mkdirSync, writeFileSync, readdirSync, existsSync } from 
 import path from 'path';
 
 const BLOG_DIR = path.resolve('src/content/blog');
-const FOLDERS_DIR = path.resolve('src/content/folders');
+const BOOKS_DIR = path.resolve('src/content/books');
 const OUT_DIR = path.resolve('public/og');
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -120,22 +120,22 @@ for (const file of files) {
   console.log(`  ${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
 }
 
-// Generate OG images for folder documents
-if (existsSync(FOLDERS_DIR)) {
-  const folderIds = readdirSync(FOLDERS_DIR, { withFileTypes: true })
+// Generate OG images for book chapters
+if (existsSync(BOOKS_DIR)) {
+  const bookIds = readdirSync(BOOKS_DIR, { withFileTypes: true })
     .filter(d => d.isDirectory())
     .map(d => d.name);
 
-  for (const folderId of folderIds) {
-    const folderDir = path.join(FOLDERS_DIR, folderId);
-    const folderOutDir = path.join(OUT_DIR, 'folder', folderId);
-    mkdirSync(folderOutDir, { recursive: true });
-    const folderName = folderId.replace(/-/g, ' ');
+  for (const bookId of bookIds) {
+    const bookDir = path.join(BOOKS_DIR, bookId);
+    const bookOutDir = path.join(OUT_DIR, 'book', bookId);
+    mkdirSync(bookOutDir, { recursive: true });
+    const bookName = bookId.replace(/-/g, ' ');
 
-    const docs = readdirSync(folderDir).filter(f => f.endsWith('.md'));
+    const docs = readdirSync(bookDir).filter(f => f.endsWith('.md'));
     for (const file of docs) {
       const slug = file.replace(/\.md$/, '');
-      const content = readFileSync(path.join(folderDir, file), 'utf8');
+      const content = readFileSync(path.join(bookDir, file), 'utf8');
       const fm = parseFrontmatter(content);
 
       if (fm.published === 'false') continue;
@@ -166,7 +166,7 @@ if (existsSync(FOLDERS_DIR)) {
                     letterSpacing: '0.08em',
                     marginBottom: 20,
                   },
-                  children: `📁 ${folderName}`,
+                  children: `📘 ${bookName}`,
                 },
               },
               {
@@ -209,8 +209,8 @@ if (existsSync(FOLDERS_DIR)) {
       );
 
       const png = new Resvg(svg, { fitTo: { mode: 'width', value: WIDTH } }).render().asPng();
-      writeFileSync(path.join(folderOutDir, `${slug}.png`), png);
-      console.log(`  folder/${folderId}/${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
+      writeFileSync(path.join(bookOutDir, `${slug}.png`), png);
+      console.log(`  book/${bookId}/${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
     }
   }
 }

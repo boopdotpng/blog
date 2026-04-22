@@ -1,0 +1,245 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { getBookConfigs } from '../../data/books';
+import { resolveBookFromDocs } from '../../lib/books';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('books', ({ data }) => data.published);
+  return getBookConfigs()
+    .filter((book) => docs.some((doc) => doc.id.startsWith(`${book.id}/`)))
+    .map((book) => ({
+      params: { book: book.id },
+    }));
+}
+
+const { book: bookId } = Astro.params;
+const docs = await getCollection('books', ({ data }) => data.published);
+const resolvedBook = resolveBookFromDocs(bookId!, docs);
+const chapterCount = resolvedBook.chapters.length;
+const firstChapter = resolvedBook.chapters[0];
+---
+
+<Layout
+  title={resolvedBook.config.title}
+  description={resolvedBook.config.description}
+  schema={{
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `https://anuraagw.me/book/${bookId}#collection`,
+    url: `https://anuraagw.me/book/${bookId}`,
+    name: resolvedBook.config.title,
+    description: resolvedBook.config.description,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: chapterCount,
+      itemListElement: resolvedBook.chapters.map((chapter) => ({
+        '@type': 'ListItem',
+        position: chapter.order,
+        url: `https://anuraagw.me${chapter.href}`,
+        name: chapter.doc.data.title,
+      })),
+    },
+  }}
+>
+  <style>
+    .book-page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1rem 1rem 4rem;
+      font-family: var(--font-mono);
+    }
+
+    .book-header {
+      padding: 1.25rem 0 1.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .book-kicker {
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      margin-bottom: 0.85rem;
+    }
+
+    .book-title {
+      margin: 0 0 0.75rem;
+      font-size: 2.35rem;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      color: var(--fg-strong);
+    }
+
+    .book-description {
+      margin: 0;
+      max-width: 56rem;
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: var(--fg-muted);
+    }
+
+    .book-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--fg-subtle);
+    }
+
+    .book-meta-sep {
+      color: var(--border-strong);
+    }
+
+    .book-actions {
+      margin-top: 1.5rem;
+    }
+
+    .book-start {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.72rem 0.95rem;
+      border: 1px solid var(--border-muted);
+      border-radius: 999px;
+      color: var(--fg);
+      text-decoration: none;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+
+    .book-start:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(var(--shadow-rgb), 0.18);
+    }
+
+    .book-start-arrow {
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    .stage-list {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .stage-card {
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      background: var(--surface-note);
+      padding: 1rem 1rem 0.25rem;
+    }
+
+    .stage-title {
+      margin: 0 0 0.9rem;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--fg-strong);
+    }
+
+    .chapter-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .chapter-item {
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .chapter-item:first-child {
+      border-top: 0;
+    }
+
+    .chapter-link {
+      display: grid;
+      grid-template-columns: 2.75rem 1fr;
+      gap: 0.75rem;
+      align-items: start;
+      padding: 0.8rem 0;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .chapter-link:hover .chapter-name {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .chapter-number {
+      color: var(--fg-subtle);
+      font-size: 0.82rem;
+    }
+
+    .chapter-name {
+      color: var(--fg);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .chapter-description {
+      margin-top: 0.25rem;
+      color: var(--fg-muted);
+      font-size: 0.8rem;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 700px) {
+      .book-title {
+        font-size: 1.85rem;
+      }
+
+      .chapter-link {
+        grid-template-columns: 2.2rem 1fr;
+      }
+    }
+  </style>
+
+  <main class="book-page">
+    <header class="book-header">
+      <div class="book-kicker">book</div>
+      <h1 class="book-title">{resolvedBook.config.title}</h1>
+      <p class="book-description">{resolvedBook.config.description}</p>
+      <div class="book-meta">
+        <span>{chapterCount} chapters</span>
+        <span class="book-meta-sep">•</span>
+        <span>{resolvedBook.stages.length} stages</span>
+      </div>
+      {firstChapter && (
+        <div class="book-actions">
+          <a class="book-start" href={firstChapter.href}>
+            <span>Start reading</span>
+            <span class="book-start-arrow">→</span>
+          </a>
+        </div>
+      )}
+    </header>
+
+    <section class="stage-list" aria-label="Reading order">
+      {resolvedBook.stages.map((stage) => (
+        <section class="stage-card">
+          <h2 class="stage-title">{stage.title}</h2>
+          <ol class="chapter-list">
+            {stage.chapters.map((chapter) => (
+              <li class="chapter-item">
+                <a class="chapter-link" href={chapter.href}>
+                  <span class="chapter-number">{String(chapter.order).padStart(2, '0')}</span>
+                  <span>
+                    <span class="chapter-name">{chapter.doc.data.title}</span>
+                    {chapter.doc.data.description && (
+                      <span class="chapter-description">{chapter.doc.data.description}</span>
+                    )}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </section>
+  </main>
+</Layout>

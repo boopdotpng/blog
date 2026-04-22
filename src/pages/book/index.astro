@@ -1,0 +1,105 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import BookCard from '../../components/BookCard.astro';
+import { getCollection } from 'astro:content';
+import { getBookConfigs } from '../../data/books';
+import { resolveBookFromDocs } from '../../lib/books';
+
+const docs = await getCollection('books', ({ data }) => data.published);
+const books = getBookConfigs()
+  .filter((config) => docs.some((doc) => doc.id.startsWith(`${config.id}/`)))
+  .map((config) => {
+    const resolved = resolveBookFromDocs(config.id, docs);
+    return {
+      id: config.id,
+      title: config.title,
+      description: config.shortDescription ?? config.description,
+      chapterCount: resolved.chapters.length,
+    };
+  });
+---
+
+<Layout
+  title="books"
+  description="Long-form documentation collections arranged as books with a chapter reading order."
+  schema={{
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': 'https://anuraagw.me/book#collection',
+    url: 'https://anuraagw.me/book',
+    name: 'books',
+    description: 'Long-form documentation collections arranged as books with a chapter reading order.',
+  }}
+>
+  <style>
+    .books-page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1rem 1rem 4rem;
+      font-family: var(--font-mono);
+    }
+
+    .books-header {
+      padding: 1.25rem 0 1.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .books-kicker {
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      margin-bottom: 0.85rem;
+    }
+
+    .books-title {
+      margin: 0 0 0.75rem;
+      font-size: 2.2rem;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      color: var(--fg-strong);
+    }
+
+    .books-description {
+      margin: 0;
+      max-width: 48rem;
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: var(--fg-muted);
+    }
+
+    .books-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.9rem;
+    }
+
+    @media (max-width: 700px) {
+      .books-title {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+
+  <main class="books-page">
+    <header class="books-header">
+      <div class="books-kicker">library</div>
+      <h1 class="books-title">books</h1>
+      <p class="books-description">
+        Longer document collections live here as ordered books, with chapter navigation and a stable reading order.
+      </p>
+    </header>
+
+    <section class="books-grid">
+      {books.map((book) => (
+        <BookCard
+          id={book.id}
+          name={book.title}
+          chapterCount={book.chapterCount}
+          description={book.description}
+        />
+      ))}
+    </section>
+  </main>
+</Layout>

@@ -1,0 +1,478 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+import galleryScriptUrl from '../../../scripts/gallery.ts?url';
+import { resolveBookFromDocs } from '../../../lib/books';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('books', ({ data }) => data.published);
+
+  return docs.map((doc) => {
+    const [book, ...chapterParts] = doc.id.split('/');
+    return {
+      params: { book, chapter: chapterParts.join('/') },
+      props: { doc },
+    };
+  });
+}
+
+const { book: bookId, chapter: chapterSlug } = Astro.params;
+const { doc } = Astro.props;
+const docs = await getCollection('books', ({ data }) => data.published);
+const resolvedBook = resolveBookFromDocs(bookId!, docs);
+const currentIndex = resolvedBook.chapters.findIndex((chapter) => chapter.slug === chapterSlug);
+const currentChapter = resolvedBook.chapters[currentIndex];
+const nextChapter = resolvedBook.chapters[currentIndex + 1];
+const { Content } = await render(doc);
+
+const parseLocalDate = (dateString: string) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (!match) return null;
+  const [, year, month, day] = match;
+  return new Date(Number(year), Number(month) - 1, Number(day));
+};
+const parseIsoDate = (dateString?: string) => {
+  if (!dateString) return undefined;
+  const date = new Date(`${dateString}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+const publishedTime = parseIsoDate(doc.data.pubDate);
+const updatedTime = parseIsoDate(doc.data.updatedDate);
+const pubDate = parseLocalDate(doc.data.pubDate);
+const displayDate = pubDate
+  ? pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase()
+  : doc.data.pubDate;
+const description = doc.data.description ?? 'a chapter';
+const body = typeof doc.body === 'string' ? doc.body.trim() : '';
+const words = body ? body.split(/\s+/).length : 0;
+const readingTimeMinutes = Math.max(1, Math.round(words / 200));
+const readingTimeLabel = readingTimeMinutes < 60
+  ? `approx ${readingTimeMinutes}m read`
+  : `approx ${Math.floor(readingTimeMinutes / 60)}h${readingTimeMinutes % 60 ? ` ${readingTimeMinutes % 60}m` : ''} read`;
+const pageTitle = `${doc.data.title} — ${resolvedBook.config.title}`;
+---
+
+<style>
+  :root {
+    --book-sidebar-width: 240px;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  code,
+  pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .book-shell {
+    max-width: 100%;
+    margin: 0;
+    padding: 0 1.5rem 4rem 0;
+    box-sizing: border-box;
+  }
+
+  .book-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--book-sidebar-width);
+    height: 100vh;
+    overflow-y: auto;
+    padding: 0 1.25rem 1.5rem 1.5rem;
+    border-right: 1px solid var(--border-soft);
+    background: var(--bg);
+    font-family: var(--font-mono);
+    box-sizing: border-box;
+    z-index: 5;
+  }
+
+  .book-sidebar-inner {
+    padding-right: 0;
+  }
+
+  .book-sidebar-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 54px;
+    margin-bottom: 0.6rem;
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+  }
+
+  .book-sidebar-back .arrow {
+    color: var(--fg-subtle);
+    font-size: 1rem;
+  }
+
+  .book-sidebar-back:hover .site-label {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .book-sidebar-kicker {
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    margin-bottom: 0.45rem;
+  }
+
+  .book-sidebar-title {
+    display: block;
+    color: var(--fg-strong);
+    font-size: 0.96rem;
+    text-decoration: none;
+    line-height: 1.35;
+    margin-bottom: 0.8rem;
+  }
+
+  .book-sidebar-title:hover {
+    color: var(--accent);
+  }
+
+  .book-stage {
+    margin-bottom: 0.8rem;
+  }
+
+  .book-stage-title {
+    margin: 0 0 0.35rem;
+    color: var(--fg-subtle);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .book-stage-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--border-soft);
+  }
+
+  .book-stage-item {
+    margin: 0;
+  }
+
+  .book-stage-link {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 0.45rem;
+    padding: 0.24rem 0 0.24rem 0.55rem;
+    color: var(--fg-muted);
+    text-decoration: none;
+    line-height: 1.28;
+  }
+
+  .book-stage-link:hover {
+    color: var(--accent);
+  }
+
+  .book-stage-link.is-active {
+    color: var(--fg);
+  }
+
+  .book-stage-link.is-active .book-stage-index {
+    color: var(--accent);
+  }
+
+  .book-stage-link.is-active .book-stage-name {
+    font-weight: 600;
+  }
+
+  .book-stage-index {
+    color: var(--fg-subtle);
+    font-size: 0.8rem;
+  }
+
+  .book-stage-name {
+    font-size: 0.88rem;
+  }
+
+  .chapter-main {
+    min-width: 0;
+    margin-left: calc(var(--book-sidebar-width) + 2.4rem);
+  }
+
+  article.chapter-plain {
+    width: 100%;
+    max-width: 980px;
+    margin: 2rem auto 0 0;
+    box-sizing: border-box;
+  }
+
+  .chapter-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: var(--fg-subtle);
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+  }
+
+  .chapter-meta-sep {
+    color: var(--border-strong);
+  }
+
+  .chapter-book-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .chapter-book-link:hover {
+    color: var(--accent);
+  }
+
+  .chapter-title {
+    margin: 0 0 0.65rem;
+    font-size: 2.2rem;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    font-family: var(--font-mono);
+    color: var(--fg-strong);
+  }
+
+  .chapter-description {
+    margin: 0 0 2rem;
+    color: var(--fg-muted);
+    font-size: 0.96rem;
+    line-height: 1.75;
+    font-family: var(--font-mono);
+  }
+
+  .chapter-plain.markdown-body {
+    line-height: 1.8;
+  }
+
+  .chapter-plain :global(img) {
+    max-width: 600px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5rem auto;
+  }
+
+  .chapter-plain :global(img[width]) {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .chapter-next {
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .chapter-next-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    color: inherit;
+    text-decoration: none;
+    font-family: var(--font-mono);
+  }
+
+  .chapter-next-link:hover .chapter-next-title {
+    color: var(--accent);
+  }
+
+  .chapter-next-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .chapter-next-label {
+    color: var(--fg-subtle);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .chapter-next-title {
+    color: var(--fg);
+    font-size: 0.88rem;
+  }
+
+  .chapter-next-arrow {
+    color: var(--accent);
+    font-size: 1.7rem;
+    line-height: 1;
+  }
+
+  .chapter-finish {
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-soft);
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .chapter-finish a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .chapter-finish a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 980px) {
+    .book-shell {
+      padding: 1rem 1rem 4rem;
+    }
+
+    .book-sidebar {
+      position: static;
+      width: auto;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+      border-bottom: 1px solid var(--border-soft);
+      border-right: 0;
+      background: none;
+      padding: 0 0 1rem;
+    }
+
+    .book-sidebar-back {
+      height: auto;
+      margin-bottom: 1rem;
+    }
+
+    .book-sidebar-inner {
+      padding-right: 0;
+    }
+
+    .chapter-main {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .chapter-title {
+      font-size: 1.8rem;
+    }
+
+    article.chapter-plain {
+      margin-top: 1rem;
+    }
+
+    article.chapter-plain svg {
+      height: auto !important;
+      font-size: 12px !important;
+    }
+  }
+</style>
+
+<Layout
+  title={pageTitle}
+  description={description}
+  fullBleed={true}
+  hideBackLink={true}
+  ogType="article"
+  useKatex={doc.data.useKatex}
+  ogImage={`/og/book/${bookId}/${chapterSlug}.png`}
+  schemaArticle={{
+    title: doc.data.title,
+    description,
+    publishedTime,
+    updatedTime,
+    section: resolvedBook.config.title,
+    wordCount: words || undefined,
+    imageUrl: new URL(`/og/book/${bookId}/${chapterSlug}.png`, Astro.site ?? 'https://anuraagw.me').href,
+  }}
+  schema={{
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'home', item: 'https://anuraagw.me' },
+      { '@type': 'ListItem', position: 2, name: 'books', item: 'https://anuraagw.me/book' },
+      { '@type': 'ListItem', position: 3, name: resolvedBook.config.title, item: `https://anuraagw.me/book/${bookId}` },
+      { '@type': 'ListItem', position: 4, name: doc.data.title },
+    ],
+  }}
+>
+  <main class="book-shell">
+    <aside class="book-sidebar" aria-label="Book chapters">
+      <div class="book-sidebar-inner">
+        <a class="book-sidebar-back" href="/">
+          <span class="arrow" aria-hidden="true">&#8592;</span>
+          <span class="site-label">anuraagw.me</span>
+        </a>
+        <div class="book-sidebar-kicker">book</div>
+        <a class="book-sidebar-title" href={`/book/${bookId}`}>{resolvedBook.config.title}</a>
+        {resolvedBook.stages.map((stage) => (
+          <section class="book-stage">
+            <h2 class="book-stage-title">{stage.title}</h2>
+            <ol class="book-stage-list">
+              {stage.chapters.map((chapter) => (
+                <li class="book-stage-item">
+                  <a
+                    class:list={['book-stage-link', { 'is-active': chapter.slug === chapterSlug }]}
+                    href={chapter.href}
+                    aria-current={chapter.slug === chapterSlug ? 'page' : undefined}
+                  >
+                    <span class="book-stage-index">{String(chapter.order).padStart(2, '0')}</span>
+                    <span class="book-stage-name">{chapter.doc.data.title}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
+    </aside>
+
+    <div class="chapter-main">
+      <article class="chapter-plain markdown-body">
+        <div class="chapter-meta">
+          <span>Chapter {currentChapter.order} of {resolvedBook.chapters.length}</span>
+          <span class="chapter-meta-sep">•</span>
+          <time datetime={doc.data.pubDate}>{displayDate}</time>
+          <span class="chapter-meta-sep">•</span>
+          <span>{readingTimeLabel}</span>
+          <span class="chapter-meta-sep">•</span>
+          <a class="chapter-book-link" href={`/book/${bookId}`}>{resolvedBook.config.title}</a>
+        </div>
+
+        <h1 class="chapter-title">{doc.data.title}</h1>
+        {doc.data.description && <p class="chapter-description">{doc.data.description}</p>}
+        <Content />
+
+        {nextChapter ? (
+          <nav class="chapter-next" aria-label="Next chapter">
+            <a class="chapter-next-link" href={nextChapter.href}>
+              <span class="chapter-next-copy">
+                <span class="chapter-next-label">Next chapter</span>
+                <span class="chapter-next-title">
+                  {String(nextChapter.order).padStart(2, '0')} · {nextChapter.doc.data.title}
+                </span>
+              </span>
+              <span class="chapter-next-arrow" aria-hidden="true">→</span>
+            </a>
+          </nav>
+        ) : (
+          <div class="chapter-finish">
+            End of book. <a href={`/book/${bookId}`}>Back to the reading order.</a>
+          </div>
+        )}
+      </article>
+    </div>
+  </main>
+  <script type="module" src={galleryScriptUrl}></script>
+</Layout>

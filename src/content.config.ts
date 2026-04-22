@@ -27,8 +27,8 @@ const blog = defineCollection({
   }).superRefine(requireDescriptionWhenPublished('posts')),
 });
 
-const folders = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/folders', ignore: ['**/CLAUDE.md'] }),
+const books = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/books', ignore: ['**/CLAUDE.md'] }),
   schema: z.object({
     title: z.string(),
     pubDate: isoDate,
@@ -39,4 +39,4 @@ const folders = defineCollection({
   }).superRefine(requireDescriptionWhenPublished('documents')),
 });
 
-export const collections = { blog, folders };
+export const collections = { blog, books };
