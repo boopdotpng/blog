@@ -11,8 +11,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "bun run update:github-heat && bun scripts/generate-og-images.ts && astro build && bun scripts/postbuild-seo.ts",
-    "update:github-heat": "bun scripts/update-github-heat.ts",
+    "build": "bun scripts/generate-og-images.ts && astro build && bun scripts/postbuild-seo.ts",
     "preview": "astro preview",
     "astro": "astro"
   },
