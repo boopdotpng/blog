@@ -101,7 +101,6 @@ if (articleSchema && schemaArticle?.wordCount) {
   {useKatex && <link rel="stylesheet" href="/katex.min.css" />}
   <link rel="stylesheet" href="/markdown.css" />
   <link rel="canonical" href={canonicalUrl} />
-  <link rel="alternate" type="application/rss+xml" title="anuraag — notes" href="/rss.xml" />
 
   <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={description} />
@@ -349,28 +348,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     text-underline-offset: 3px;
   }
 
-  .rss-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.35rem;
-    color: var(--fg-muted);
-  }
-
-  .rss-link:hover {
-    color: var(--fg);
-  }
-
-  .rss-link svg {
-    width: 16px;
-    height: 16px;
-    fill: currentColor;
-  }
-
-  .rss-link .rss-dot {
-    transform-origin: center;
-  }
-
   .theme-toggle {
     border: none;
     background: none;
@@ -475,15 +452,6 @@ if (articleSchema && schemaArticle?.wordCount) {
               <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18V4a8 8 0 1 1 0 16Z"/>
             </svg>
           </button>
-        </li>
-        <li>
-          <a class="rss-link" href="/rss.xml" aria-label="RSS feed">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M6.2 17.8a1.6 1.6 0 1 1-3.2 0 1.6 1.6 0 0 1 3.2 0Z" class="rss-dot"></path>
-              <path d="M4 10.2v2.6c3.9 0 7 3.1 7 7h2.6c0-5.3-4.3-9.6-9.6-9.6Z"></path>
-              <path d="M4 4v2.6c7.3 0 13.4 6 13.4 13.4H20C20 10.1 13.9 4 4 4Z"></path>
-            </svg>
-          </a>
         </li>
         <li><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a></li>
         <li><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a></li>

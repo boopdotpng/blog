@@ -93,7 +93,7 @@ export default defineConfig({
       filter: (page) => {
         const pathname = new URL(page).pathname;
         // Don't include non-canonical or non-content routes in the sitemap.
-        if (pathname === '/rss.xml' || pathname === '/404' || pathname === '/404.html') return false;
+        if (pathname === '/404' || pathname === '/404.html') return false;
 
         const normalizedPathname = pathname.replace(/\/$/, '') || '/';
         const blogMeta = BLOG_METADATA_BY_PATHNAME.get(normalizedPathname);
