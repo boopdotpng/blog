@@ -3,7 +3,7 @@ title: tenstorrent blackhole architecture guide
 pubDate: "2026-02-28"
 published: true
 description: "deep dive into the tenstorrent blackhole p100a architecture — tensix cores, NOC routing, firmware stack, and the open-source toolchain."
-cat: hardware
+cat: tenstorrent
 useKatex: true
 ---
 I bought a Tenstorrent blackhole p100a. The idea of a fully open source toolchain, from the kernel mode driver to the software stack that runs the models, is super exciting. Some parts of the card (like the firmware binaries for certain tiny components) aren't open source because of 3rd party IP, but this is pretty much the best it gets. You own every part of the card above the Verilog. 

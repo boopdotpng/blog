@@ -3,7 +3,7 @@ title: blackhole in pure python
 pubDate: "2026-05-01"
 published: true
 description: "emitting tenstorrent kernels without their compiler"
-cat: hardware
+cat: tenstorrent
 ---
 
 Since my [last post](https://anuraagw.me/blog/blackhole-architecture), I have realized that my vision and plan for tenstorrent hardware was completely wrong. I've thought about it a while, and below is the fastest, most fun approach. 
