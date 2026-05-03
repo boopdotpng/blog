@@ -1,5 +1,5 @@
 ---
-title: emitting risc-v from python
+title: blackhole in pure python
 pubDate: "2026-05-01"
 published: true
 description: "emitting tenstorrent kernels without their compiler"
