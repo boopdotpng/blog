@@ -9,6 +9,8 @@ export interface BookConfig {
   description: string;
   shortDescription?: string;
   stages: BookStageConfig[];
+  /** Marks the book as AI-generated content (shown subtly so readers know upfront). */
+  ai?: boolean;
 }
 
 export const BOOKS: Record<string, BookConfig> = {
@@ -17,6 +19,7 @@ export const BOOKS: Record<string, BookConfig> = {
     title: 'blackhole emulator',
     description: 'A guided reading order for the Blackhole emulator specs, from the machine model and boot flow through the data path, hardware units, and advanced synchronization details.',
     shortDescription: 'Ordered Blackhole emulator specs with chapter navigation.',
+    ai: true,
     stages: [
       {
         title: 'Stage 1 — What Is This Machine?',

@@ -39,4 +39,20 @@ const books = defineCollection({
   }).superRefine(requireDescriptionWhenPublished('documents')),
 });
 
-export const collections = { blog, books };
+const ai = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/ai' }),
+  schema: z.object({
+    title: z.string(),
+    pubDate: isoDate,
+    updatedDate: isoDate.optional(),
+    published: z.boolean().optional().default(true),
+    description: z.string().min(1).optional(),
+    /** Free-form label, e.g. "writing", "report", "experiment". */
+    kind: z.string().optional(),
+    /** Model that produced this entry, e.g. "Opus 4.7", "Sonnet 4.5". */
+    model: z.string().optional(),
+    useKatex: z.boolean().optional().default(false),
+  }).superRefine(requireDescriptionWhenPublished('ai entries')),
+});
+
+export const collections = { blog, books, ai };

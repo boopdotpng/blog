@@ -16,6 +16,7 @@ const books = getBookConfigs().map((config) => {
     id: config.id,
     name: config.title,
     chapterCount: resolved.chapters.length,
+    ai: Boolean(config.ai),
   };
 });
 
@@ -66,6 +67,8 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
     <span>{books.length} {books.length === 1 ? 'book' : 'books'}</span>
     <span class="sep">/</span>
     <span>updated {latestPostLabel}</span>
+    <span class="sep">/</span>
+    <a class="meta-link" href="/ai">ai corner →</a>
   </div>
 
   {books.length > 0 && (
@@ -79,7 +82,12 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
           <li class="book-row">
             <a class="book-link" href={`/book/${book.id}`}>
               <span class="book-mark" aria-hidden="true">▌</span>
-              <span class="book-name">{book.name}</span>
+              <span class="book-name">
+                {book.name}
+                {book.ai && (
+                  <span class="ai-chip" title="AI-generated content">[ai]</span>
+                )}
+              </span>
               <span class="book-chapters">{book.chapterCount} chapter{book.chapterCount !== 1 ? 's' : ''}</span>
             </a>
           </li>
@@ -159,6 +167,32 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
 
   .meta .sep {
     color: var(--border-strong);
+  }
+
+  .meta-link {
+    color: var(--fg-subtle);
+    text-decoration: none;
+    transition: color 0.12s;
+  }
+
+  .meta-link:hover {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .ai-chip {
+    margin-left: 0.45rem;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--fg-subtle);
+    vertical-align: 0.12em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .book-link:hover .ai-chip {
+    color: var(--fg-muted);
   }
 
   /* ── sections ──────────────────────────────────────────── */

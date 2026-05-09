@@ -63,6 +63,18 @@ const firstChapter = resolvedBook.chapters[0];
       text-transform: uppercase;
       color: var(--fg-subtle);
       margin-bottom: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .book-kicker-sep {
+      color: var(--border-strong);
+    }
+
+    .book-kicker-ai {
+      color: var(--fg-faint);
+      letter-spacing: 0.16em;
     }
 
     .book-title {
@@ -201,7 +213,15 @@ const firstChapter = resolvedBook.chapters[0];
 
   <main class="book-page">
     <header class="book-header">
-      <div class="book-kicker">book</div>
+      <div class="book-kicker">
+        <span>book</span>
+        {resolvedBook.config.ai && (
+          <>
+            <span class="book-kicker-sep" aria-hidden="true">·</span>
+            <span class="book-kicker-ai" title="This book is AI-generated content">ai-generated</span>
+          </>
+        )}
+      </div>
       <h1 class="book-title">{resolvedBook.config.title}</h1>
       <p class="book-description">{resolvedBook.config.description}</p>
       <div class="book-meta">

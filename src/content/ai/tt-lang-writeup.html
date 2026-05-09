@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="ai-model" content="Opus 4.7">
+<title>How tt-lang works: from Python DSL to C++ kernel strings</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --panel-2: #1c232c;
+    --fg: #e6edf3;
+    --muted: #9aa6b2;
+    --accent: #7fb3ff;
+    --accent-2: #ffb86b;
+    --border: #2a313a;
+    --green: #7ee787;
+    --pink: #ff7b9c;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  h1 {
+    font-size: 2.1rem;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 1.45rem;
+    margin: 48px 0 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 28px 0 10px;
+    color: var(--accent);
+  }
+  p, li { color: var(--fg); }
+  .lede { color: var(--muted); font-size: 1.05rem; margin-top: 0; }
+  code, pre {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+  }
+  code {
+    background: var(--panel-2);
+    color: #ffd9a8;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  pre code {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: inherit;
+  }
+  .pipeline {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 18px 0 24px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.88rem;
+    color: var(--muted);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .pipeline b { color: var(--accent); font-weight: 600; }
+  .pipeline em { color: var(--accent-2); font-style: normal; }
+  .layer {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0 18px;
+  }
+  .layer.alt { border-left-color: var(--accent-2); }
+  .layer.green { border-left-color: var(--green); }
+  .layer.pink { border-left-color: var(--pink); }
+  .layer h3 { margin-top: 0; }
+  .pill {
+    display: inline-block;
+    background: var(--panel-2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    margin-right: 6px;
+  }
+  .toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin: 18px 0 28px;
+  }
+  .toc ol { margin: 6px 0 0 18px; padding: 0; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  blockquote {
+    margin: 12px 0;
+    padding: 10px 16px;
+    border-left: 3px solid var(--accent-2);
+    background: var(--panel);
+    color: var(--muted);
+    border-radius: 0 6px 6px 0;
+  }
+  .caption { color: var(--muted); font-size: 0.85rem; margin-top: -6px; }
+  .footer { color: var(--muted); margin-top: 48px; font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 16px; }
+  table { border-collapse: collapse; margin: 12px 0; width: 100%; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>How tt-lang works</h1>
+<p class="lede">From Python decorators to C++ kernel strings &mdash; a layer-by-layer tour of the compilation pipeline.</p>
+
+<div class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#big-picture">The big picture in one diagram</a></li>
+  <li><a href="#layer1">Layer 1 &mdash; The Python DSL the user sees</a></li>
+  <li><a href="#layer2">Layer 2 &mdash; AST capture and MLIR builder</a></li>
+  <li><a href="#layer3">Layer 3 &mdash; The <code>ttl</code> dialect</a></li>
+  <li><a href="#layer4">Layer 4 &mdash; The MLIR pass pipeline</a></li>
+  <li><a href="#layer5">Layer 5 &mdash; The <code>ttkernel</code> dialect</a></li>
+  <li><a href="#layer6">Layer 6 &mdash; <code>EmitC</code> and translation to C++ strings</a></li>
+  <li><a href="#layer7">Layer 7 &mdash; Packaging kernels for tt-metal execution</a></li>
+  <li><a href="#takeaway">Takeaway: the same idea at every layer</a></li>
+</ol>
+</div>
+
+<h2 id="big-picture">The big picture in one diagram</h2>
+
+<p>tt-lang is, fundamentally, a Python frontend that builds MLIR, runs a chain of MLIR passes that progressively lower the IR, and finally serializes a small <em>per-thread</em> C++ source string for every RISC-V core that will run on the Tenstorrent device. tt-metal then compiles those strings the same way it compiles a hand-written tt-metalium kernel.</p>
+
+<div class="pipeline">
+   user Python (eltwise_add.py)
+            │
+            │  <b>@ttl.operation</b>  &mdash; decorators capture function source
+            ▼
+   ┌─────────────────────────────────────────────┐
+   │  <b>1.</b> Python AST  (<em>ast.parse</em>)                │
+   │  <b>2.</b> TTLGenericCompiler walks the AST       │
+   │       and emits MLIR via Python bindings    │
+   └─────────────────────────────────────────────┘
+            │
+            ▼
+   <b>Initial MLIR</b> in the <em>ttl</em> dialect
+   (dataflow buffers, blocks, pipes, tile ops)
+            │
+            │  PassManager.parse(...).run(module)
+            ▼
+   ┌─────────────────────────────────────────────┐
+   │  ~20 MLIR passes (TTL → TTKernel)           │
+   │   insert-copy-wait, insert-cb-sync,         │
+   │   convert-ttl-to-compute, assign-dst,       │
+   │   lower-to-loops, ttl-to-ttkernel ...       │
+   └─────────────────────────────────────────────┘
+            │
+            ▼
+   MLIR in the <em>ttkernel</em> dialect
+   (cb_wait_front, matmul_tiles, noc_async_read…)
+            │
+            │  convert-ttkernel-to-emitc
+            ▼
+   MLIR in the <em>emitc</em> dialect (C-like ops)
+            │
+            │  ttkernel_to_cpp_by_name(module, name)
+            ▼
+   <b>std::string</b> of compute.cpp / reader.cpp / writer.cpp
+            │
+            ▼
+   tt-metal builds &amp; launches via <em>ttnn.generic_op</em>
+</div>
+
+<p>Everything below this diagram is a more careful walk through each stage.</p>
+
+<h2 id="layer1">Layer 1 &mdash; The Python DSL the user sees</h2>
+
+<p>The user never writes MLIR or C++. They write a Python function that <em>looks</em> like normal Python but actually has very restricted semantics &mdash; it is a small DSL pretending to be Python, much like JAX or Triton.</p>
+
+<p>The canonical "hello world" is element-wise add (from <code>examples/eltwise_add.py</code>):</p>
+
+<pre><code>@ttl.operation(grid="auto")
+def eltwise_add(a_in, b_in, out):
+    a_dfb   = ttl.make_dataflow_buffer_like(a_in,   shape=(GRANULARITY, 1), block_count=2)
+    b_dfb   = ttl.make_dataflow_buffer_like(b_in,   shape=(GRANULARITY, 1), block_count=2)
+    out_dfb = ttl.make_dataflow_buffer_like(out,    shape=(GRANULARITY, 1), block_count=2)
+
+    @ttl.compute()
+    def compute():
+        node_col, node_row = ttl.node(dims=2)
+        ...
+        with a_dfb.wait()  as a_blk, \
+             b_dfb.wait()  as b_blk, \
+             out_dfb.reserve() as out_blk:
+            out_blk.store(a_blk + b_blk)
+
+    @ttl.datamovement()
+    def read():
+        ...
+        with a_dfb.reserve() as a_blk, b_dfb.reserve() as b_blk:
+            tx_a = ttl.copy(a_in[r0:r1, col:col+1], a_blk)
+            tx_b = ttl.copy(b_in[r0:r1, col:col+1], b_blk)
+            tx_a.wait(); tx_b.wait()
+
+    @ttl.datamovement()
+    def write():
+        ...
+</code></pre>
+
+<div class="layer">
+<h3>What the decorators actually mean</h3>
+<ul>
+  <li><span class="pill">@ttl.operation</span> Marks the outer function as a kernel <em>operation</em>. It collects the inner <code>@ttl.compute</code> and <code>@ttl.datamovement</code> functions registered into a per-call <em>thread registry</em> (<code>_thread_registry</code> in <code>ttl_api.py</code>) and is the entry point that drives the compile.</li>
+  <li><span class="pill">@ttl.compute()</span> One thread that runs on the TRISC compute cores (the FPU/SFPU pipeline).</li>
+  <li><span class="pill">@ttl.datamovement()</span> One thread that runs on a NOC core (BRISC/NCRISC). You typically write a "reader" and a "writer" pair.</li>
+  <li><span class="pill">grid="auto"</span> The op is parallelized across a 2D grid of cores. <code>ttl.node(dims=2)</code> is the per-core <code>(col, row)</code> id.</li>
+</ul>
+</div>
+
+<div class="layer alt">
+<h3>What the abstractions in the body mean</h3>
+<ul>
+  <li><b>Dataflow buffer (DFB)</b> &mdash; a typed circular buffer (CB) on L1 with a producer/consumer protocol. <code>reserve()</code> grabs a slot to write into; <code>wait()</code> blocks until a slot is full to read.</li>
+  <li><b>Block</b> &mdash; the value yielded from a DFB context manager: a typed view into one slot of the CB. Compute is written against blocks (<code>a_blk + b_blk</code>).</li>
+  <li><b>copy</b> &mdash; explicit DMA. Source and destination can be a tensor slice (lives in DRAM/L1 of another core) or a block (lives in this core's L1). <code>tx.wait()</code> blocks for completion.</li>
+  <li><b>Pipe / PipeNet</b> &mdash; cross-core communication abstractions for multi-core programs. (Not used in <code>eltwise_add</code> but present in <code>matmul_1d_mcast.py</code>, etc.)</li>
+</ul>
+</div>
+
+<p>Critically, <code>a_blk + b_blk</code> is not a real Python <code>__add__</code>. By the time tt-lang sees it, the function body has been re-parsed as an AST and the <code>+</code> is just a node that the AST walker decides to lower into a tile-add op.</p>
+
+<h2 id="layer2">Layer 2 &mdash; AST capture and MLIR builder</h2>
+
+<p>When a decorated <code>@ttl.operation</code> function is <em>called</em>, tt-lang does not actually run the Python body in the normal sense. Instead:</p>
+
+<ol>
+  <li><b>Source is captured</b>. <code>inspect.getsource()</code> grabs the function text; <code>_cleanup_source_code</code> normalizes indentation. The text is then parsed with the standard library <code>ast</code> module.</li>
+  <li><b>Each thread is compiled in isolation.</b> Inner <code>@ttl.compute</code> / <code>@ttl.datamovement</code> functions are pulled out of the registry and one <code>TTLGenericCompiler</code> instance is built per thread (see <code>python/ttl/_src/ttl_ast.py</code>).</li>
+  <li><b>The AST is walked, not interpreted.</b> The compiler is a visitor that translates Python AST nodes into MLIR ops by calling the Python MLIR bindings exposed by tt-mlir (the <code>ttl</code>, <code>ttkernel</code>, <code>ttcore</code>, <code>arith</code>, <code>func</code>, ... dialects).</li>
+</ol>
+
+<p>So when the visitor sees an <code>ast.BinOp(left=Name("a_blk"), op=Add(), right=Name("b_blk"))</code> inside a <code>with</code> that opened blocks of a tile-typed DFB, it emits an MLIR op like <code>ttl.tile_add</code> (or whichever per-element op the operator maps to). When it sees <code>ttl.copy(...)</code> it emits a <code>ttl.copy</code> op. When it sees the <code>with a_dfb.wait() as a_blk</code> it emits the wait/release scoped operations on the buffer.</p>
+
+<p>The result is one <code>func.func</code> per thread, all stitched into one <code>builtin.module</code>:</p>
+
+<pre><code>module attributes {ttl.target_arch = "wormhole_b0"} {
+  func.func @eltwise_add_compute(...) attributes {ttkernel.thread = #ttkernel.thread&lt;compute&gt;} { ... }
+  func.func @eltwise_add_read   (...) attributes {ttkernel.thread = #ttkernel.thread&lt;noc&gt;}     { ... }
+  func.func @eltwise_add_write  (...) attributes {ttkernel.thread = #ttkernel.thread&lt;noc&gt;}     { ... }
+}
+</code></pre>
+
+<p class="caption">If you set <code>TTLANG_INITIAL_MLIR=/tmp/initial.mlir</code> before running an example, this is exactly what you'll see written to that file.</p>
+
+<h2 id="layer3">Layer 3 &mdash; The <code>ttl</code> dialect</h2>
+
+<p>The "initial MLIR" lives in a custom MLIR dialect called <code>ttl</code>. Its job is to <em>preserve the user's intent</em> as faithfully as possible: it has first-class ops for things like:</p>
+
+<table>
+<tr><th>tt-lang concept</th><th>ttl op (representative)</th></tr>
+<tr><td>dataflow buffer reserve / wait</td><td><code>ttl.dfb_reserve</code> / <code>ttl.dfb_wait</code></td></tr>
+<tr><td>tile-level math (a + b on tiles)</td><td><code>ttl.tile_add</code>, <code>ttl.tile_mul</code>, <code>ttl.tile_matmul</code>, ...</td></tr>
+<tr><td>explicit DMAs</td><td><code>ttl.copy</code></td></tr>
+<tr><td>per-core address (<code>ttl.node</code>)</td><td><code>ttl.node_index</code></td></tr>
+</table>
+
+<p>The dialect is defined under <code>include/ttlang/Dialect/TTL/</code> and implemented in <code>lib/Dialect/TTL/</code>. There is a separate <code>ttkernel</code> dialect that is much closer to the tt-metal C++ API.</p>
+
+<blockquote>The architectural rule: <em>every level of abstraction that the user can express must have a 1:1 op in the dialect.</em> This avoids the antipattern of "guess what the user meant by chasing SSA defs" &mdash; instead the semantics live on the operation itself, and lowering can be a localised rewrite.</blockquote>
+
+<h2 id="layer4">Layer 4 &mdash; The MLIR pass pipeline</h2>
+
+<p>Once the module is built, tt-lang assembles a pipeline string and runs it with <code>PassManager.parse(...).run(module)</code> (see <code>ttl_api.py</code> ~line 1584&ndash;1679). The same ordering also exists in C++ for the standalone <code>ttlang-opt</code> tool in <code>lib/Dialect/TTL/Pipelines/TTLPipelines.cpp</code>.</p>
+
+<p>The passes can be grouped into three rough phases. Setting <code>TTLANG_VERBOSE_PASSES=1</code> dumps the IR before and after every one of them, which is the easiest way to see what each does.</p>
+
+<div class="layer green">
+<h3>Phase A &mdash; Synchronization &amp; semantics elaboration (still in <code>ttl</code>)</h3>
+<pre><code>ttl-insert-intermediate-dfbs        # auto-create CBs for fused intermediate values
+ttl-insert-copy-wait                # add wait points after copies the user forgot about
+ttl-insert-cb-sync                  # cb_push_back / cb_pop_front pairs around regions
+ttl-annotate-l1-acc-loops           # mark loops eligible for L1 accumulation
+</code></pre>
+<p>These passes don't change the dialect &mdash; they fill in the synchronization scaffolding that the user gets to omit because it's mechanical.</p>
+</div>
+
+<div class="layer green">
+<h3>Phase B &mdash; Compute lowering (still in <code>ttl</code>)</h3>
+<pre><code>convert-ttl-to-compute              # rewrite tile arithmetic into a "compute region"
+ttl-set-compute-kernel-config       # pick fp32_dest_acc_en, dst_full_sync_en, etc.
+ttl-assign-dst                      # assign destination registers (the DST file)
+ttl-subblock-compute-for-dst (opt.) # tile DST sub-block scheduling for throughput
+ttl-lower-to-loops                  # turn block-level math into explicit affine loops
+ttl-schedule-operations (opt.)      # reorder ops to maximize DST utilisation
+ttl-finalize-dfb-indices            # bake CB indices into ops
+ttl-annotate-cb-associations        # tag which CB each tile op reads / writes
+</code></pre>
+<p>By the end of this phase the IR still references <code>ttl.*</code> ops, but the high-level value-typed math has been replaced by an explicit <em>compute region</em> with affine loops over tile coordinates and ops that name a specific DST register.</p>
+</div>
+
+<div class="layer green">
+<h3>Phase C &mdash; Lowering to <code>ttkernel</code> and to C</h3>
+<pre><code>convert-ttl-to-ttkernel             # ttl ops -> ttkernel API calls
+ttkernel-insert-inits               # binary_op_init_common, mm_init, etc.
+ttkernel-insert-l1-accumulation     # L1-accum specific guard ops
+ttkernel-combine-pack-tiles (opt.)  # merge adjacent pack_tile calls
+canonicalize, cse                   # standard cleanups
+lower-affine                        # affine loops -> scf / cf
+ttl-lower-signpost-to-emitc         # profiling signposts -> emitc.call
+convert-ttkernel-to-emitc           # the big rewrite to the EmitC dialect
+symbol-dce                          # drop unused functions
+</code></pre>
+</div>
+
+<p>The pipeline is run once over the whole module &mdash; all three threads of a kernel are lowered together so synchronization between them stays consistent.</p>
+
+<h2 id="layer5">Layer 5 &mdash; The <code>ttkernel</code> dialect</h2>
+
+<p>Mid-pipeline the IR transitions to the <code>ttkernel</code> dialect. <code>ttkernel</code> is intentionally close to the tt-metal "kernel API" surface that a tt-metalium user types in by hand:</p>
+
+<pre><code>// after convert-ttl-to-ttkernel (sketch)
+%cb_in0 = ttkernel.get_compile_time_arg : !ttkernel.cb
+%cb_in1 = ttkernel.get_compile_time_arg : !ttkernel.cb
+%cb_out = ttkernel.get_compile_time_arg : !ttkernel.cb
+
+ttkernel.binary_op_init_common(%cb_in0, %cb_in1, %cb_out)
+scf.for %i = ... {
+  ttkernel.cb_wait_front  %cb_in0, 1
+  ttkernel.cb_wait_front  %cb_in1, 1
+  ttkernel.cb_reserve_back %cb_out, 1
+
+  ttkernel.tile_regs_acquire
+  ttkernel.add_tiles(%cb_in0, %cb_in1, 0, 0, 0)
+  ttkernel.tile_regs_commit
+  ttkernel.tile_regs_wait
+  ttkernel.pack_tile(0, %cb_out)
+  ttkernel.tile_regs_release
+
+  ttkernel.cb_pop_front  %cb_in0, 1
+  ttkernel.cb_pop_front  %cb_in1, 1
+  ttkernel.cb_push_back  %cb_out, 1
+}
+</code></pre>
+
+<p>Each operation here corresponds 1:1 to an inline function in <code>tt_metal/include/compute_kernel_api/*.h</code>. The dialect carries enough metadata (tile types, CB ids, thread type) for the EmitC pass below to print a runnable C++ file.</p>
+
+<p>Each <code>func.func</code> in the module is also tagged with a <code>ttkernel.thread = #ttkernel.thread&lt;compute|noc&gt;</code> attribute, which is how the next stage decides what kind of kernel to emit and which header file to include.</p>
+
+<h2 id="layer6">Layer 6 &mdash; <code>EmitC</code> and translation to C++ strings</h2>
+
+<p>MLIR has an upstream dialect called <code>emitc</code> that models a small C-like subset (calls, locals, expressions, types). <code>convert-ttkernel-to-emitc</code> rewrites every <code>ttkernel.*</code> op into an <code>emitc.call</code> referencing the corresponding tt-metal kernel-API function, plus the right <code>emitc.include</code>s and <code>void main()</code> wrapper.</p>
+
+<p>Once the module is in <code>emitc</code>, lowering to a C++ <em>string</em> is mechanical &mdash; MLIR's built-in <code>mlir-translate --mlir-to-cpp</code> handles it. tt-lang exposes this through a tiny C++ helper bound into Python:</p>
+
+<pre><code>// python/ttmlir/TT_MLIRMinimalPasses.cpp
+m.def(
+  "ttkernel_to_cpp_by_name",
+  [](MlirModule module, const std::string &kernelName) -&gt; std::string {
+    // Convert to EmitC first (idempotent if already done)
+    if (!ttmlirMinimalRunTTKernelToEmitC(module)) { /* error */ }
+    // Translate ONE func.func by name to a self-contained C++ source string
+    char *result = ttmlirMinimalTranslateKernelToCpp(module, kernelName.c_str());
+    std::string output(result);
+    free(result);
+    return output;
+  });
+</code></pre>
+
+<p>The Python side then loops once per thread and asks for that thread's C++:</p>
+
+<pre><code># ttl_api.py, _compile_ttnn_kernel
+for name, thread_type in get_ttkernel_names(module):
+    cpp_source = ttkernel_to_cpp_by_name(module, name)   # &lt;-- the string!
+    kernel_path = _write_kernel_to_tmp(name, cpp_source) # write it to /tmp/.../foo.cpp
+    ...
+</code></pre>
+
+<p>So the canonical "output" of the tt-lang compiler &mdash; what tt-metal will eventually see &mdash; is a small set of C++ strings, one per RISC-V core. For a typical operation that's three: <em>compute.cpp</em>, <em>reader.cpp</em>, and <em>writer.cpp</em>.</p>
+
+<h2 id="layer7">Layer 7 &mdash; Packaging kernels for tt-metal execution</h2>
+
+<p>tt-lang doesn't run the kernel itself. It hands the kernel strings, plus metadata, to the existing tt-metal runtime. The packaging step (<code>_compile_ttnn_kernel</code> in <code>ttl_api.py</code>) does a few things:</p>
+
+<ul>
+  <li><b>Pick the role per thread.</b> By inspecting <code>ttkernel.thread</code> attributes it labels each kernel as <code>compute</code> (TRISC0/1/2), <code>reader</code> (NCRISC), or <code>writer</code> (BRISC).</li>
+  <li><b>Apply auto-detected compute config.</b> If the IR contains f32 tiles or a <code>reduce_tile</code>/<code>matmul_block</code> call, it flips on <code>fp32_dest_acc_en</code> automatically.</li>
+  <li><b>Extract runtime args.</b> Each <code>func.func</code> carries an <code>arg_spec</code> attribute listing what the kernel expects at runtime; <code>get_ttkernel_arg_spec</code> reads it back into Python.</li>
+  <li><b>Build CB descriptors.</b> The <code>ttl.base_cta_index</code> and <code>ttl.crta_indices</code> attributes (set during AST&rarr;MLIR) tell tt-metal how the user tensors map to circular buffers.</li>
+  <li><b>Hand off to <code>ttnn.generic_op</code></b>. tt-metal picks up the C++ files, compiles them with its own RISC-V toolchains, links them against the tt-metal kernel API, and launches the program on the device just like any hand-written tt-metalium kernel.</li>
+</ul>
+
+<p>Optionally tt-lang also emits a <em>kernel bundle</em> on disk under <code>ttlang_kernel_dumps/program_&lt;hash&gt;/</code> &mdash; the C++ files plus a JSON manifest describing the program. That's how examples can be replayed (or shared) without re-running the Python frontend.</p>
+
+<h2 id="takeaway">Takeaway: the same idea at every layer</h2>
+
+<p>If you squint, every transition in the pipeline is the same trick:</p>
+
+<ol>
+  <li>Define a representation that captures one specific layer of intent (Python DSL, <code>ttl</code>, <code>ttkernel</code>, <code>emitc</code>).</li>
+  <li>Make that representation rich enough that the lowering rule to the <em>next</em> layer is a local rewrite, not a global guess.</li>
+  <li>Hand the result of the last layer to a system that already knows how to run it (tt-metal in this case).</li>
+</ol>
+
+<p>The user only ever writes layer 1. Everything else is a series of well-defined, individually testable rewrites. That's why you can debug a tt-lang program either by reading its Python source, by dumping <code>TTLANG_INITIAL_MLIR</code>, by stepping through <code>TTLANG_VERBOSE_PASSES=1</code>, or by reading the final C++ in <code>ttlang_kernel_dumps/</code> &mdash; they're four views of the same program at four levels of detail.</p>
+
+<div class="footer">
+<p>Source references for further reading: <code>python/ttl/ttl_api.py</code> (driver), <code>python/ttl/_src/ttl_ast.py</code> (AST&rarr;MLIR), <code>lib/Dialect/TTL/</code> (dialect &amp; passes), <code>lib/Dialect/TTL/Pipelines/TTLPipelines.cpp</code> (canonical pipeline), <code>python/ttmlir/TT_MLIRMinimalPasses.cpp</code> (Cpp emission binding), <code>examples/eltwise_add.py</code> (the running example).</p>
+</div>
+
+</div>
+</body>
+</html>

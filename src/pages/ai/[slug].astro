@@ -1,0 +1,207 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import Layout from '../../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('ai', ({ data }) => data.published);
+  const mdPaths = docs.map((doc) => ({
+    params: { slug: doc.id },
+    props: { type: 'md' as const, doc },
+  }));
+
+  const aiDir = path.resolve('./src/content/ai');
+  const htmlPaths: Array<{ params: { slug: string }; props: { type: 'html'; html: string } }> = [];
+  if (fs.existsSync(aiDir)) {
+    for (const file of fs.readdirSync(aiDir)) {
+      if (!file.endsWith('.html')) continue;
+      const slug = file.replace(/\.html$/, '');
+      // Guard against slug collisions with md entries.
+      if (mdPaths.some((p) => p.params.slug === slug)) {
+        throw new Error(`AI corner: slug "${slug}" exists as both .md and .html`);
+      }
+      const html = fs.readFileSync(path.join(aiDir, file), 'utf-8');
+      htmlPaths.push({ params: { slug }, props: { type: 'html', html } });
+    }
+  }
+
+  return [...mdPaths, ...htmlPaths];
+}
+
+const props = Astro.props as
+  | { type: 'md'; doc: Awaited<ReturnType<typeof getCollection<'ai'>>>[number] }
+  | { type: 'html'; html: string };
+
+const BACK_PILL = `<a href="/ai" id="__ai-corner-back" aria-label="Back to ai corner">← ai corner</a><style id="__ai-corner-back-style">
+#__ai-corner-back{position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px;line-height:1;letter-spacing:.04em;color:#1a1a1a;background:rgba(255,255,255,.88);border:1px solid rgba(0,0,0,.14);border-radius:999px;text-decoration:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(0,0,0,.16);transition:transform .12s ease,background .12s ease,box-shadow .12s ease}
+#__ai-corner-back:hover{background:rgba(255,255,255,.98);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.2)}
+@media (prefers-color-scheme: dark){#__ai-corner-back{color:#e6edf3;background:rgba(20,22,28,.72);border-color:rgba(255,255,255,.14);box-shadow:0 2px 10px rgba(0,0,0,.45)}#__ai-corner-back:hover{background:rgba(28,30,36,.92)}}
+@media print{#__ai-corner-back,#__ai-corner-back-style{display:none!important}}
+</style>`;
+
+let passthroughHtml = '';
+if (props.type === 'html') {
+  // Inject the pill right after the opening <body> tag; fall back to prepend.
+  const bodyMatch = props.html.match(/<body\b[^>]*>/i);
+  if (bodyMatch) {
+    const idx = bodyMatch.index! + bodyMatch[0].length;
+    passthroughHtml = props.html.slice(0, idx) + BACK_PILL + props.html.slice(idx);
+  } else {
+    passthroughHtml = BACK_PILL + props.html;
+  }
+}
+
+// Only computed for md branch, but fine to declare unconditionally.
+const isMd = props.type === 'md';
+const doc = isMd ? props.doc : null;
+const Content = isMd ? (await render(props.doc)).Content : null;
+
+const parseLocalDate = (dateString: string) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (!match) return null;
+  const [, year, month, day] = match;
+  return new Date(Number(year), Number(month) - 1, Number(day));
+};
+const displayDate = doc
+  ? (parseLocalDate(doc.data.pubDate)?.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).toLowerCase() ?? doc.data.pubDate)
+  : '';
+---
+{props.type === 'html' && <Fragment set:html={passthroughHtml} />}
+
+{isMd && doc && (
+  <Layout
+    title={`${doc.data.title} — ai corner`}
+    description={doc.data.description ?? 'AI-generated entry from the ai corner.'}
+    ogType="article"
+    useKatex={doc.data.useKatex}
+    robots="noindex,follow"
+  >
+    <div class="centered-wrapper">
+      <article class="ai-entry markdown-body">
+        <div class="ai-banner" role="note">
+          <span class="ai-banner-tag">ai-generated</span>
+          {doc.data.model && (
+            <span class="ai-banner-text">
+              written by <strong class="ai-banner-model">{doc.data.model}</strong>
+            </span>
+          )}
+        </div>
+        <div class="ai-meta">
+          <a href="/ai" class="ai-back">← ai corner</a>
+          <span class="ai-meta-sep">•</span>
+          <time datetime={doc.data.pubDate}>{displayDate}</time>
+          {doc.data.kind && (
+            <>
+              <span class="ai-meta-sep">•</span>
+              <span class="ai-kind">{doc.data.kind}</span>
+            </>
+          )}
+        </div>
+        <h1 class="ai-title">{doc.data.title}</h1>
+        {doc.data.description && (
+          <p class="ai-description">{doc.data.description}</p>
+        )}
+        {Content && <Content />}
+      </article>
+    </div>
+  </Layout>
+)}
+
+<style>
+  .centered-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    box-sizing: border-box;
+  }
+
+  .ai-entry {
+    margin: 2.5rem auto 4rem;
+    line-height: 1.8;
+  }
+
+  .ai-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.8rem;
+    margin: 0 0 1.75rem;
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    background: var(--surface-soft);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--fg-muted);
+  }
+
+  .ai-banner-tag {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+    color: var(--fg-soft);
+  }
+
+  .ai-banner-text {
+    color: var(--fg-muted);
+  }
+
+  .ai-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--fg-subtle);
+    font-size: 0.82rem;
+    font-family: var(--font-mono);
+    margin: 0 0 0.6rem;
+  }
+
+  .ai-meta-sep {
+    color: var(--border-strong);
+  }
+
+  .ai-back {
+    color: var(--fg-muted);
+    text-decoration: none;
+  }
+
+  .ai-back:hover {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .ai-kind {
+    color: var(--fg-subtle);
+  }
+
+  .ai-title {
+    font-size: 2.05rem;
+    line-height: 1.2;
+    margin: 0 0 0.6rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--fg-strong);
+  }
+
+  .ai-description {
+    margin: 0 0 2rem;
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 600px) {
+    .ai-title {
+      font-size: 1.7rem;
+    }
+  }
+</style>
