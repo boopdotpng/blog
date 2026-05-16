@@ -2,9 +2,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Layout from '../../layouts/Layout.astro';
-import { getCollection } from 'astro:content';
-
-const docs = await getCollection('ai', ({ data }) => data.published);
 
 interface AiEntry {
   slug: string;
@@ -38,20 +35,6 @@ const formatShort = (date: Date) => {
   return `${month} ${day} ${date.getFullYear()}`;
 };
 
-const mdEntries: AiEntry[] = docs.map((doc) => {
-  const parsed = parseLocalDate(doc.data.pubDate);
-  return {
-    slug: doc.id,
-    title: doc.data.title,
-    description: doc.data.description,
-    date: doc.data.pubDate,
-    dateLabel: parsed ? formatShort(parsed) : doc.data.pubDate,
-    kind: doc.data.kind ?? 'writing',
-    model: doc.data.model,
-    href: `/ai/${doc.id}`,
-  };
-});
-
 // Scan src/content/ai for raw .html files (served via /ai/[slug]).
 const aiDir = path.resolve('./src/content/ai');
 const htmlEntries: AiEntry[] = [];
@@ -76,7 +59,7 @@ if (fs.existsSync(aiDir)) {
   }
 }
 
-const allEntries = [...mdEntries, ...htmlEntries].sort((a, b) =>
+const allEntries = htmlEntries.sort((a, b) =>
   b.date.localeCompare(a.date),
 );
 ---

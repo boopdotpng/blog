@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="ai-model" content="Opus 4.7">
+<title>Fast Dispatch / CQ Firmware on Blackhole</title>
+<style>
+  @font-face {
+    font-family: "Google Sans Code";
+    font-style: normal;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url("/fonts/GoogleSansCode-Variable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Google Sans Code";
+    font-style: italic;
+    font-weight: 300 800;
+    font-display: swap;
+    src: url("/fonts/GoogleSansCode-VariableItalic.woff2") format("woff2");
+  }
+
+  :root {
+    --bg: #faf9f7;
+    --fg: #37352f;
+    --fg-strong: #1a1a1a;
+    --fg-muted: #888178;
+    --fg-subtle: #aaa39b;
+    --accent: #4a7c96;
+    --accent-hover: #3a6580;
+    --border-soft: #e8e6e1;
+    --border-strong: #d0cdc6;
+    --surface-soft: #f5f3ef;
+    --surface-elev: #f0eeeb;
+    --cat-host:     #4a7c96; /* blue */
+    --cat-prefetch: #3a8a6e; /* green */
+    --cat-dispatch: #c06a20; /* orange */
+    --cat-worker:   #7c6ab8; /* purple */
+    --cat-warn:     #b85a5a; /* red */
+    --svg-panel: #f0eeeb;
+    --font-sans: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    --font-mono: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #181818;
+      --fg: #c8c4be;
+      --fg-strong: #e8e5df;
+      --fg-muted: #7a7570;
+      --fg-subtle: #5a5550;
+      --accent: #8ab4cc;
+      --accent-hover: #a0c8dd;
+      --border-soft: #2a2a28;
+      --border-strong: #444440;
+      --surface-soft: #1e1e1c;
+      --surface-elev: #242422;
+      --cat-host:     #8ab4cc;
+      --cat-prefetch: #6dba98;
+      --cat-dispatch: #daa86a;
+      --cat-worker:   #a89cd6;
+      --cat-warn:     #d49494;
+      --svg-panel: #242422;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    line-height: 1.7;
+    font-size: 17px;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  header.hero {
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 1.4rem;
+    margin-bottom: 2rem;
+  }
+  header.hero h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.4em;
+    color: var(--fg-strong);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  header.hero .subtitle {
+    color: var(--fg-muted);
+    font-size: 1.05rem;
+    font-style: italic;
+    line-height: 1.55;
+  }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s, color 0.15s; }
+  a:hover { color: var(--accent-hover); border-bottom-color: currentColor; }
+  nav.toc {
+    background: var(--surface-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 0.9em 1.2em 1em;
+    margin: 1.5em 0 2.4em;
+  }
+  nav.toc h3 {
+    margin: 0 0 0.55em;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--fg-muted);
+  }
+  nav.toc ol { margin: 0; padding-left: 1.4em; font-size: 0.95rem; }
+  nav.toc li { margin: 0.25em 0; }
+  h2 {
+    margin-top: 2.6em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--fg-strong);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  h3 {
+    margin-top: 1.8em;
+    color: var(--fg-strong);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  h4 {
+    color: var(--fg-strong);
+    font-weight: 700;
+    margin-top: 1.4em;
+    font-size: 1rem;
+    letter-spacing: 0.005em;
+  }
+  p, li { color: var(--fg); }
+  p { margin: 0 0 1em; }
+  ul, ol { padding-left: 1.5em; }
+  li { margin: 0.25em 0; }
+  code, pre, .kbd, kbd, samp {
+    font-family: var(--font-mono);
+  }
+  code {
+    background: var(--surface-soft);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+  pre {
+    background: var(--surface-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 1em 1.2em;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 1.4em 0;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.2em 0;
+    font-size: 0.94rem;
+  }
+  th, td {
+    padding: 0.5em 0.7em;
+    text-align: left;
+    vertical-align: top;
+    border: none;
+  }
+  th {
+    font-weight: 700;
+    color: var(--fg-strong);
+    border-bottom: 2px solid var(--border-strong);
+  }
+  tr:not(:first-child) td { border-top: 1px solid var(--border-soft); }
+  th:first-child, td:first-child { padding-left: 0; }
+  .diagram {
+    background: var(--surface-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 1.2rem;
+    margin: 1.5em 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .diagram svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  .diagram .cap {
+    color: var(--fg-muted);
+    font-size: 0.85rem;
+    margin-top: 0.6em;
+    font-style: italic;
+  }
+  .callout {
+    background: var(--surface-soft);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.7em 1.1em;
+    margin: 1.2em 0;
+    font-size: 0.96rem;
+  }
+  .callout.warn { border-left-color: var(--cat-warn); }
+  .callout.note { border-left-color: var(--cat-dispatch); }
+  /* SVG styling — map old accent groups to category colours */
+  .svg-host     { fill: var(--svg-panel); stroke: var(--cat-host);     stroke-width: 1.5; }
+  .svg-prefetch { fill: var(--svg-panel); stroke: var(--cat-prefetch); stroke-width: 1.5; }
+  .svg-dispatch { fill: var(--svg-panel); stroke: var(--cat-dispatch); stroke-width: 1.5; }
+  .svg-worker   { fill: var(--svg-panel); stroke: var(--cat-worker);   stroke-width: 1.5; }
+  .svg-ring     { fill: var(--bg);        stroke: var(--border-strong); stroke-width: 1; }
+  .svg-arrow   { fill: none; stroke: var(--cat-host);     stroke-width: 1.6; marker-end: url(#arrow); }
+  .svg-arrow-2 { fill: none; stroke: var(--cat-prefetch); stroke-width: 1.6; marker-end: url(#arrow2); }
+  .svg-arrow-3 { fill: none; stroke: var(--cat-dispatch); stroke-width: 1.6; marker-end: url(#arrow3); }
+  .svg-arrow-4 { fill: none; stroke: var(--cat-warn);     stroke-width: 1.6; stroke-dasharray: 4 3; marker-end: url(#arrow4); }
+  .svg-arrow-5 { fill: none; stroke: var(--cat-worker);   stroke-width: 1.6; marker-end: url(#arrow5); }
+  .svg-text       { fill: var(--fg);        font: 13px var(--font-sans); }
+  .svg-text-sm    { fill: var(--fg);        font: 11px var(--font-sans); }
+  .svg-text-mono  { fill: var(--fg);        font: 11px var(--font-mono); }
+  .svg-text-muted { fill: var(--fg-muted);  font: 11px var(--font-sans); }
+  .svg-text-title   { fill: var(--cat-host);     font: 700 13px var(--font-mono); letter-spacing: 0.04em; }
+  .svg-text-title-2 { fill: var(--cat-prefetch); font: 700 13px var(--font-mono); letter-spacing: 0.04em; }
+  .svg-text-title-3 { fill: var(--cat-dispatch); font: 700 13px var(--font-mono); letter-spacing: 0.04em; }
+  .svg-text-title-5 { fill: var(--cat-worker);   font: 700 13px var(--font-mono); letter-spacing: 0.04em; }
+  .legend {
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    text-align: left;
+    padding: 0.5em 0 0;
+  }
+  .legend span { display: inline-block; margin-right: 1rem; }
+  .legend i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+    vertical-align: middle;
+    border-radius: 2px;
+  }
+  hr { border: none; border-top: 1px solid var(--border-soft); margin: 3em 0; }
+  .kbd {
+    background: var(--surface-elev);
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.78em;
+    color: var(--fg);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <h1>Fast Dispatch / CQ Firmware on Blackhole</h1>
+  <div class="subtitle">A self-contained, detailed walkthrough of how the Command Queue (CQ) firmware works in <code>blackhole-py-old</code> — host code in <code>cq.py</code> / <code>dispatch.py</code> / <code>device.py</code>, firmware in <code>firmware/cq/</code>.</div>
+</header>
+
+<nav class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#overview">System overview</a></li>
+    <li><a href="#memmap">Memory map and pointers</a></li>
+    <li><a href="#host">Host-side command construction</a></li>
+    <li><a href="#prefetch">Prefetcher startup and main loops</a></li>
+    <li><a href="#dispatch">Dispatch master core</a></li>
+    <li><a href="#dispatchs">Dispatch subordinate</a></li>
+    <li><a href="#launch">Launch flow</a></li>
+    <li><a href="#completion">Host-side completion path</a></li>
+    <li><a href="#trace">End-to-end execution trace</a></li>
+    <li><a href="#summary">Key takeaways</a></li>
+  </ol>
+</nav>
+
+<!-- ============================ §0 OVERVIEW ============================ -->
+<h2 id="overview">0. System overview</h2>
+
+<p>The pipeline has three cooperating actors:</p>
+<ol>
+  <li><b>Host</b> — runs the Python in <code>cq.py</code>. Writes commands into a pinned hugepage ("issue region") and pushes 2-byte size entries onto a 16-bit <code>prefetch_q</code> in the prefetch core's L1.</li>
+  <li><b>Prefetch core</b> (BRISC on <code>(PREFETCH_NOC_X, PREFETCH_NOC_Y)</code>, NOC 0) — reads from host hugepage over PCIe-NOC, lands data in its <code>cmddat_q</code>, relays commands to the dispatch core's CB. Built from <code>cq_prefetch.cpp</code>.</li>
+  <li><b>Dispatch core</b> (BRISC on <code>(DISPATCH_NOC_X, DISPATCH_NOC_Y)</code>, NOC 1, with a co-resident NCRISC "subordinate") — drains the relayed command stream, executes individual dispatch commands. Built from <code>cq_dispatch.cpp</code> (BRISC) and <code>cq_dispatch_subordinate.cpp</code> (NCRISC).</li>
+</ol>
+
+<div class="diagram">
+<svg viewBox="0 0 1000 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="System architecture: host, prefetch, dispatch, workers">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a7c96"/></marker>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3a8a6e"/></marker>
+    <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c06a20"/></marker>
+    <marker id="arrow4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b85a5a"/></marker>
+    <marker id="arrow5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7c6ab8"/></marker>
+  </defs>
+
+  <!-- Host -->
+  <rect x="20" y="40" width="200" height="380" rx="8" class="svg-host"/>
+  <text x="120" y="65" text-anchor="middle" class="svg-text-title">HOST (Python)</text>
+  <text x="120" y="82" text-anchor="middle" class="svg-text-muted">cq.py / dispatch.py</text>
+  <rect x="40" y="100" width="160" height="80" rx="4" class="svg-ring"/>
+  <text x="120" y="118" text-anchor="middle" class="svg-text-sm">Hugepage (sysmem)</text>
+  <text x="120" y="135" text-anchor="middle" class="svg-text-mono">issue region (64 MiB)</text>
+  <text x="120" y="150" text-anchor="middle" class="svg-text-mono">completion (32 MiB)</text>
+  <text x="120" y="165" text-anchor="middle" class="svg-text-mono">timestamps</text>
+  <rect x="40" y="200" width="160" height="60" rx="4" class="svg-ring"/>
+  <text x="120" y="220" text-anchor="middle" class="svg-text-sm">Pushes 2 B sizes</text>
+  <text x="120" y="235" text-anchor="middle" class="svg-text-mono">→ prefetch_q[idx]</text>
+  <text x="120" y="250" text-anchor="middle" class="svg-text-muted">spin until slot==0</text>
+  <rect x="40" y="280" width="160" height="60" rx="4" class="svg-ring"/>
+  <text x="120" y="300" text-anchor="middle" class="svg-text-sm">wait_completion</text>
+  <text x="120" y="315" text-anchor="middle" class="svg-text-mono">poll _HOST_CQ_WR_OFF</text>
+  <text x="120" y="330" text-anchor="middle" class="svg-text-muted">read event_id</text>
+
+  <!-- Prefetch core -->
+  <rect x="290" y="40" width="240" height="380" rx="8" class="svg-prefetch"/>
+  <text x="410" y="65" text-anchor="middle" class="svg-text-title-2">PREFETCH CORE</text>
+  <text x="410" y="82" text-anchor="middle" class="svg-text-muted">BRISC · NOC 0 · (14,2) P100</text>
+  <rect x="310" y="100" width="200" height="50" rx="4" class="svg-ring"/>
+  <text x="410" y="119" text-anchor="middle" class="svg-text-sm">prefetch_q @ 0x19840</text>
+  <text x="410" y="136" text-anchor="middle" class="svg-text-mono">1534 × uint16</text>
+  <rect x="310" y="165" width="200" height="60" rx="4" class="svg-ring"/>
+  <text x="410" y="184" text-anchor="middle" class="svg-text-sm">cmddat_q @ 0x1A440</text>
+  <text x="410" y="200" text-anchor="middle" class="svg-text-mono">256 KiB · 64×4 KiB pages</text>
+  <text x="410" y="215" text-anchor="middle" class="svg-text-mono">4 blocks · ring</text>
+  <rect x="310" y="240" width="200" height="45" rx="4" class="svg-ring"/>
+  <text x="410" y="258" text-anchor="middle" class="svg-text-sm">scratch_db @ 0x5A440</text>
+  <text x="410" y="273" text-anchor="middle" class="svg-text-mono">128 KiB · double-buffered</text>
+  <rect x="310" y="300" width="200" height="100" rx="4" class="svg-ring"/>
+  <text x="410" y="319" text-anchor="middle" class="svg-text-sm">kernel_main_hd()</text>
+  <text x="410" y="336" text-anchor="middle" class="svg-text-muted">fetch_q_get_cmds</text>
+  <text x="410" y="351" text-anchor="middle" class="svg-text-muted">process_cmd</text>
+  <text x="410" y="366" text-anchor="middle" class="svg-text-muted">→ RELAY_INLINE</text>
+  <text x="410" y="385" text-anchor="middle" class="svg-text-muted">CBWriter (credits)</text>
+
+  <!-- Dispatch core -->
+  <rect x="600" y="40" width="240" height="380" rx="8" class="svg-dispatch"/>
+  <text x="720" y="65" text-anchor="middle" class="svg-text-title-3">DISPATCH CORE</text>
+  <text x="720" y="82" text-anchor="middle" class="svg-text-muted">BRISC + NCRISC · NOC 1</text>
+  <rect x="620" y="100" width="200" height="60" rx="4" class="svg-ring"/>
+  <text x="720" y="119" text-anchor="middle" class="svg-text-sm">dispatch CB @ 0x1A000</text>
+  <text x="720" y="135" text-anchor="middle" class="svg-text-mono">128 × 4 KiB · 4 blocks</text>
+  <text x="720" y="150" text-anchor="middle" class="svg-text-mono">512 KiB total</text>
+  <rect x="620" y="175" width="200" height="50" rx="4" class="svg-ring"/>
+  <text x="720" y="195" text-anchor="middle" class="svg-text-sm">dispatch_s CB @ 0x9A000</text>
+  <text x="720" y="211" text-anchor="middle" class="svg-text-mono">32 KiB · idle (HD mode)</text>
+  <rect x="620" y="240" width="200" height="90" rx="4" class="svg-ring"/>
+  <text x="720" y="259" text-anchor="middle" class="svg-text-sm">kernel_main()</text>
+  <text x="720" y="275" text-anchor="middle" class="svg-text-muted">CBReader (4 blocks)</text>
+  <text x="720" y="291" text-anchor="middle" class="svg-text-muted">process_cmd</text>
+  <text x="720" y="307" text-anchor="middle" class="svg-text-muted">→ WRITE_PACKED, WAIT</text>
+  <text x="720" y="323" text-anchor="middle" class="svg-text-muted">→ SEND_GO_SIGNAL</text>
+  <rect x="620" y="345" width="200" height="55" rx="4" class="svg-ring"/>
+  <text x="720" y="364" text-anchor="middle" class="svg-text-sm">streams 48..55</text>
+  <text x="720" y="381" text-anchor="middle" class="svg-text-muted">worker-completion regs</text>
+
+  <!-- Workers -->
+  <rect x="910" y="40" width="70" height="380" rx="8" class="svg-worker"/>
+  <text x="945" y="65" text-anchor="middle" class="svg-text-title-5">WORKERS</text>
+  <text x="945" y="82" text-anchor="middle" class="svg-text-muted">tensix</text>
+  <g>
+    <rect x="922" y="100" width="46" height="40" rx="3" class="svg-ring"/><text x="945" y="125" text-anchor="middle" class="svg-text-sm">core</text>
+    <rect x="922" y="150" width="46" height="40" rx="3" class="svg-ring"/><text x="945" y="175" text-anchor="middle" class="svg-text-sm">core</text>
+    <rect x="922" y="200" width="46" height="40" rx="3" class="svg-ring"/><text x="945" y="225" text-anchor="middle" class="svg-text-sm">core</text>
+    <rect x="922" y="250" width="46" height="40" rx="3" class="svg-ring"/><text x="945" y="275" text-anchor="middle" class="svg-text-sm">core</text>
+    <rect x="922" y="300" width="46" height="40" rx="3" class="svg-ring"/><text x="945" y="325" text-anchor="middle" class="svg-text-sm">core</text>
+    <rect x="922" y="350" width="46" height="40" rx="3" class="svg-ring"/><text x="945" y="375" text-anchor="middle" class="svg-text-sm">…</text>
+  </g>
+
+  <!-- Arrows -->
+  <!-- Host → Prefetch (PCIe NOC read + prefetch_q push) -->
+  <path d="M220,140 L290,140" class="svg-arrow"/>
+  <text x="255" y="132" text-anchor="middle" class="svg-text-sm" fill="#4a7c96">PCIe-NOC read</text>
+  <path d="M220,225 L290,180" class="svg-arrow"/>
+  <text x="245" y="210" text-anchor="middle" class="svg-text-sm" fill="#4a7c96">push sizes</text>
+
+  <!-- Prefetch → Dispatch (RELAY_INLINE) -->
+  <path d="M530,200 L600,140" class="svg-arrow-2"/>
+  <text x="565" y="160" text-anchor="middle" class="svg-text-sm" fill="#3a8a6e">RELAY_INLINE</text>
+  <text x="565" y="175" text-anchor="middle" class="svg-text-sm" fill="#3a8a6e">→ dispatch CB</text>
+
+  <!-- Dispatch → Workers (go signal + writes) -->
+  <path d="M840,240 L910,240" class="svg-arrow-3"/>
+  <text x="875" y="232" text-anchor="middle" class="svg-text-sm" fill="#c06a20">WRITE_PACKED</text>
+  <text x="875" y="247" text-anchor="middle" class="svg-text-sm" fill="#c06a20">SEND_GO_SIGNAL</text>
+
+  <!-- Worker → Dispatch (stream completion) -->
+  <path d="M910,365 L840,365" class="svg-arrow-5"/>
+  <text x="875" y="357" text-anchor="middle" class="svg-text-sm" fill="#7c6ab8">stream 48 inc</text>
+
+  <!-- Dispatch → Host (completion FIFO) -->
+  <path d="M720,420 Q 400,470 130,420" class="svg-arrow-4"/>
+  <text x="430" y="455" text-anchor="middle" class="svg-text-sm" fill="#b85a5a">WRITE_LINEAR_H_HOST → completion FIFO</text>
+</svg>
+<div class="cap">Figure 1 — Three-actor pipeline. Host pushes records through hugepage and a 16-bit ring; prefetch core relays them into dispatch's CB; dispatch interprets them and unicasts go-words to workers; workers signal back via NOC stream registers; dispatch writes events into host's completion FIFO.</div>
+</div>
+
+<p>The board layout is wired in <code>device.py</code>:</p>
+<pre><code>P100: tensix_x = 1..7, 10..14   prefetch=(14,2)  dispatch=(14,3)
+P150: tensix_x = 1..7, 10..16   prefetch=(16,2)  dispatch=(16,3)
+PCIE NOC: x=19  y=24   (absolute; not subject to NOC mirroring)</code></pre>
+
+<p><code>build.sh</code> compiles the CQ kernels with <code>-DPREFETCH_NOC_X/Y</code>, <code>-DDISPATCH_NOC_X/Y</code>, <code>-DPCIE_NOC_X=19 -DPCIE_NOC_Y=24</code> and <code>-DNOC_INDEX={0,1}</code>. Prefetch BRISC is NOC 0; dispatch BRISC + the subordinate NCRISC are both NOC 1.</p>
+
+<!-- ============================ §1 MEM MAP ============================ -->
+<h2 id="memmap">1. Memory map and pointers</h2>
+
+<p><code>cq_fixed_config.hpp</code> is the source of truth for L1 layout. Three include-guarded blocks select per processor.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="L1 memory layouts">
+  <!-- Prefetch L1 -->
+  <text x="160" y="30" text-anchor="middle" class="svg-text-title-2">Prefetch core L1 (NOC 0 BRISC)</text>
+  <rect x="40" y="50" width="240" height="450" class="svg-prefetch"/>
+  <line x1="40" y1="90" x2="280" y2="90" stroke="#3a8a6e" stroke-width="0.7"/>
+  <line x1="40" y1="120" x2="280" y2="120" stroke="#3a8a6e" stroke-width="0.7"/>
+  <line x1="40" y1="160" x2="280" y2="160" stroke="#3a8a6e" stroke-width="0.7"/>
+  <line x1="40" y1="270" x2="280" y2="270" stroke="#3a8a6e" stroke-width="0.7"/>
+  <line x1="40" y1="380" x2="280" y2="380" stroke="#3a8a6e" stroke-width="0.7"/>
+  <text x="160" y="73" text-anchor="middle" class="svg-text-sm">prefetch_q (3068 B)</text>
+  <text x="50" y="73" class="svg-text-mono">0x19840</text>
+  <text x="160" y="108" text-anchor="middle" class="svg-text-sm">rd_ptr · pcie_rd_ptr</text>
+  <text x="50" y="108" class="svg-text-mono">0x196C0</text>
+  <text x="160" y="143" text-anchor="middle" class="svg-text-sm">(gap)</text>
+  <text x="160" y="215" text-anchor="middle" class="svg-text-sm">cmddat_q</text>
+  <text x="160" y="232" text-anchor="middle" class="svg-text-muted">256 KiB · 64×4 KiB · 4 blocks</text>
+  <text x="50" y="178" class="svg-text-mono">0x1A440</text>
+  <text x="160" y="325" text-anchor="middle" class="svg-text-sm">scratch_db</text>
+  <text x="160" y="342" text-anchor="middle" class="svg-text-muted">128 KiB · double-buffered</text>
+  <text x="50" y="288" class="svg-text-mono">0x5A440</text>
+  <text x="160" y="430" text-anchor="middle" class="svg-text-sm">dispatch_s_buffer (view)</text>
+  <text x="160" y="447" text-anchor="middle" class="svg-text-muted">32 KiB · log_page=8</text>
+  <text x="50" y="398" class="svg-text-mono">0x9A000</text>
+  <text x="160" y="490" text-anchor="middle" class="svg-text-muted">downstream_cb view → dispatch L1</text>
+
+  <!-- Dispatch L1 -->
+  <text x="500" y="30" text-anchor="middle" class="svg-text-title-3">Dispatch core L1 (NOC 1 BRISC)</text>
+  <rect x="380" y="50" width="240" height="450" class="svg-dispatch"/>
+  <line x1="380" y1="90" x2="620" y2="90" stroke="#c06a20" stroke-width="0.7"/>
+  <line x1="380" y1="115" x2="620" y2="115" stroke="#c06a20" stroke-width="0.7"/>
+  <line x1="380" y1="140" x2="620" y2="140" stroke="#c06a20" stroke-width="0.7"/>
+  <line x1="380" y1="170" x2="620" y2="170" stroke="#c06a20" stroke-width="0.7"/>
+  <line x1="380" y1="370" x2="620" y2="370" stroke="#c06a20" stroke-width="0.7"/>
+  <text x="500" y="72" text-anchor="middle" class="svg-text-sm">DEV_COMPLETION_Q_WR_PTR</text>
+  <text x="390" y="72" class="svg-text-mono">0x196D0</text>
+  <text x="500" y="106" text-anchor="middle" class="svg-text-sm">DEV_COMPLETION_Q_RD_PTR</text>
+  <text x="390" y="106" class="svg-text-mono">0x196E0</text>
+  <text x="500" y="131" text-anchor="middle" class="svg-text-sm">(semaphores)</text>
+  <text x="390" y="131" class="svg-text-mono">0x19710</text>
+  <text x="500" y="158" text-anchor="middle" class="svg-text-sm">(gap)</text>
+  <text x="500" y="265" text-anchor="middle" class="svg-text-sm">DISPATCH_CB_BASE</text>
+  <text x="500" y="282" text-anchor="middle" class="svg-text-muted">128 × 4 KiB pages</text>
+  <text x="500" y="298" text-anchor="middle" class="svg-text-muted">4 blocks · 512 KiB</text>
+  <text x="390" y="188" class="svg-text-mono">0x1A000</text>
+  <text x="500" y="430" text-anchor="middle" class="svg-text-sm">dispatch_s CB</text>
+  <text x="500" y="447" text-anchor="middle" class="svg-text-muted">32 KiB</text>
+  <text x="390" y="388" class="svg-text-mono">0x9A000</text>
+
+  <!-- Host sysmem -->
+  <text x="840" y="30" text-anchor="middle" class="svg-text-title">Host sysmem (hugepage)</text>
+  <rect x="720" y="50" width="240" height="450" class="svg-host"/>
+  <line x1="720" y1="80" x2="960" y2="80" stroke="#4a7c96" stroke-width="0.7"/>
+  <line x1="720" y1="115" x2="960" y2="115" stroke="#4a7c96" stroke-width="0.7"/>
+  <line x1="720" y1="150" x2="960" y2="150" stroke="#4a7c96" stroke-width="0.7"/>
+  <line x1="720" y1="300" x2="960" y2="300" stroke="#4a7c96" stroke-width="0.7"/>
+  <line x1="720" y1="400" x2="960" y2="400" stroke="#4a7c96" stroke-width="0.7"/>
+  <text x="840" y="68" text-anchor="middle" class="svg-text-sm">header / reserved</text>
+  <text x="730" y="68" class="svg-text-mono">+0</text>
+  <text x="840" y="103" text-anchor="middle" class="svg-text-sm">_HOST_CQ_WR_OFF</text>
+  <text x="730" y="103" class="svg-text-mono">+128</text>
+  <text x="840" y="138" text-anchor="middle" class="svg-text-sm">_HOST_CQ_RD_OFF</text>
+  <text x="730" y="138" class="svg-text-mono">+192</text>
+  <text x="840" y="220" text-anchor="middle" class="svg-text-sm">issue region</text>
+  <text x="840" y="237" text-anchor="middle" class="svg-text-muted">64 MiB</text>
+  <text x="730" y="170" class="svg-text-mono">+256</text>
+  <text x="840" y="350" text-anchor="middle" class="svg-text-sm">completion region</text>
+  <text x="840" y="367" text-anchor="middle" class="svg-text-muted">32 MiB</text>
+  <text x="840" y="440" text-anchor="middle" class="svg-text-sm">timestamp slots</text>
+  <text x="840" y="457" text-anchor="middle" class="svg-text-sm">core timing slots</text>
+  <text x="840" y="475" text-anchor="middle" class="svg-text-muted">4096 × 16 B each</text>
+
+  <!-- arrows between regions -->
+  <path d="M280,210 Q320,210 380,265" class="svg-arrow-2"/>
+  <text x="335" y="245" class="svg-text-sm" fill="#3a8a6e">RELAY</text>
+
+  <path d="M720,230 Q650,230 620,260" class="svg-arrow"/>
+  <text x="660" y="217" class="svg-text-sm" fill="#4a7c96">PCIe-NOC read</text>
+
+  <path d="M620,90 Q700,90 720,440" class="svg-arrow-4"/>
+  <text x="720" y="500" text-anchor="middle" class="svg-text-sm" fill="#b85a5a">completion WR (mirror)</text>
+</svg>
+<div class="cap">Figure 2 — L1 layouts for prefetch and dispatch cores, and the host hugepage. Arrows show the three NOC traffic flows: PCIe-NOC reads (host → prefetch), RELAY_INLINE (prefetch → dispatch CB), and completion-FIFO writes back to sysmem.</div>
+</div>
+
+<h3>1.1 Prefetch core L1 (NOC 0 BRISC)</h3>
+<table>
+  <tr><th>Region</th><th>Base</th><th>Size</th><th>Purpose</th></tr>
+  <tr><td>PCIE NOC view of host hugepage</td><td><code>pcie_base = 0x4000_0100</code></td><td>64 MiB</td><td>Prefetcher reads via NOC PCIe</td></tr>
+  <tr><td><code>prefetch_q</code></td><td><code>0x19840</code></td><td>3068 B (1534 × 2 B)</td><td>Ring of 16-bit fetch sizes</td></tr>
+  <tr><td><code>prefetch_q_rd_ptr</code></td><td><code>0x196C0</code></td><td>4 B</td><td>Device read pointer (echoed back to host)</td></tr>
+  <tr><td><code>prefetch_q_pcie_rd_ptr</code></td><td><code>0x196C4</code></td><td>4 B</td><td>Current PCIe read offset (echoed back)</td></tr>
+  <tr><td><code>cmddat_q</code></td><td><code>0x1A440</code></td><td>256 KiB, 64 × 4 KiB, 4 blocks</td><td>Where commands land</td></tr>
+  <tr><td><code>scratch_db</code></td><td><code>0x5A440</code></td><td>128 KiB (2 × 64 KiB)</td><td>Double-buffered bounce for paged/linear relays</td></tr>
+  <tr><td><code>dispatch_s_buffer</code> (view)</td><td><code>0x9A000</code></td><td>32 KiB, log_page=8</td><td>Path to dispatch subordinate</td></tr>
+  <tr><td><code>downstream_cb</code> (view)</td><td><code>0x1A000</code></td><td>128 × 4 KiB = 512 KiB</td><td>Dispatch BRISC CB</td></tr>
+</table>
+
+<p>Semaphores (16 B aligned, on the FD core type):</p>
+<ul>
+  <li><code>MY_DOWNSTREAM_CB_SEM_ID = 0</code> — page credits granted by dispatch_d.</li>
+  <li><code>MY_DISPATCH_S_CB_SEM_ID = 1</code> — page credits granted by dispatch_s.</li>
+  <li><code>DOWNSTREAM_SYNC_SEM_ID = 2</code> — counter dispatch_d increments to unblock prefetch's STALL.</li>
+  <li><code>MY_UPSTREAM_CB_SEM_ID = 3</code> — only used in <code>_d</code> variants (split path).</li>
+</ul>
+
+<h3>1.2 Dispatch core L1 (NOC 1 BRISC, "dispatch_d")</h3>
+<table>
+  <tr><th>Address</th><th>Name</th><th>Purpose</th></tr>
+  <tr><td><code>0x196D0</code></td><td><code>DEV_COMPLETION_Q_WR_PTR</code></td><td>Device-side completion FIFO write ptr (mirror)</td></tr>
+  <tr><td><code>0x196E0</code></td><td><code>DEV_COMPLETION_Q_RD_PTR</code></td><td>Host's read ptr written into device L1</td></tr>
+  <tr><td><code>0x1A000</code></td><td><code>DISPATCH_CB_BASE</code></td><td>Input CB from prefetcher, 128 × 4 KiB, 4 blocks</td></tr>
+  <tr><td><code>0x40000000</code> (NOC)</td><td><code>COMMAND_QUEUE_BASE_ADDR</code></td><td>Host completion ptr in sysmem (mirror target)</td></tr>
+  <tr><td><code>0x44000100</code> (NOC)</td><td><code>COMPLETION_QUEUE_BASE_ADDR</code></td><td>Host completion region (32 MiB)</td></tr>
+  <tr><td><code>0x370</code></td><td><code>UNICAST_GO_SIGNAL_ADDR</code></td><td>Per-worker go-message offset</td></tr>
+</table>
+
+<h3>1.3 Dispatch subordinate L1 (NCRISC, NOC 1)</h3>
+<p>Co-resident with dispatch_d on the same tile. CB at <code>0x9A000</code>, 32 KiB, log_page_size=8. Worker-completion stream registers live in the NOC stream register file from <code>FIRST_STREAM_USED = 48</code>. <code>DISPATCH_S_SYNC_SEM_BASE_ADDR = 0x19710</code> — array of 16-byte-strided semaphores bumped by dispatch_d so dispatch_s knows when it's safe to send a go signal.</p>
+
+<h3>1.4 Host sysmem layout</h3>
+<pre><code>+0                       (header / reserved)
++2 * PCIE_ALIGN          _HOST_CQ_WR_OFF      (4 B: completion-fifo wr-ptr | toggle)
++3 * PCIE_ALIGN          _HOST_CQ_RD_OFF      (4 B: host's rd-ptr | toggle echo)
++4 * PCIE_ALIGN          _HOST_ISSUE_BASE     issue region, 64 MiB
++   ...                  _HOST_COMPLETION_BASE  completion region, 32 MiB
++   ...                  _HOST_TIMESTAMP_BASE   4096 × 16 B   (CQTimestamp slots)
++   ...                  _HOST_CORE_TIMING_BASE 4096 × 16 B   (per-core BRISC start/end)
+
+PCIE_ALIGN = 64,  L1_ALIGN = 16,  PAGE_SIZE = 4096</code></pre>
+
+<div class="callout note">The buffer is allocated with <code>mmap(MAP_SHARED|MAP_ANONYMOUS|MAP_POPULATE)</code>, pinned via <code>PCIDevice.pin_pages()</code>, and the returned IOVA must have bit 60 set (the "PCIE NOC base" marker <code>_PCIE_NOC_BASE = 1 &lt;&lt; 60</code>). The 32-bit truncation <code>noc_local = noc_addr - _PCIE_NOC_BASE</code> is what the prefetcher uses as <code>pcie_base</code> offsets.</div>
+
+<!-- ============================ §2 HOST ============================ -->
+<h2 id="host">2. Host-side command construction (<code>cq.py</code>)</h2>
+
+<h3>2.1 Commands</h3>
+<p>Every dispatch command is a 16-byte fixed-size header followed by an L1-aligned payload. The byte layout is defined by <code>cq_commands.hpp</code> and produced on the host by <code>_cq_hdr(fmt, ...)</code> which struct-packs and zero-pads to 16 bytes.</p>
+
+<table>
+  <tr><th>ID</th><th>Name</th><th>Dataclass</th></tr>
+  <tr><td>3</td><td><code>WRITE_LINEAR_H_HOST</code></td><td><code>CQHostEvent</code></td></tr>
+  <tr><td>5</td><td><code>WRITE_PACKED</code></td><td><code>CQWritePacked</code></td></tr>
+  <tr><td>6</td><td><code>WRITE_PACKED_LARGE</code></td><td><code>CQWritePackedLarge</code></td></tr>
+  <tr><td>7</td><td><code>WAIT</code></td><td><code>CQWaitStream</code>, <code>CQBarrier</code></td></tr>
+  <tr><td>14</td><td><code>SEND_GO_SIGNAL</code></td><td><code>CQSendGoSignal</code></td></tr>
+  <tr><td>17</td><td><code>SET_GO_SIGNAL_NOC_DATA</code></td><td><code>CQSetGoSignalNocData</code></td></tr>
+  <tr><td>18</td><td><code>TIMESTAMP</code></td><td><code>CQTimestamp</code></td></tr>
+</table>
+
+<h3>2.2 RELAY_INLINE wrapping</h3>
+<p>Each top-level dispatch command is wrapped on the host into a <code>RELAY_INLINE</code> prefetch command:</p>
+<pre><code>def _relay_inline(payload):
+  stride = align_up(CQ_CMD_SIZE + len(payload), PCIE_ALIGN)
+  hdr = _cq_hdr("&lt;BBHII", _RELAY_INLINE, 0, 0, len(payload), stride)
+  return hdr + payload.ljust(stride - CQ_CMD_SIZE, b"\0")</code></pre>
+
+<div class="diagram">
+<svg viewBox="0 0 980 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RELAY_INLINE wrapping">
+  <!-- Outer prefetch cmd -->
+  <rect x="30" y="40" width="920" height="170" rx="4" class="svg-prefetch"/>
+  <text x="490" y="32" text-anchor="middle" class="svg-text-title-2">RELAY_INLINE wrapper (PCIE_ALIGN-aligned record in issue region)</text>
+  <!-- prefetch header -->
+  <rect x="50" y="60" width="120" height="60" class="svg-ring"/>
+  <text x="110" y="80" text-anchor="middle" class="svg-text-sm">prefetch hdr</text>
+  <text x="110" y="96" text-anchor="middle" class="svg-text-mono">16 B</text>
+  <text x="110" y="112" text-anchor="middle" class="svg-text-muted">cmd_id, len, stride</text>
+  <!-- dispatch cmd -->
+  <rect x="190" y="60" width="220" height="60" class="svg-dispatch"/>
+  <text x="300" y="80" text-anchor="middle" class="svg-text-sm">dispatch cmd hdr</text>
+  <text x="300" y="96" text-anchor="middle" class="svg-text-mono">16 B</text>
+  <text x="300" y="112" text-anchor="middle" class="svg-text-muted">e.g. WRITE_PACKED</text>
+  <!-- sub-commands -->
+  <rect x="430" y="60" width="200" height="60" class="svg-ring"/>
+  <text x="530" y="80" text-anchor="middle" class="svg-text-sm">sub-commands</text>
+  <text x="530" y="96" text-anchor="middle" class="svg-text-mono">count × 4 or 12 B</text>
+  <text x="530" y="112" text-anchor="middle" class="svg-text-muted">(L1_ALIGN padded)</text>
+  <!-- payload -->
+  <rect x="650" y="60" width="200" height="60" class="svg-host"/>
+  <text x="750" y="80" text-anchor="middle" class="svg-text-sm">payload</text>
+  <text x="750" y="96" text-anchor="middle" class="svg-text-muted">RTA bytes / launch msg /</text>
+  <text x="750" y="112" text-anchor="middle" class="svg-text-muted">kernel binary / event_id</text>
+  <!-- padding -->
+  <rect x="870" y="60" width="60" height="60" class="svg-ring" fill="#f0eeeb"/>
+  <text x="900" y="80" text-anchor="middle" class="svg-text-sm">pad</text>
+  <text x="900" y="96" text-anchor="middle" class="svg-text-muted">→ PCIE_ALIGN</text>
+
+  <!-- prefetch_q entry annotation -->
+  <line x1="50" y1="135" x2="930" y2="135" stroke="#888178" stroke-dasharray="3 3"/>
+  <line x1="50" y1="130" x2="50" y2="140" stroke="#888178"/>
+  <line x1="930" y1="130" x2="930" y2="140" stroke="#888178"/>
+  <text x="490" y="156" text-anchor="middle" class="svg-text-sm">total stride bytes  ⇒  prefetch_q[idx] = (stride &gt;&gt; 4)</text>
+  <text x="490" y="175" text-anchor="middle" class="svg-text-muted">host spins until prefetch_q[idx] == 0, then atomically writes the 16-byte-unit size</text>
+  <text x="490" y="195" text-anchor="middle" class="svg-text-muted">device zeros the slot on consumption ⇒ single-producer/single-consumer 1534-entry SPSC ring</text>
+</svg>
+<div class="cap">Figure 3 — A single record in the issue region: outer 16 B prefetch header, inner 16 B dispatch header, sub-commands, payload(s), and tail padding so the whole thing is <code>PCIE_ALIGN</code> (64 B). The 2-byte ring entry encodes <code>stride &gt;&gt; 4</code>.</div>
+</div>
+
+<h3>2.3 prefetch_q ring</h3>
+<div class="diagram">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="prefetch_q ring buffer">
+  <!-- Ring: 1534 entries shown as 32 slots for illustration -->
+  <g transform="translate(450,140)">
+    <circle r="115" fill="#faf9f7" stroke="#d0cdc6" stroke-width="1"/>
+    <circle r="80" fill="none" stroke="#d0cdc6" stroke-width="1"/>
+    <!-- slots: light arc segments -->
+    <g stroke="#d0cdc6" stroke-width="0.6">
+      <line x1="0" y1="-115" x2="0" y2="-80"/>
+      <line x1="80" y1="-80" x2="115" y2="-115" transform="rotate(45)"/>
+      <line x1="115" y1="0" x2="80" y2="0" transform="rotate(0)"/>
+      <line x1="0" y1="115" x2="0" y2="80" transform="rotate(90)"/>
+      <line x1="115" y1="0" x2="80" y2="0" transform="rotate(90)"/>
+      <line x1="115" y1="0" x2="80" y2="0" transform="rotate(135)"/>
+      <line x1="115" y1="0" x2="80" y2="0" transform="rotate(180)"/>
+      <line x1="115" y1="0" x2="80" y2="0" transform="rotate(225)"/>
+      <line x1="115" y1="0" x2="80" y2="0" transform="rotate(270)"/>
+      <line x1="115" y1="0" x2="80" y2="0" transform="rotate(315)"/>
+    </g>
+    <!-- filled slots (host has written, device hasn't consumed) -->
+    <path d="M 0,-115 A 115 115 0 0 1 115,0 L 80,0 A 80 80 0 0 0 0,-80 Z" fill="#f0eeeb" stroke="#3a8a6e"/>
+    <path d="M 115,0 A 115 115 0 0 1 81.3,81.3 L 56.6,56.6 A 80 80 0 0 0 80,0 Z" fill="#f0eeeb" stroke="#3a8a6e"/>
+    <!-- ptr arrows -->
+    <line x1="0" y1="-150" x2="0" y2="-118" stroke="#4a7c96" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="0" y="-160" text-anchor="middle" class="svg-text-sm" fill="#4a7c96">host wr_idx</text>
+    <line x1="120" y1="100" x2="80" y2="76" stroke="#c06a20" stroke-width="2" marker-end="url(#arrow3)"/>
+    <text x="155" y="115" text-anchor="middle" class="svg-text-sm" fill="#c06a20">device rd_ptr</text>
+    <text y="5" text-anchor="middle" class="svg-text-sm">prefetch_q</text>
+    <text y="22" text-anchor="middle" class="svg-text-muted">1534 × uint16</text>
+  </g>
+
+  <!-- legend / annotation -->
+  <rect x="700" y="40" width="180" height="180" rx="6" fill="#f5f3ef" stroke="#d0cdc6"/>
+  <text x="790" y="60" text-anchor="middle" class="svg-text-sm">Slot states</text>
+  <rect x="715" y="75" width="14" height="14" fill="#f0eeeb" stroke="#3a8a6e"/>
+  <text x="735" y="86" class="svg-text-sm">nonzero = pending</text>
+  <rect x="715" y="100" width="14" height="14" fill="#faf9f7" stroke="#d0cdc6"/>
+  <text x="735" y="111" class="svg-text-sm">zero = free</text>
+  <text x="710" y="140" class="svg-text-muted">Host:</text>
+  <text x="710" y="155" class="svg-text-mono">spin until slot==0</text>
+  <text x="710" y="172" class="svg-text-mono">write (size&gt;&gt;4)</text>
+  <text x="710" y="195" class="svg-text-muted">Device:</text>
+  <text x="710" y="210" class="svg-text-mono">read, NOC PCIe</text>
+</svg>
+<div class="cap">Figure 4 — <code>prefetch_q</code> as a 1534-slot SPSC ring. Each slot is a <code>uint16</code> holding either <code>0</code> (free) or the 16-byte-unit size of the next chunk to fetch. The high bit is an EXEC_BUF stall flag (unused in this build).</div>
+</div>
+
+<h3>2.4 Issue region writes</h3>
+<pre><code>1. Bump _issue_wr to next PCIE_ALIGN boundary.
+2. If record won't fit, wrap to 0.
+3. Copy record into sysmem at _HOST_ISSUE_BASE + _issue_wr.
+4. _issue_wr += len(record).
+5. Spin waiting until prefetch_q[idx] == 0.
+6. Atomically write 2-byte size (record_len >> 4) into prefetch_q[idx].
+7. idx = (idx + 1) % CQ_PREFETCH_Q_ENTRIES.</code></pre>
+
+<h3>2.5 Lowering programs (<code>dispatch.py</code>)</h3>
+<p><code>build_ir(program, ...)</code> produces a list of <code>IRCommand</code>s; <code>_lower_ir</code> then converts:</p>
+<pre><code>Write(cores, addr, bytes)         → CQWritePackedLarge + CQBarrier  (per 1 KiB chunk)
+Write(cores, addr, list[bytes])   → CQWritePacked                   (per L1_ALIGN slice)
+Launch(cores)                     → CQSetGoSignalNocData(cores)
+                                    CQWaitStream(DONE_STREAM=48, 0)
+                                    CQSendGoSignal(go_word, 48, 0, len(cores))
+                                    CQWaitStream(DONE_STREAM, len(cores))</code></pre>
+<p><code>lower_fast(programs, ...)</code> bookends each per-program IR with <code>CQTimestamp</code> writes. <code>device._run_fast_dispatch()</code> appends a single <code>CQHostEvent</code> — that is the event the host waits on.</p>
+
+<!-- ============================ §3 PREFETCH ============================ -->
+<h2 id="prefetch">3. Prefetcher startup and main loops</h2>
+
+<p>The prefetch firmware lives in <code>cq_prefetch.cpp</code>. It compiles to three variants (<code>_h</code>, <code>_d</code>, <code>_hd</code>) but for <code>blackhole-py-old</code> only the unified <code>_hd</code> is used because <code>IS_H_VARIANT = IS_D_VARIANT = 1</code>.</p>
+
+<pre><code>void kernel_main_hd() {
+    uint32_t cmd_ptr = cmddat_q_base;
+    uint32_t fence   = cmddat_q_base;
+    bool done = false;
+    uint32_t l1_cache[l1_cache_elements_rounded];
+    PrefetchExecBufState exec_buf_state;
+
+    cq_noc_async_write_init_state&lt;...&gt;(0, dst_dispatch, 0);    // BRISC_WR_CMD_BUF
+    cq_noc_async_write_init_state&lt;...&gt;(0, dst_dispatch_s, 0);  // BRISC_WR_REG_CMD_BUF
+
+    while (!done) {
+        fetch_q_get_cmds&lt;0&gt;(fence, cmd_ptr, pcie_read_ptr);
+        cmd = (volatile CQPrefetchCmd*)cmd_ptr;
+        uint32_t stride;
+        done = process_cmd&lt;false, false&gt;(cmd_ptr, downstream_data_ptr, stride, l1_cache, exec_buf_state);
+        cmd_ptr += stride;
+    }
+}</code></pre>
+
+<div class="diagram">
+<svg viewBox="0 0 880 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="fetch_q_get_cmds state machine">
+  <!-- States -->
+  <rect x="30" y="40" width="180" height="60" rx="8" class="svg-prefetch"/>
+  <text x="120" y="65" text-anchor="middle" class="svg-text-title-2">cmd_ready?</text>
+  <text x="120" y="83" text-anchor="middle" class="svg-text-muted">cmd_ptr ≠ fence</text>
+
+  <rect x="350" y="40" width="180" height="60" rx="8" class="svg-prefetch"/>
+  <text x="440" y="65" text-anchor="middle" class="svg-text-sm">return</text>
+  <text x="440" y="83" text-anchor="middle" class="svg-text-muted">process_cmd takes over</text>
+
+  <rect x="30" y="160" width="180" height="60" rx="8" class="svg-prefetch"/>
+  <text x="120" y="183" text-anchor="middle" class="svg-text-title-2">read_pending?</text>
+  <text x="120" y="201" text-anchor="middle" class="svg-text-muted">pending_read_size ≠ 0</text>
+
+  <rect x="350" y="160" width="200" height="60" rx="8" class="svg-prefetch"/>
+  <text x="450" y="183" text-anchor="middle" class="svg-text-sm">barrier on read</text>
+  <text x="450" y="201" text-anchor="middle" class="svg-text-muted">fence += pending_read_size</text>
+
+  <rect x="30" y="280" width="180" height="60" rx="8" class="svg-prefetch"/>
+  <text x="120" y="303" text-anchor="middle" class="svg-text-title-2">prefetch_q_ready?</text>
+  <text x="120" y="321" text-anchor="middle" class="svg-text-muted">slot ≠ 0 (invalidate dcache!)</text>
+
+  <rect x="350" y="280" width="270" height="60" rx="8" class="svg-prefetch"/>
+  <text x="485" y="298" text-anchor="middle" class="svg-text-sm">issue PCIe-NOC read</text>
+  <text x="485" y="313" text-anchor="middle" class="svg-text-muted">src = pcie_noc_xy | pcie_read_ptr</text>
+  <text x="485" y="328" text-anchor="middle" class="svg-text-muted">dst = fence</text>
+
+  <rect x="660" y="280" width="200" height="60" rx="8" class="svg-prefetch"/>
+  <text x="760" y="303" text-anchor="middle" class="svg-text-sm">slot ← 0 (consumed)</text>
+  <text x="760" y="321" text-anchor="middle" class="svg-text-muted">echo rd_ptr back to L1</text>
+
+  <rect x="30" y="370" width="180" height="50" rx="8" class="svg-prefetch"/>
+  <text x="120" y="392" text-anchor="middle" class="svg-text-sm">spin</text>
+  <text x="120" y="408" text-anchor="middle" class="svg-text-muted">invalidate_l1_cache</text>
+
+  <!-- Arrows -->
+  <path d="M210,70 L350,70" class="svg-arrow-2"/>
+  <text x="280" y="60" class="svg-text-sm" fill="#3a8a6e">yes</text>
+  <path d="M120,100 L120,160" class="svg-arrow-2"/>
+  <text x="135" y="135" class="svg-text-sm" fill="#3a8a6e">no</text>
+  <path d="M210,190 L350,190" class="svg-arrow-2"/>
+  <text x="280" y="180" class="svg-text-sm" fill="#3a8a6e">yes</text>
+  <path d="M450,220 Q 450,255 120,275" class="svg-arrow-2"/>
+  <text x="290" y="255" class="svg-text-sm" fill="#3a8a6e">re-check prefetch_q</text>
+  <path d="M120,220 L120,280" class="svg-arrow-2"/>
+  <text x="135" y="255" class="svg-text-sm" fill="#3a8a6e">no</text>
+  <path d="M210,310 L350,310" class="svg-arrow-2"/>
+  <text x="280" y="300" class="svg-text-sm" fill="#3a8a6e">yes</text>
+  <path d="M550,310 L660,310" class="svg-arrow-2"/>
+  <path d="M120,340 L120,370" class="svg-arrow-2"/>
+  <text x="135" y="360" class="svg-text-sm" fill="#3a8a6e">no</text>
+  <path d="M210,395 Q300,395 350,340" class="svg-arrow-2"/>
+</svg>
+<div class="cap">Figure 5 — <code>fetch_q_get_cmds</code> as a state machine over three flags. The function returns as soon as there is something to process; otherwise it advances any in-flight read, or starts a new PCIe-NOC read keyed off the next nonzero <code>prefetch_q</code> slot.</div>
+</div>
+
+<h3>3.1 <code>process_cmd</code> (prefetcher)</h3>
+<table>
+  <tr><th>Prefetch cmd</th><th>Action</th></tr>
+  <tr><td><code>RELAY_LINEAR</code></td><td>NOC-read from <code>(noc_xy, addr)</code> into scratch_db, stream to dispatch CB. <em>(unused here)</em></td></tr>
+  <tr><td><code>RELAY_PAGED</code> / <code>_PACKED</code></td><td>Pull pages from interleaved DRAM banks, double-buffer through <code>scratch_db_top[0..1]</code>. <em>(unused)</em></td></tr>
+  <tr><td><code>RELAY_INLINE</code></td><td><b>The path Python uses for every command.</b> Copy body from cmddat_q to dispatch CB, flushing pages as it goes.</td></tr>
+  <tr><td><code>RELAY_INLINE_NOFLUSH</code></td><td>Same, but doesn't release trailing page; next command can append.</td></tr>
+  <tr><td><code>EXEC_BUF</code> / <code>_END</code></td><td>Switch source from PCIe to a DRAM-resident command buffer; stalls new PCIe reads.</td></tr>
+  <tr><td><code>STALL</code></td><td>Spin on <code>my_downstream_sync_sem</code> hitting a count (driven by dispatch_d's <code>NOTIFY_PREFETCH</code> WAIT flag).</td></tr>
+  <tr><td><code>TERMINATE</code></td><td>Drop out of <code>kernel_main_hd</code>.</td></tr>
+</table>
+
+<h3>3.2 <code>process_relay_inline_common</code> — the hot path</h3>
+<pre><code>uint32_t length = cmd-&gt;relay_inline.length;
+uint32_t stride = cmd-&gt;relay_inline.stride;
+uint32_t npages = (length + page_size - 1) &gt;&gt; log_page_size;
+
+RelayInlineState::cb_writer.acquire_pages(npages);     // wait on credits from dispatch
+CmdPayloadStream stream{cmd_ptr, exec_buf_state};
+stream.init(sizeof(CQPrefetchCmd));                    // skip 16 B prefetch header
+while (remaining &gt; 0) {
+    ByteSpan span = stream.next_span(remaining, stride);
+    write_downstream&lt;...&gt;(span.ptr, local_downstream_data_ptr, span.len, ..., );
+    remaining -= span.len;
+}
+local_downstream_data_ptr = round_up_pow2(local_downstream_data_ptr, page_size);
+noc_async_writes_flushed(RelayInlineState::downstream_noc_index);
+RelayInlineState::cb_writer.release_pages(npages, local_downstream_data_ptr);</code></pre>
+
+<div class="callout note">The <code>CBWriter</code> keeps an <code>additional_count</code> field for "borrowed credit" (used by EXEC_BUF / ringbuffer paths), and uses <code>wrap_gt</code> signed-diff comparison to safely handle the semaphore wrapping past 2³¹.</div>
+
+<!-- ============================ §4 DISPATCH ============================ -->
+<h2 id="dispatch">4. Dispatch core (master, BRISC NOC 1)</h2>
+
+<pre><code>void kernel_main() {
+    set_l1_data_cache&lt;true&gt;();
+    if constexpr (NOC_INDEX != UPSTREAM_NOC_INDEX) noc_local_state_init(UPSTREAM_NOC_INDEX);
+    reset_worker_completion_stream_counts&lt;FIRST_STREAM_USED=48, MAX_NUM_WORKER_SEMS=8&gt;();
+    dispatch_cb_reader.init();
+    cmd_ptr = DISPATCH_CB_BASE;
+    write_offset[0..2] = 0;
+    completion_queue_wr_ptr_and_toggle = *get_cq_completion_write_ptr();
+    while (!done) {
+        dispatch_cb_reader.wait_for_available_data_and_release_old_pages(cmd_ptr);
+        done = process_cmd&lt;IS_D_VARIANT=true&gt;(cmd_ptr, l1_cache);
+        cmd_ptr = round_up_pow2(cmd_ptr, dispatch_cb_page_size);
+    }
+}</code></pre>
+
+<h3>4.1 The dispatch CB — 4-block ring with deferred release</h3>
+
+<div class="diagram">
+<svg viewBox="0 0 920 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dispatch CB 4 blocks">
+  <text x="460" y="28" text-anchor="middle" class="svg-text-title-3">DISPATCH_CB — 128 × 4 KiB pages = 512 KiB, partitioned into 4 blocks</text>
+  <!-- 4 blocks -->
+  <g>
+    <rect x="40" y="60" width="200" height="80" class="svg-dispatch"/>
+    <text x="140" y="83" text-anchor="middle" class="svg-text-sm">Block 0</text>
+    <text x="140" y="100" text-anchor="middle" class="svg-text-muted">32 pages · 128 KiB</text>
+    <text x="140" y="118" text-anchor="middle" class="svg-text-muted">released (1 block ago)</text>
+    <rect x="240" y="60" width="200" height="80" class="svg-dispatch"/>
+    <text x="340" y="83" text-anchor="middle" class="svg-text-sm">Block 1</text>
+    <text x="340" y="100" text-anchor="middle" class="svg-text-muted">currently draining</text>
+    <text x="340" y="118" text-anchor="middle" class="svg-text-muted">NOC writes in flight</text>
+    <rect x="440" y="60" width="200" height="80" class="svg-dispatch" fill="#f0eeeb"/>
+    <text x="540" y="83" text-anchor="middle" class="svg-text-sm">Block 2 (active)</text>
+    <text x="540" y="100" text-anchor="middle" class="svg-text-muted">reader processing here</text>
+    <rect x="640" y="60" width="200" height="80" class="svg-dispatch"/>
+    <text x="740" y="83" text-anchor="middle" class="svg-text-sm">Block 3</text>
+    <text x="740" y="100" text-anchor="middle" class="svg-text-muted">future</text>
+  </g>
+  <!-- ptrs -->
+  <line x1="540" y1="150" x2="540" y2="170" stroke="#3a8a6e" stroke-width="2" marker-end="url(#arrow2)"/>
+  <text x="540" y="185" text-anchor="middle" class="svg-text-sm" fill="#3a8a6e">cmd_ptr / cb_fence</text>
+  <line x1="340" y1="150" x2="340" y2="170" stroke="#b85a5a" stroke-width="2" marker-end="url(#arrow4)"/>
+  <text x="340" y="185" text-anchor="middle" class="svg-text-sm" fill="#b85a5a">deferred release zone</text>
+  <line x1="140" y1="150" x2="140" y2="170" stroke="#4a7c96" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="140" y="185" text-anchor="middle" class="svg-text-sm" fill="#4a7c96">credit returned to prefetch</text>
+  <text x="460" y="220" text-anchor="middle" class="svg-text-muted">A block is freed only after the next block is finished AND its NOC writes have left the NIU,</text>
+  <text x="460" y="237" text-anchor="middle" class="svg-text-muted">so prefetch's incoming writes can't race with the dispatch's outgoing writes from the same pages.</text>
+</svg>
+<div class="cap">Figure 6 — Dispatch CB deferred-release pattern. The active block (cmd_ptr) drains; the previous block waits for outstanding NOC writes to land before its pages are released back to the prefetcher.</div>
+</div>
+
+<p><code>CBReaderWithReleasePolicy</code> (defined in <code>cq_common.hpp</code>) maintains:</p>
+<ul>
+  <li><code>local_count_</code> — pages logically consumed.</li>
+  <li><code>cb_fence_</code> — byte address one past last guaranteed-present byte.</li>
+  <li><code>block_next_start_addr_[4]</code> — block boundary fences.</li>
+  <li><code>rd_block_idx_</code> — current block (0..3).</li>
+  <li><code>block_noc_writes_to_clear_</code> — snapshot of NOC nonposted-write counter.</li>
+</ul>
+
+<h3>4.2 <code>process_cmd</code> (dispatcher)</h3>
+<table>
+  <tr><th>Dispatch cmd</th><th>Function</th></tr>
+  <tr><td><code>WRITE_LINEAR</code></td><td><code>process_write_linear(num_mcast_dests)</code></td></tr>
+  <tr><td><code>WRITE_LINEAR_H_HOST</code></td><td><code>process_write_host_h()</code> — host event / read-buffer path</td></tr>
+  <tr><td><code>WRITE_PAGED</code></td><td><code>process_write_paged&lt;is_dram&gt;()</code></td></tr>
+  <tr><td><code>WRITE_PACKED</code></td><td><code>process_write_packed&lt;mcast, SubCmdT&gt;()</code></td></tr>
+  <tr><td><code>WRITE_PACKED_LARGE</code></td><td><code>process_write_packed_large()</code></td></tr>
+  <tr><td><code>WAIT</code></td><td><code>process_wait()</code></td></tr>
+  <tr><td><code>SEND_GO_SIGNAL</code></td><td><code>process_go_signal_mcast_cmd()</code></td></tr>
+  <tr><td><code>SET_GO_SIGNAL_NOC_DATA</code></td><td>copies words into local 256-entry array</td></tr>
+  <tr><td><code>SET_WRITE_OFFSET</code></td><td>updates <code>write_offset[3]</code> for relocation</td></tr>
+  <tr><td><code>TIMESTAMP</code></td><td>samples wall-clock and writes 8 B to a NOC dst</td></tr>
+  <tr><td><code>TERMINATE</code></td><td>breaks the loop</td></tr>
+</table>
+
+<h3>4.3 The hot path: <code>process_write_packed</code></h3>
+
+<div class="diagram">
+<svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="WRITE_PACKED execution">
+  <!-- Source: cmd in dispatch CB -->
+  <rect x="30" y="40" width="220" height="160" class="svg-dispatch"/>
+  <text x="140" y="32" text-anchor="middle" class="svg-text-title-3">dispatch CB</text>
+  <rect x="45" y="55" width="190" height="22" class="svg-ring"/>
+  <text x="140" y="71" text-anchor="middle" class="svg-text-mono">CQDispatchCmd hdr</text>
+  <rect x="45" y="80" width="190" height="22" class="svg-ring"/>
+  <text x="140" y="96" text-anchor="middle" class="svg-text-mono">sub[0]: noc_xy</text>
+  <rect x="45" y="105" width="190" height="22" class="svg-ring"/>
+  <text x="140" y="121" text-anchor="middle" class="svg-text-mono">sub[1]: noc_xy</text>
+  <rect x="45" y="130" width="190" height="22" class="svg-ring"/>
+  <text x="140" y="146" text-anchor="middle" class="svg-text-mono">sub[N-1]: noc_xy</text>
+  <rect x="45" y="155" width="190" height="40" class="svg-host"/>
+  <text x="140" y="173" text-anchor="middle" class="svg-text-sm">payload (L1_ALIGN-padded)</text>
+  <text x="140" y="188" text-anchor="middle" class="svg-text-muted">data_ptr advances by stride</text>
+
+  <!-- copy sub_cmds to local cache -->
+  <rect x="310" y="60" width="220" height="60" rx="6" class="svg-dispatch"/>
+  <text x="420" y="80" text-anchor="middle" class="svg-text-sm">careful_copy → l1_cache[]</text>
+  <text x="420" y="98" text-anchor="middle" class="svg-text-muted">avoid re-reading L1 per iter</text>
+  <text x="420" y="113" text-anchor="middle" class="svg-text-muted">(local data RAM faster)</text>
+
+  <!-- NOC issue -->
+  <rect x="310" y="140" width="220" height="80" rx="6" class="svg-dispatch"/>
+  <text x="420" y="160" text-anchor="middle" class="svg-text-sm">for sub in subs:</text>
+  <text x="420" y="178" text-anchor="middle" class="svg-text-mono">cq_noc_async_write_with_state</text>
+  <text x="420" y="194" text-anchor="middle" class="svg-text-mono">src=data_ptr, dst=sub.noc_xy</text>
+  <text x="420" y="210" text-anchor="middle" class="svg-text-mono">data_ptr += stride</text>
+
+  <!-- N target cores -->
+  <rect x="600" y="40" width="270" height="180" rx="6" class="svg-worker"/>
+  <text x="735" y="32" text-anchor="middle" class="svg-text-title-5">N worker tensix L1s</text>
+  <rect x="615" y="60" width="50" height="40" class="svg-ring"/><text x="640" y="85" text-anchor="middle" class="svg-text-sm">core 0</text>
+  <rect x="675" y="60" width="50" height="40" class="svg-ring"/><text x="700" y="85" text-anchor="middle" class="svg-text-sm">core 1</text>
+  <rect x="735" y="60" width="50" height="40" class="svg-ring"/><text x="760" y="85" text-anchor="middle" class="svg-text-sm">core 2</text>
+  <rect x="795" y="60" width="50" height="40" class="svg-ring"/><text x="820" y="85" text-anchor="middle" class="svg-text-sm">…</text>
+  <rect x="615" y="110" width="50" height="40" class="svg-ring"/><text x="640" y="135" text-anchor="middle" class="svg-text-sm">…</text>
+  <rect x="675" y="110" width="50" height="40" class="svg-ring"/><text x="700" y="135" text-anchor="middle" class="svg-text-sm">…</text>
+  <rect x="735" y="110" width="50" height="40" class="svg-ring"/><text x="760" y="135" text-anchor="middle" class="svg-text-sm">…</text>
+  <rect x="795" y="110" width="50" height="40" class="svg-ring"/><text x="820" y="135" text-anchor="middle" class="svg-text-sm">core N</text>
+  <text x="735" y="180" text-anchor="middle" class="svg-text-muted">all receive xfer_size bytes</text>
+  <text x="735" y="197" text-anchor="middle" class="svg-text-muted">at the same dst_addr</text>
+
+  <!-- arrows -->
+  <path d="M250,100 L310,90" class="svg-arrow-3"/>
+  <path d="M250,170 L310,180" class="svg-arrow-3"/>
+  <path d="M530,180 L600,130" class="svg-arrow-3"/>
+</svg>
+<div class="cap">Figure 7 — <code>process_write_packed</code>. Sub-commands (one per target core) are copied into BRISC's local cache, then a tight loop issues one stateful NOC write per sub-command. If <code>NO_STRIDE</code> is set, all cores share the same payload pointer; otherwise <code>data_ptr</code> advances by <code>L1_ALIGN</code>-padded <code>xfer_size</code>.</div>
+</div>
+
+<h3>4.4 <code>process_write_host_h</code> (host event / read-back)</h3>
+<pre><code>data_ptr = cmd_ptr;     // include cmd header so host can parse it
+wlength  = cmd-&gt;write_linear_host.length;
+init NOC state to pcie_noc_xy.
+while (wlength != 0) {
+    chunk_len = min(wlength, ~(dispatch_cb_page_size - 1));
+    while (chunk_len != 0) {
+        wait_for_data_in_cb(data_ptr);
+        xfer = min(chunk_len, available_in_cb);
+        npages = div_up(xfer, completion_page_size);
+        completion_queue_reserve_back(npages);          // blocks on rd_ptr
+        wr_addr = cq_write_interface.completion_fifo_wr_ptr &lt;&lt; 4;
+        if (wr_addr + xfer &gt; completion_queue_end) { split + wrap; }
+        write to (pcie_noc_xy, wr_addr) of size xfer
+        completion_queue_push_back(npages);             // updates ptr in sysmem
+        data_ptr += xfer; chunk_len -= xfer; wlength -= xfer;
+    }
+}</code></pre>
+
+<h3>4.5 Sync commands (<code>WAIT</code> flags)</h3>
+<ul>
+  <li><code>BARRIER (0x01)</code> → <code>noc_async_write_barrier()</code></li>
+  <li><code>WAIT_MEMORY (0x04)</code> → spin until <code>*addr &gt;= count</code> (using <code>wrap_ge</code>)</li>
+  <li><code>WAIT_STREAM (0x08)</code> → spin on stream's <code>SPACE_AVAILABLE_REG</code> until <code>&gt;= count</code></li>
+  <li><code>CLEAR_STREAM (0x10)</code> → atomically zero the stream by writing <code>-(*sem)</code> to the update reg</li>
+  <li><code>NOTIFY_PREFETCH (0x02)</code> → <code>noc_semaphore_inc(prefetch's UPSTREAM_SYNC_SEM, 1)</code></li>
+</ul>
+
+<!-- ============================ §5 DISPATCH_S ============================ -->
+<h2 id="dispatchs">5. Dispatch subordinate (NCRISC, NOC 1)</h2>
+
+<p><code>cq_dispatch_subordinate.cpp</code> lives on the same tensix as dispatch_d but runs on the NCRISC. It uses NOC 1 with a customized command-buffer allocation so BRISC and NCRISC never collide:</p>
+
+<div class="diagram">
+<svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NOC1 cmd buf allocation">
+  <text x="360" y="28" text-anchor="middle" class="svg-text-title-3">NOC 1 command-buffer allocation (dispatch core)</text>
+  <rect x="40" y="55" width="640" height="135" rx="6" class="svg-dispatch"/>
+  <rect x="60" y="80" width="140" height="80" class="svg-ring"/>
+  <text x="130" y="100" text-anchor="middle" class="svg-text-sm">Cmd Buf 0</text>
+  <text x="130" y="120" text-anchor="middle" class="svg-text-muted">dispatch_s</text>
+  <text x="130" y="138" text-anchor="middle" class="svg-text-muted">regular writes</text>
+  <rect x="220" y="80" width="140" height="80" class="svg-ring"/>
+  <text x="290" y="100" text-anchor="middle" class="svg-text-sm">Cmd Buf 1</text>
+  <text x="290" y="120" text-anchor="middle" class="svg-text-muted">dispatch_s</text>
+  <text x="290" y="138" text-anchor="middle" class="svg-text-muted">inline / reg writes</text>
+  <rect x="380" y="80" width="140" height="80" class="svg-ring"/>
+  <text x="450" y="100" text-anchor="middle" class="svg-text-sm">Cmd Buf 2</text>
+  <text x="450" y="120" text-anchor="middle" class="svg-text-muted">dispatch_s</text>
+  <text x="450" y="138" text-anchor="middle" class="svg-text-muted">atomics</text>
+  <rect x="540" y="80" width="120" height="80" class="svg-ring"/>
+  <text x="600" y="100" text-anchor="middle" class="svg-text-sm">Cmd Buf 3</text>
+  <text x="600" y="120" text-anchor="middle" class="svg-text-muted">dispatch_d</text>
+  <text x="600" y="138" text-anchor="middle" class="svg-text-muted">NCRISC_WR_CMD_BUF</text>
+</svg>
+<div class="cap">Figure 8 — On the dispatch tile, BRISC (dispatch_d) and NCRISC (dispatch_s) share NOC 1. The subordinate is restricted to cmd-bufs 0–2; the master keeps cmd-buf 3. Manual <code>NOC_CMD_BUF_WRITE_REG</code> setup at boot enforces the partition.</div>
+</div>
+
+<p>In <code>blackhole-py-old</code>'s fixed config <code>DISTRIBUTED_DISPATCHER = 0</code>, so the host never sends go-signal commands as <code>DISPATCH_SUBORDINATE</code>. The dispatch_s mostly idles after start-up — kept fully functional only so future split configurations can drop in.</p>
+
+<!-- ============================ §6 LAUNCH ============================ -->
+<h2 id="launch">6. Launch flow — how a program actually starts</h2>
+
+<p><code>_lower_ir</code> lowers a <code>Launch(cores)</code> to four CQ commands in order:</p>
+<pre><code>CQSetGoSignalNocData(cores)                 # 17: SET_GO_SIGNAL_NOC_DATA
+CQWaitStream(DONE_STREAM=48, 0)             # 7 + WAIT_STREAM + CLEAR_STREAM
+CQSendGoSignal(go_word, 48, 0, len(cores))  # 14: SEND_GO_SIGNAL  (num_unicast = N)
+CQWaitStream(DONE_STREAM, len(cores))       # 7 + WAIT_STREAM + CLEAR_STREAM</code></pre>
+
+<div class="diagram">
+<svg viewBox="0 0 980 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Launch sequence">
+  <!-- swim lanes -->
+  <line x1="120" y1="60" x2="120" y2="600" stroke="#4a7c96" stroke-width="2"/>
+  <line x1="380" y1="60" x2="380" y2="600" stroke="#3a8a6e" stroke-width="2"/>
+  <line x1="640" y1="60" x2="640" y2="600" stroke="#c06a20" stroke-width="2"/>
+  <line x1="900" y1="60" x2="900" y2="600" stroke="#7c6ab8" stroke-width="2"/>
+  <text x="120" y="40" text-anchor="middle" class="svg-text-title">Host</text>
+  <text x="380" y="40" text-anchor="middle" class="svg-text-title-2">Prefetch</text>
+  <text x="640" y="40" text-anchor="middle" class="svg-text-title-3">Dispatch</text>
+  <text x="900" y="40" text-anchor="middle" class="svg-text-title-5">Workers</text>
+
+  <!-- t1: SET_GO_SIGNAL_NOC_DATA -->
+  <rect x="70" y="80" width="100" height="40" rx="4" class="svg-host"/>
+  <text x="120" y="105" text-anchor="middle" class="svg-text-sm">push cmd 17</text>
+  <path d="M170,100 L380,100" class="svg-arrow"/>
+  <text x="275" y="92" text-anchor="middle" class="svg-text-sm" fill="#4a7c96">PCIe-NOC</text>
+  <rect x="330" y="120" width="100" height="40" rx="4" class="svg-prefetch"/>
+  <text x="380" y="145" text-anchor="middle" class="svg-text-sm">RELAY_INLINE</text>
+  <path d="M430,140 L640,140" class="svg-arrow-2"/>
+  <rect x="590" y="160" width="100" height="40" rx="4" class="svg-dispatch"/>
+  <text x="640" y="185" text-anchor="middle" class="svg-text-sm">stash NOC xys</text>
+  <text x="640" y="200" text-anchor="middle" class="svg-text-muted">go_signal_noc_data[]</text>
+
+  <!-- t2: WAIT(stream=48, 0) -->
+  <rect x="70" y="220" width="100" height="40" rx="4" class="svg-host"/>
+  <text x="120" y="245" text-anchor="middle" class="svg-text-sm">push cmd 7</text>
+  <path d="M170,240 Q280,240 380,280" class="svg-arrow"/>
+  <rect x="590" y="280" width="100" height="40" rx="4" class="svg-dispatch"/>
+  <text x="640" y="305" text-anchor="middle" class="svg-text-sm">CLEAR stream 48</text>
+  <text x="640" y="320" text-anchor="middle" class="svg-text-muted">(arm counter at 0)</text>
+
+  <!-- t3: SEND_GO_SIGNAL -->
+  <rect x="70" y="350" width="100" height="40" rx="4" class="svg-host"/>
+  <text x="120" y="375" text-anchor="middle" class="svg-text-sm">push cmd 14</text>
+  <path d="M170,370 Q280,370 380,400" class="svg-arrow"/>
+  <rect x="590" y="400" width="100" height="50" rx="4" class="svg-dispatch"/>
+  <text x="640" y="420" text-anchor="middle" class="svg-text-sm">unicast go_word</text>
+  <text x="640" y="436" text-anchor="middle" class="svg-text-muted">→ N workers @ 0x370</text>
+  <path d="M690,425 L900,425" class="svg-arrow-3"/>
+  <text x="795" y="416" text-anchor="middle" class="svg-text-sm" fill="#c06a20">RUN_MSG_GO (0x80)</text>
+  <rect x="850" y="445" width="100" height="50" rx="4" class="svg-worker"/>
+  <text x="900" y="465" text-anchor="middle" class="svg-text-sm">run kernel</text>
+  <text x="900" y="481" text-anchor="middle" class="svg-text-muted">N cores in parallel</text>
+
+  <!-- t4: workers signal completion -->
+  <path d="M900,495 Q850,520 690,510" class="svg-arrow-5"/>
+  <text x="800" y="505" text-anchor="middle" class="svg-text-sm" fill="#7c6ab8">stream 48 += 1 (×N)</text>
+
+  <!-- t5: WAIT(stream=48, N) -->
+  <rect x="70" y="500" width="100" height="40" rx="4" class="svg-host"/>
+  <text x="120" y="525" text-anchor="middle" class="svg-text-sm">push cmd 7</text>
+  <path d="M170,520 Q280,540 380,540" class="svg-arrow"/>
+  <rect x="590" y="540" width="100" height="50" rx="4" class="svg-dispatch"/>
+  <text x="640" y="560" text-anchor="middle" class="svg-text-sm">WAIT(stream 48, N)</text>
+  <text x="640" y="577" text-anchor="middle" class="svg-text-muted">CLEAR after match</text>
+</svg>
+<div class="cap">Figure 9 — Launch handshake (vertical = time). Four CQ commands move from host → prefetch → dispatch; dispatch unicasts <code>RUN_MSG_GO</code> to <code>0x370</code> on each worker; each worker increments stream 48 on the dispatch core when it transitions to <code>RUN_MSG_DONE</code>; dispatch's <code>WAIT(N)</code> unblocks and clears the stream for the next launch.</div>
+</div>
+
+<p>The <code>go_word</code> is built in <code>device._go_word()</code>:</p>
+<pre><code>go = GoMsg()
+go.bits.signal = DevMsgs.RUN_MSG_GO          # = 0x80
+go.bits.master_x, go.bits.master_y = DISPATCH_NOC_X, DISPATCH_NOC_Y
+go.bits.dispatch_message_offset = 0
+return go.all                                # uint32: [signal | mx | my | offset]</code></pre>
+
+<h3>6.1 SET_GO_SIGNAL_NOC_DATA</h3>
+<p>Copies a list of NOC xy encodings into <code>go_signal_noc_data[256]</code>. Subsequent <code>SEND_GO_SIGNAL</code> walks the array starting at <code>noc_data_start_index</code>.</p>
+
+<h3>6.2 The WAIT(stream=48, 0) + CLEAR</h3>
+<p>Trivially passes the WAIT check (≥0 always true), then atomically zeroes the stream counter by writing <code>-(*sem) &lt;&lt; REMOTE_DEST_BUF_WORDS_FREE_INC</code> to the update reg. Streams are accumulator-style registers, not normal memory.</p>
+
+<h3>6.3 SEND_GO_SIGNAL</h3>
+<pre><code>for (i = 0; i &lt; num_unicasts; ++i) {
+    dst = get_noc_addr_helper(go_signal_noc_data[idx++], UNICAST_GO_SIGNAL_ADDR);
+    noc_async_write_one_packet(aligned_go_signal_storage, dst, sizeof(uint32_t));
+}</code></pre>
+<p>The go word lands at <code>0x370</code> on each worker tensix. The worker BRISC spins on that address, sees <code>signal == RUN_MSG_GO (0x80)</code>, starts the program; when done it writes back <code>RUN_MSG_DONE = 0</code> and bumps stream 48 of the dispatch core by 1.</p>
+
+<h3>6.4 WAIT(stream=48, N) + CLEAR</h3>
+<p>Dispatcher spins until stream 48 reaches <code>N</code>, then clears it. This is the "bottom of cycle" fence — after it returns, the next launch can proceed.</p>
+
+<!-- ============================ §7 COMPLETION ============================ -->
+<h2 id="completion">7. Host-side completion path</h2>
+
+<div class="diagram">
+<svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Completion FIFO with toggle">
+  <!-- FIFO ring -->
+  <g transform="translate(280,160)">
+    <circle r="125" fill="#faf9f7" stroke="#d0cdc6"/>
+    <circle r="80" fill="none" stroke="#d0cdc6"/>
+    <!-- 8 page slots -->
+    <g stroke="#d0cdc6" stroke-width="0.6">
+      <line x1="0" y1="-125" x2="0" y2="-80"/>
+      <line x1="0" y1="-125" x2="0" y2="-80" transform="rotate(45)"/>
+      <line x1="0" y1="-125" x2="0" y2="-80" transform="rotate(90)"/>
+      <line x1="0" y1="-125" x2="0" y2="-80" transform="rotate(135)"/>
+      <line x1="0" y1="-125" x2="0" y2="-80" transform="rotate(180)"/>
+      <line x1="0" y1="-125" x2="0" y2="-80" transform="rotate(225)"/>
+      <line x1="0" y1="-125" x2="0" y2="-80" transform="rotate(270)"/>
+      <line x1="0" y1="-125" x2="0" y2="-80" transform="rotate(315)"/>
+    </g>
+    <!-- pages with data -->
+    <path d="M 0,-125 A 125 125 0 0 1 88.4,-88.4 L 56.6,-56.6 A 80 80 0 0 0 0,-80 Z" fill="#f0eeeb" stroke="#c06a20"/>
+    <path d="M 88.4,-88.4 A 125 125 0 0 1 125,0 L 80,0 A 80 80 0 0 0 56.6,-56.6 Z" fill="#f0eeeb" stroke="#c06a20"/>
+    <text y="3" text-anchor="middle" class="svg-text-sm">completion FIFO</text>
+    <text y="20" text-anchor="middle" class="svg-text-muted">page-granular (4 KiB)</text>
+    <text y="35" text-anchor="middle" class="svg-text-muted">31 bits ptr | 1 bit toggle</text>
+    <!-- wr ptr -->
+    <line x1="125" y1="0" x2="160" y2="0" stroke="#c06a20" stroke-width="2" marker-end="url(#arrow3)"/>
+    <text x="185" y="5" class="svg-text-sm" fill="#c06a20">dispatch wr_ptr</text>
+    <!-- rd ptr -->
+    <line x1="0" y1="-160" x2="0" y2="-130" stroke="#4a7c96" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="0" y="-170" text-anchor="middle" class="svg-text-sm" fill="#4a7c96">host rd_ptr</text>
+  </g>
+
+  <!-- structure of one page -->
+  <rect x="570" y="60" width="300" height="220" rx="6" class="svg-host"/>
+  <text x="720" y="83" text-anchor="middle" class="svg-text-title">One completion page (4 KiB)</text>
+  <rect x="590" y="100" width="260" height="40" class="svg-ring"/>
+  <text x="720" y="118" text-anchor="middle" class="svg-text-sm">echoed cmd header (16 B)</text>
+  <text x="720" y="133" text-anchor="middle" class="svg-text-muted">WRITE_LINEAR_H_HOST</text>
+  <rect x="590" y="145" width="260" height="40" class="svg-ring"/>
+  <text x="720" y="163" text-anchor="middle" class="svg-text-sm">event_id (4 B) + pad to L1_ALIGN</text>
+  <rect x="590" y="190" width="260" height="65" class="svg-ring" fill="#f0eeeb"/>
+  <text x="720" y="215" text-anchor="middle" class="svg-text-muted">unused tail (4032 B)</text>
+  <text x="720" y="232" text-anchor="middle" class="svg-text-muted">host reads off+16 to skip</text>
+  <text x="720" y="248" text-anchor="middle" class="svg-text-muted">the echoed header</text>
+</svg>
+<div class="cap">Figure 10 — Completion FIFO. The high bit of both rd/wr pointers is the wraparound <em>toggle</em>: when the wr_ptr wraps to base, its toggle flips, so the dispatcher can tell "wr is one cycle ahead" from "rd has caught up". Each push is a full 4 KiB page regardless of payload size.</div>
+</div>
+
+<pre><code>while True:
+  wr_raw = self._sysmem_read32(_HOST_CQ_WR_OFF)
+  wr_16b, wr_toggle = wr_raw &amp; 0x7FFF_FFFF, (wr_raw &gt;&gt; 31) &amp; 1
+  if (wr_16b, wr_toggle) != (self._completion_rd_16b, self._completion_rd_toggle):
+    off = (self._completion_rd_16b &lt;&lt; 4) - self.noc_local
+    got = self._sysmem_read32(off + 16)            # skip echoed header
+    self._completion_rd_16b += self._completion_page_16b
+    if self._completion_rd_16b &gt;= self._completion_end_16b:
+      self._completion_rd_16b = self._completion_base_16b
+      self._completion_rd_toggle ^= 1
+    raw = (self._completion_rd_16b &amp; 0x7FFF_FFFF) | (self._completion_rd_toggle &lt;&lt; 31)
+    self._dispatch_win.write32(CQ_COMPLETION_RD_PTR, raw)
+    self._sysmem_write32(_HOST_CQ_RD_OFF, raw)
+    if got != (event_id &amp; 0xFFFFFFFF):
+      raise RuntimeError("event mismatch")
+    return
+  time.sleep(0.0002)</code></pre>
+
+<!-- ============================ §8 TRACE ============================ -->
+<h2 id="trace">8. Putting it all end-to-end</h2>
+
+<div class="diagram">
+<svg viewBox="0 0 980 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="End-to-end pipeline">
+  <!-- swim lanes for actors -->
+  <text x="20" y="40" class="svg-text-title">Host</text>
+  <text x="20" y="155" class="svg-text-title-2">Prefetch</text>
+  <text x="20" y="270" class="svg-text-title-3">Dispatch</text>
+  <text x="20" y="385" class="svg-text-title-5">Workers</text>
+
+  <line x1="120" y1="55" x2="960" y2="55" stroke="#d0cdc6"/>
+  <line x1="120" y1="170" x2="960" y2="170" stroke="#d0cdc6"/>
+  <line x1="120" y1="285" x2="960" y2="285" stroke="#d0cdc6"/>
+  <line x1="120" y1="400" x2="960" y2="400" stroke="#d0cdc6"/>
+  <line x1="120" y1="500" x2="960" y2="500" stroke="#d0cdc6"/>
+
+  <!-- Host activities -->
+  <rect x="130" y="20" width="100" height="30" rx="3" class="svg-host"/>
+  <text x="180" y="40" text-anchor="middle" class="svg-text-sm">build IR</text>
+  <rect x="240" y="20" width="120" height="30" rx="3" class="svg-host"/>
+  <text x="300" y="40" text-anchor="middle" class="svg-text-sm">lower → CQ cmds</text>
+  <rect x="370" y="20" width="120" height="30" rx="3" class="svg-host"/>
+  <text x="430" y="40" text-anchor="middle" class="svg-text-sm">flush to sysmem</text>
+  <rect x="500" y="20" width="120" height="30" rx="3" class="svg-host"/>
+  <text x="560" y="40" text-anchor="middle" class="svg-text-sm">push prefetch_q</text>
+  <rect x="800" y="20" width="150" height="30" rx="3" class="svg-host"/>
+  <text x="875" y="40" text-anchor="middle" class="svg-text-sm">wait_completion(evt)</text>
+
+  <!-- Prefetch activities -->
+  <rect x="625" y="135" width="80" height="30" rx="3" class="svg-prefetch"/>
+  <text x="665" y="155" text-anchor="middle" class="svg-text-sm">PCIe read</text>
+  <rect x="710" y="135" width="100" height="30" rx="3" class="svg-prefetch"/>
+  <text x="760" y="155" text-anchor="middle" class="svg-text-sm">RELAY_INLINE</text>
+
+  <!-- Dispatch activities -->
+  <rect x="815" y="250" width="55" height="30" rx="3" class="svg-dispatch"/>
+  <text x="842" y="270" text-anchor="middle" class="svg-text-sm">WRITE</text>
+  <rect x="872" y="250" width="38" height="30" rx="3" class="svg-dispatch"/>
+  <text x="891" y="270" text-anchor="middle" class="svg-text-sm">GO</text>
+  <rect x="912" y="250" width="35" height="30" rx="3" class="svg-dispatch"/>
+  <text x="929" y="270" text-anchor="middle" class="svg-text-sm">WAIT</text>
+
+  <!-- Workers run -->
+  <rect x="800" y="365" width="120" height="30" rx="3" class="svg-worker"/>
+  <text x="860" y="385" text-anchor="middle" class="svg-text-sm">execute kernel</text>
+
+  <!-- Final completion -->
+  <rect x="855" y="455" width="100" height="30" rx="3" class="svg-dispatch"/>
+  <text x="905" y="475" text-anchor="middle" class="svg-text-sm">EVT → sysmem</text>
+
+  <!-- Arrows -->
+  <path d="M560,55 L665,135" class="svg-arrow"/>
+  <text x="610" y="100" class="svg-text-sm" fill="#4a7c96">prefetch_q[idx]</text>
+  <path d="M760,170 L842,250" class="svg-arrow-2"/>
+  <text x="800" y="220" class="svg-text-sm" fill="#3a8a6e">dispatch CB</text>
+  <path d="M891,285 L860,365" class="svg-arrow-3"/>
+  <text x="900" y="325" class="svg-text-sm" fill="#c06a20">go signal</text>
+  <path d="M860,395 L929,285" class="svg-arrow-5"/>
+  <text x="920" y="335" class="svg-text-sm" fill="#7c6ab8">stream 48</text>
+  <path d="M929,285 L905,455" class="svg-arrow-3"/>
+  <path d="M905,485 Q700,495 875,55" stroke="#b85a5a" stroke-width="1.6" fill="none" stroke-dasharray="4 3" marker-end="url(#arrow4)"/>
+  <text x="500" y="510" text-anchor="middle" class="svg-text-sm" fill="#b85a5a">completion FIFO wr_ptr update → host poll wakes</text>
+</svg>
+<div class="cap">Figure 11 — End-to-end pipeline. The host can push records far ahead of the device draining them; backpressure is enforced by three independent rings (prefetch_q slots, dispatch CB credits, completion FIFO toggle).</div>
+</div>
+
+<p>A concrete trace for <code>device.run()</code> on one program with N cores:</p>
+<ol>
+  <li><code>_compile_ir(program, ...)</code> builds IR: <code>Write(go_msg reset) + Write(go_msg_index) + Write(uniform_rta) + Write(launch, role) + Write(shared, role) + Launch(cores)</code>.</li>
+  <li><code>lower_fast</code> prepends a <code>CQTimestamp</code> for slot 0, lowers IR to CQ commands, appends <code>CQTimestamp</code> for slot 1, then <code>CQHostEvent(event_id)</code>.</li>
+  <li>Each CQ command is <code>to_bytes()</code>-serialized, wrapped in <code>_relay_inline</code>, appended to <code>cq.stream</code>.</li>
+  <li><code>CQSysmem.flush(cq)</code> copies each record into sysmem and pushes its size onto <code>prefetch_q</code>.</li>
+  <li>Prefetch core's <code>fetch_q_get_cmds</code> sees the new slot, NOC-reads the record from hugepage into <code>cmddat_q</code>, marks the slot 0.</li>
+  <li>Prefetch decodes outer <code>RELAY_INLINE</code>, acquires N pages of dispatch CB credit, NOC-writes the inner command into the dispatch CB, releases credit via NOC atomic-inc.</li>
+  <li>Dispatch BRISC wakes; runs <code>process_cmd</code> — for <code>WRITE_PACKED</code> issues N NOC writes to workers; for <code>WAIT_STREAM</code> polls stream 48; for <code>SEND_GO_SIGNAL</code> unicasts the go word.</li>
+  <li>Workers receive go word, run, write completion to stream 48 on dispatch core.</li>
+  <li>Dispatch processes <code>WRITE_LINEAR_H_HOST</code>: writes 32 B (cmd hdr + event page) to completion region; updates wr_ptr in sysmem mirror.</li>
+  <li>Host's <code>wait_completion</code> polls <code>_HOST_CQ_WR_OFF</code>, sees move, reads event_id, advances rd_ptr, writes back. Done.</li>
+</ol>
+
+<!-- ============================ §9 SUMMARY ============================ -->
+<h2 id="summary">9. Pieces worth re-emphasizing</h2>
+
+<ul>
+  <li><b>Three independent rings</b>: <code>prefetch_q</code> (16-bit sizes, 1534 entries), <code>cmddat_q</code> (256 KiB byte ring), dispatch CB (128×4 KiB page ring). Each has its own producer/consumer ptrs.</li>
+  <li><b>Three independent semaphores per producer-consumer hop</b>: input-CB credit, downstream-CB credit, sync (for <code>STALL</code> / <code>NOTIFY_PREFETCH</code>). All counted, all over-NOC atomic-incremented.</li>
+  <li><b>Stateful NOC programming</b>: each kernel pre-arms cmd buffers once at init and re-uses them every transaction. dispatch_s uses a different cmd-buf allocation than dispatch_d so they share NOC 1 without clobbering each other.</li>
+  <li><b>PCIe NOC</b>: prefetcher reads from host hugepage go over (19,24) on Blackhole P100 — a special endpoint bridging to the PCIe controller. The hugepage IOVA is pinned and bit 60 marks it as a PCIe-NOC address.</li>
+  <li><b>Stream registers</b> (48..55) carry worker-completion signals. CLEAR is implemented via the update reg with a shifted negative delta because stream regs are accumulators.</li>
+  <li><b>Timestamps</b>: every program is bracketed with two <code>CQTimestamp</code> commands that have the dispatcher sample its wall clock and write 8 B to a sysmem slot. With <code>TT_CORE_TIMING=1</code>, the host also arms each worker BRISC to log its own start/end into another pair of slots.</li>
+  <li><b>Unused-in-this-build commands</b>: <code>RELAY_PAGED*</code>, <code>RELAY_LINEAR</code>, <code>RELAY_RINGBUFFER</code>, <code>EXEC_BUF*</code>, <code>WRITE_PAGED</code>, <code>WRITE_LINEAR(_H)</code>, <code>NOTIFY_SUBORDINATE_GO_SIGNAL</code>, mcast <code>SEND_GO_SIGNAL</code>. The host only emits <code>WRITE_PACKED</code>, <code>WRITE_PACKED_LARGE</code>, <code>WAIT</code>, <code>SEND_GO_SIGNAL</code>, <code>SET_GO_SIGNAL_NOC_DATA</code>, <code>WRITE_LINEAR_H_HOST</code>, <code>TIMESTAMP</code>.</li>
+</ul>
+
+<div class="callout">
+<b>Cleanest mental model:</b> the prefetcher is a credit-managed NOC DMA from host hugepage to dispatch L1, and the dispatcher is an interpreter of a short command ISA whose primary verbs are <em>"scatter to L1 of N tensix cores (packed)"</em>, <em>"atomic-inc / poll a stream register"</em> (the sync primitive), and <em>"write something into the host completion FIFO"</em>. Everything else is plumbing and corner-case backpressure.
+</div>
+
+</div>
+</body>
+</html>
