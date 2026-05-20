@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blackhole Tensix Unpacker &amp; Packer — Complete Reference</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --fg: #1d1d1d;
+    --muted: #555;
+    --accent: #c43a1a;
+    --accent2: #6b3aa0;
+    --code-bg: #f0ece2;
+    --code-fg: #1f1f1f;
+    --border: #d9d3c2;
+    --table-stripe: #f5f1e6;
+    --table-head: #ece6d2;
+    --note-bg: #fff8d6;
+    --note-border: #d8c860;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --fg: #e6e3d8;
+      --muted: #a09c8e;
+      --accent: #ff8c63;
+      --accent2: #b896e6;
+      --code-bg: #25241f;
+      --code-fg: #ece8d8;
+      --border: #3a3833;
+      --table-stripe: #232220;
+      --table-head: #2e2c27;
+      --note-bg: #2f2a18;
+      --note-border: #7d6b1f;
+    }
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 6rem 1.5rem;
+    font-size: 16px;
+  }
+  h1, h2, h3, h4 {
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--fg);
+    line-height: 1.25;
+  }
+  h1 {
+    font-size: 2.1rem;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: .4rem;
+    margin-bottom: .3rem;
+  }
+  h2 {
+    font-size: 1.55rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: .25rem;
+    margin-top: 2.5rem;
+  }
+  h3 {
+    font-size: 1.2rem;
+    color: var(--accent2);
+    margin-top: 1.8rem;
+  }
+  h4 {
+    font-size: 1.05rem;
+    margin-top: 1.4rem;
+  }
+  p, li {
+    color: var(--fg);
+  }
+  code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.92em;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 0.9rem 1rem;
+    border-radius: 5px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    font-size: 0.85em;
+    line-height: 1.45;
+  }
+  pre code {
+    background: transparent;
+    padding: 0;
+    font-size: inherit;
+  }
+  blockquote, .note {
+    background: var(--note-bg);
+    border-left: 4px solid var(--note-border);
+    margin: 1rem 0;
+    padding: 0.6rem 1rem;
+    border-radius: 0 4px 4px 0;
+  }
+  blockquote p { margin: 0.3rem 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--table-head);
+    font-weight: 600;
+  }
+  tr:nth-child(even) td { background: var(--table-stripe); }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: 0.2rem 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+  .ascii {
+    background: var(--code-bg);
+    padding: 0.8rem;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.82em;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.3;
+  }
+  .toc {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.8rem 1.2rem;
+    margin: 1.5rem 0 2.5rem;
+    font-size: 0.93em;
+  }
+  .toc h2 {
+    margin: 0 0 .4rem;
+    font-size: 1rem;
+    color: var(--muted);
+    border: none;
+    padding: 0;
+    font-family: -apple-system, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .toc ol { margin: 0; padding-left: 1.3rem; }
+  .toc li { margin: .15rem 0; }
+  .small { font-size: 0.85em; color: var(--muted); }
+  .kbd {
+    display: inline-block;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0 .35em;
+    font-family: monospace;
+    font-size: 0.85em;
+  }
+  table.fmt-encoding td:first-child, table.fmt-encoding th:first-child {
+    background: var(--table-head);
+    font-weight: 600;
+  }
+  /* SVG block diagrams */
+  .svg-diagram {
+    display: block;
+    margin: 1.4rem auto;
+    max-width: 100%;
+    height: auto;
+    color: var(--fg);
+  }
+  .svg-diagram .box-l1   { fill: var(--code-bg); stroke: var(--accent2); stroke-width: 2; }
+  .svg-diagram .box-unp  { fill: var(--note-bg); stroke: var(--accent);  stroke-width: 2; }
+  .svg-diagram .box-src  { fill: var(--table-stripe); stroke: var(--muted); stroke-width: 1.5; }
+  .svg-diagram .box-fpu  { fill: var(--note-bg); stroke: var(--accent2); stroke-width: 2; }
+  .svg-diagram .box-dst  { fill: var(--table-stripe); stroke: var(--accent2); stroke-width: 2; }
+  .svg-diagram .box-pck  { fill: var(--note-bg); stroke: var(--accent);  stroke-width: 2; }
+  .svg-diagram .box-stage{ fill: var(--code-bg); stroke: var(--border);  stroke-width: 1.5; }
+  .svg-diagram .box-stage-hi { fill: var(--note-bg); stroke: var(--accent); stroke-width: 1.8; }
+  .svg-diagram .title    { font: 600 13px Georgia, "Times New Roman", serif; fill: var(--fg); }
+  .svg-diagram .title-sm { font: 600 12px Georgia, "Times New Roman", serif; fill: var(--fg); }
+  .svg-diagram .subtitle { font: 10.5px -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+  .svg-diagram .subtitle-mono { font: 10.5px "SFMono-Regular", Consolas, monospace; fill: var(--muted); }
+  .svg-diagram .label    { font: italic 11px Georgia, serif; fill: var(--muted); }
+  .svg-diagram .arrow      { fill: none; stroke: var(--fg);     stroke-width: 1.5; }
+  .svg-diagram .arrow-thick{ fill: none; stroke: var(--accent); stroke-width: 2.4; }
+  .svg-diagram .arrow-dashed { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5,3; }
+  .svg-diagram .arrow-bidir{ fill: none; stroke: var(--accent2); stroke-width: 1.8; }
+  .svg-diagram .divider { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2,3; }
+  .svg-caption {
+    display: block;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85em;
+    margin: -0.4rem 0 1.6rem;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<h1>Blackhole Tensix Unpacker &amp; Packer — Complete Reference</h1>
+<p class="small">How data moves from the input circular buffer in L1 through the unpackers into SrcA/SrcB/Dst, gets computed on by the FPU/SFPU, and is written back to L1 by the four packers. With every config register, every relevant TT* instruction, and the LLK programming model.</p>
+
+<blockquote>
+<p><strong>Note.</strong> Tenstorrent's official ISA docs split documentation across <code>tt-isa-documentation/WormholeB0/</code> (which has the detailed <em>Unpackers/Packers</em> sub-trees) and <code>tt-isa-documentation/BlackholeA0/</code> (which has BH-specific overrides like <code>Dst.md</code>, <code>BackendConfiguration.md</code>, <code>ConfigurationUnit.md</code>). On Blackhole the <strong>functional model is largely the same as Wormhole B0</strong> — same UNPACR / PACR pipeline, with a few BH-specific additions (Auto-TTSync, extra context counts, an 8-bit FP8 e4m3 helper, 1.5&nbsp;MiB L1 instead of 1.46&nbsp;MiB, the Mover, new SFPU ops). Below I cite which docs the details come from, and how the LLK (<code>tt-llk/tt_llk_blackhole/</code>) actually programs the registers.</p>
+</blockquote>
+
+<div class="toc">
+<h2>Contents</h2>
+<ol>
+  <li><a href="#big-picture">The big picture: L1 → SrcA/SrcB/Dst → math → Dst → L1</a></li>
+  <li><a href="#unpacker">The Unpacker</a></li>
+  <li><a href="#packer">The Packer</a></li>
+  <li><a href="#walkthrough">Step-by-step: data going CB → SrcA/Dst → Dst → CB</a></li>
+  <li><a href="#instructions">Complete list of unpacker-related TT* instructions</a></li>
+  <li><a href="#refs">Source references</a></li>
+</ol>
+</div>
+
+<h2 id="big-picture">1. The big picture: L1 → SrcA/SrcB/Dst → math → Dst → L1</h2>
+
+<p>A Tensix tile has:</p>
+
+<svg viewBox="0 0 980 500" class="svg-diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Top-level Blackhole Tensix data flow from L1 input CBs through unpackers, SrcA/SrcB, FPU/SFPU, Dst, packers, and back to L1 output CBs">
+  <defs>
+    <marker id="arrA-fg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--fg)"/>
+    </marker>
+    <marker id="arrA-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/>
+    </marker>
+    <marker id="arrA-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--muted)"/>
+    </marker>
+    <marker id="arrA-accent2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--accent2)"/>
+    </marker>
+  </defs>
+
+  <!-- L1 input CBs -->
+  <rect x="20" y="40" width="140" height="170" rx="8" class="box-l1"/>
+  <text x="90" y="68" text-anchor="middle" class="title">L1 input CBs</text>
+  <text x="90" y="90" text-anchor="middle" class="subtitle">circular FIFOs in</text>
+  <text x="90" y="106" text-anchor="middle" class="subtitle">1536 KiB shared SRAM</text>
+  <line x1="35" y1="120" x2="145" y2="120" class="divider"/>
+  <text x="90" y="138" text-anchor="middle" class="subtitle-mono">Unpack_limit_address</text>
+  <text x="90" y="154" text-anchor="middle" class="subtitle-mono">Unpack_fifo_size</text>
+  <text x="90" y="182" text-anchor="middle" class="subtitle">tile = 32×32 datums</text>
+  <text x="90" y="198" text-anchor="middle" class="subtitle">= 4 faces × 16×16</text>
+
+  <!-- Unpacker 0 -->
+  <rect x="190" y="50" width="120" height="60" rx="6" class="box-unp"/>
+  <text x="250" y="75" text-anchor="middle" class="title">Unpacker 0</text>
+  <text x="250" y="92" text-anchor="middle" class="subtitle">→ SrcA  or  → Dst</text>
+
+  <!-- Unpacker 1 -->
+  <rect x="190" y="140" width="120" height="60" rx="6" class="box-unp"/>
+  <text x="250" y="165" text-anchor="middle" class="title">Unpacker 1</text>
+  <text x="250" y="182" text-anchor="middle" class="subtitle">→ SrcB</text>
+
+  <!-- SrcA -->
+  <rect x="340" y="50" width="150" height="60" rx="6" class="box-src"/>
+  <text x="415" y="72" text-anchor="middle" class="title">SrcA (bank 0/1)</text>
+  <text x="415" y="89" text-anchor="middle" class="subtitle">64×16 × 19 bits</text>
+  <text x="415" y="103" text-anchor="middle" class="subtitle">AllowedClient gate</text>
+
+  <!-- SrcB -->
+  <rect x="340" y="140" width="150" height="60" rx="6" class="box-src"/>
+  <text x="415" y="162" text-anchor="middle" class="title">SrcB (bank 0/1)</text>
+  <text x="415" y="179" text-anchor="middle" class="subtitle">64×16 × 19 bits</text>
+  <text x="415" y="193" text-anchor="middle" class="subtitle">AllowedClient gate</text>
+
+  <!-- FPU -->
+  <rect x="520" y="50" width="150" height="60" rx="6" class="box-fpu"/>
+  <text x="595" y="74" text-anchor="middle" class="title">FPU — Matrix Unit</text>
+  <text x="595" y="91" text-anchor="middle" class="subtitle">MVMUL / ELW / REDUCE</text>
+  <text x="595" y="105" text-anchor="middle" class="subtitle">on SrcA, SrcB</text>
+
+  <!-- SFPU -->
+  <rect x="520" y="140" width="150" height="60" rx="6" class="box-fpu"/>
+  <text x="595" y="164" text-anchor="middle" class="title">SFPU — Vector Unit</text>
+  <text x="595" y="181" text-anchor="middle" class="subtitle">32-lane SIMD</text>
+  <text x="595" y="195" text-anchor="middle" class="subtitle">reads &amp; writes Dst</text>
+
+  <!-- Dst -->
+  <rect x="730" y="60" width="200" height="180" rx="8" class="box-dst"/>
+  <text x="830" y="95" text-anchor="middle" class="title">Dst register</text>
+  <text x="830" y="115" text-anchor="middle" class="subtitle">1024 × 16 × 16b</text>
+  <text x="830" y="131" text-anchor="middle" class="subtitle">— or —</text>
+  <text x="830" y="147" text-anchor="middle" class="subtitle">512 × 16 × 32b</text>
+  <line x1="748" y1="165" x2="912" y2="165" class="divider"/>
+  <text x="830" y="184" text-anchor="middle" class="subtitle-mono">DstRowValid scoreboard</text>
+  <text x="830" y="200" text-anchor="middle" class="subtitle-mono">remap_addrs / swizzle_32b</text>
+  <text x="830" y="225" text-anchor="middle" class="subtitle">tile = 4 faces in Dst</text>
+
+  <!-- Packers (4 in a row) -->
+  <rect x="200" y="310" width="100" height="60" rx="6" class="box-pck"/>
+  <text x="250" y="334" text-anchor="middle" class="title">Packer 0</text>
+  <text x="250" y="352" text-anchor="middle" class="subtitle">face F0 of Dst</text>
+  <rect x="310" y="310" width="100" height="60" rx="6" class="box-pck"/>
+  <text x="360" y="334" text-anchor="middle" class="title">Packer 1</text>
+  <text x="360" y="352" text-anchor="middle" class="subtitle">face F1 of Dst</text>
+  <rect x="420" y="310" width="100" height="60" rx="6" class="box-pck"/>
+  <text x="470" y="334" text-anchor="middle" class="title">Packer 2</text>
+  <text x="470" y="352" text-anchor="middle" class="subtitle">face F2 of Dst</text>
+  <rect x="530" y="310" width="100" height="60" rx="6" class="box-pck"/>
+  <text x="580" y="334" text-anchor="middle" class="title">Packer 3</text>
+  <text x="580" y="352" text-anchor="middle" class="subtitle">face F3 of Dst</text>
+
+  <!-- L1 output CBs -->
+  <rect x="20" y="290" width="140" height="130" rx="8" class="box-l1"/>
+  <text x="90" y="318" text-anchor="middle" class="title">L1 output CBs</text>
+  <line x1="35" y1="332" x2="145" y2="332" class="divider"/>
+  <text x="90" y="350" text-anchor="middle" class="subtitle-mono">Pack_limit_address</text>
+  <text x="90" y="366" text-anchor="middle" class="subtitle-mono">Pack_fifo_size</text>
+  <text x="90" y="392" text-anchor="middle" class="subtitle">16-byte aligned</text>
+  <text x="90" y="406" text-anchor="middle" class="subtitle">L1 writes</text>
+
+  <!-- Arrows: L1 in → Unp -->
+  <path d="M160,90 L188,80" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M160,150 L188,170" class="arrow" marker-end="url(#arrA-fg)"/>
+
+  <!-- Unp → Src -->
+  <path d="M310,80 L338,80" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M310,170 L338,170" class="arrow" marker-end="url(#arrA-fg)"/>
+
+  <!-- Src → FPU (both feed FPU) -->
+  <path d="M490,80 L518,75" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M490,170 L518,180" class="arrow" marker-end="url(#arrA-fg)"/>
+  <text x="503" y="135" text-anchor="middle" class="label">reads</text>
+
+  <!-- Unp 0 bypass to Dst -->
+  <path d="M310,58 C430,18 602,18 730,66" class="arrow-dashed" marker-end="url(#arrA-muted)"/>
+  <text x="520" y="14" text-anchor="middle" class="label">Unp 0 → Dst (bypass FPU)</text>
+
+  <!-- FPU → Dst (writes) -->
+  <path d="M670,82 L730,82" class="arrow-thick" marker-end="url(#arrA-accent)"/>
+  <text x="700" y="68" text-anchor="middle" class="label">writes</text>
+
+  <!-- SFPU ↔ Dst (R/W) -->
+  <path d="M670,160 L730,160" class="arrow-bidir" marker-end="url(#arrA-accent2)" marker-start="url(#arrA-accent2)"/>
+  <text x="700" y="146" text-anchor="middle" class="label">R/W</text>
+
+  <!-- Dst → packers (4 arrows) -->
+  <path d="M758,240 C710,270 332,270 250,308" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M806,240 C760,282 438,274 360,308" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M854,240 C830,294 548,278 470,308" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M902,240 C908,310 650,286 580,308" class="arrow" marker-end="url(#arrA-fg)"/>
+  <text x="938" y="262" text-anchor="end" class="label">to packers</text>
+
+  <!-- Packers → L1 output -->
+  <path d="M200,340 L160,340" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M360,370 C300,408 220,404 160,356" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M470,370 C385,430 230,424 160,372" class="arrow" marker-end="url(#arrA-fg)"/>
+  <path d="M580,370 C460,452 240,444 160,388" class="arrow" marker-end="url(#arrA-fg)"/>
+
+  <!-- Thread labels -->
+  <text x="250" y="225" text-anchor="middle" class="label">issued by TRISC0 (unpack)</text>
+  <text x="595" y="225" text-anchor="middle" class="label">issued by TRISC1 (math)</text>
+  <text x="410" y="472" text-anchor="middle" class="label">issued by TRISC2 (pack) — typically</text>
+</svg>
+<span class="svg-caption">Figure 1. CB → SrcA/SrcB/Dst → math → Dst → CB. Dashed arrow shows Unpacker 0's optional direct-to-Dst bypass; bidirectional arrow shows the SFPU operating in-place on Dst.</span>
+
+<p>Three Tensix-coprocessor threads (T0/T1/T2) issue Tensix instructions independently and the backend execution units (Unpackers / Matrix Unit / Vector Unit / Packers / ThCon / Sync / Mover / Configuration / Misc) are shared. Unpackers usually take instructions from T0, the FPU/SFPU from T1, the packers from T2 — but any thread can issue any instruction. Synchronization is via <code>STALLWAIT</code>, semaphores, <code>SETDVALID</code>, and the <code>SrcA/SrcB</code> "AllowedClient" mechanism described below.</p>
+
+<h3 id="shapes">1.1 SrcA / SrcB / Dst shapes (Blackhole)</h3>
+<ul>
+  <li><strong>SrcA</strong> and <strong>SrcB</strong> each have two banks; a bank is <code>64 rows × 16 columns</code>. Each datum is up to <strong>19 bits wide</strong> (1 sign + 8 exponent + 10 mantissa, i.e. TF32). Software-visible types in SrcA/SrcB are: TF32, BF16, FP16, Integer "16" (opaque), Integer "8" (1S + 10M magnitude). One bank holds enough for a 16×16 face's worth of data with a few extras; unpackers and the FPU swap banks via the "AllowedClient" hand-off.</li>
+  <li><strong>Dst</strong> is <code>1024 rows × 16 cols × 16 bits</code> (Dst16b view) <strong>or</strong> <code>512 rows × 16 cols × 32 bits</code> (Dst32b view) — same underlying storage. Dst can hold FP32, BF16, FP16, Integer "32", Integer "16", Integer "8". Dst's row index goes through the <code>Adj16</code>/<code>Adj32</code> swizzle (<code>DEST_ACCESS_CFG_remap_addrs</code>, <code>DEST_ACCESS_CFG_swizzle_32b</code>). Each row has a 1-bit <code>DstRowValid</code> flag used by the hardware to track when a write has retired vs. is still in flight (4-cycle scoreboard).</li>
+  <li>A <strong>tile</strong> in Tensix convention = <code>32×32</code> datums, divided into 4 faces (<code>F0..F3</code>) of <code>16×16</code> each, each face stored row-major. Multiple tiles can be held in Dst (configured via <code>DEST_TARGET_REG_CFG_*_Offset</code>).</li>
+</ul>
+
+<h3 id="adcs">1.2 ADCs (Addressing Counters)</h3>
+
+<p>Both unpackers and packers compute addresses by stepping through "ADC" channels rather than by getting an explicit address each instruction. Each thread has one ADC per unpacker (and a shared one for the packers). Each ADC has two channels (Channel[0] = input/source side, Channel[1] = output/dest side), each with <code>X</code>, <code>Y</code>, <code>Z</code>, <code>W</code> counters + <code>Y_Cr</code>, <code>Z_Cr</code> "current row" shadow counters.</p>
+
+<p>ADC counters are advanced by:</p>
+<ul>
+  <li><code>SETADC</code> / <code>SETADCXY</code> / <code>SETADCZW</code> / <code>SETADCXX</code> — absolute set</li>
+  <li><code>INCADCXY</code> / <code>INCADCZW</code> — increment</li>
+  <li><code>ADDRCRXY</code> / <code>ADDRCRZW</code> — copy Cr → current</li>
+  <li><code>REG2FLOP</code> — load from L1</li>
+  <li>The <code>AddrMod</code> field of <code>UNPACR</code>/<code>PACR</code> (auto-increment using <code>ADDR_MOD_AB_SEC[i]</code> / <code>ADDR_MOD_PACK_SEC[i]</code> "modifier" config slots, indexed 0..3, two banks for unpack)</li>
+</ul>
+<p>This is how a single <code>UNPACR</code> for a face advances to the next face automatically.</p>
+
+<hr>
+
+<h2 id="unpacker">2. The Unpacker</h2>
+
+<p>There are <strong>two unpackers</strong>. <strong>Unpacker 0</strong> writes to <code>SrcA</code> or directly to <code>Dst</code>. <strong>Unpacker 1</strong> writes to <code>SrcB</code>. They share an L1 read port but can run concurrently with throttle-mode arbitration (see §2.5).</p>
+
+<h3 id="unpacr-instr">2.1 The UNPACR instruction</h3>
+
+<p>Source: <code>tt-llk/tt_llk_blackhole/common/inc/ckernel_ops.h</code>, opcode <code>0x42</code>. The full BH encoding is:</p>
+
+<pre><code>TT_OP_UNPACR(
+    Unpack_block_selection,  // 1 bit  : 0 = Unpacker 0, 1 = Unpacker 1
+    AddrMode,                // 8 bits : packed Ch0YInc/Ch0ZInc/Ch1YInc/Ch1ZInc (2 bits each)
+    CfgContextCntInc,        // 2 bits : used to bump context-counter after instr
+    CfgContextId,            // 3 bits : explicit context (used when AutoIncContextID=0)
+    AddrCntContextId,        // 2 bits : which ADC bank to use (0..2 = T0..T2)
+    OvrdThreadId,            // 1 bit  : was MultiContextMode in WH docs (see below)
+    SetDatValid,             // 1 bit  : hand SrcA/B bank to Matrix Unit after unpack
+    srcb_bcast,              // 1 bit  : RAREFYB / broadcast B
+    ZeroWrite2,              // 1 bit  : AllDatumsAreZero — write zeros instead of fetching
+    AutoIncContextID,        // 1 bit  : use context counter instead of CfgContextId
+    RowSearch,               // 1 bit  : use BlobsYStart row-search mode
+    SearchCacheFlush,        // 1 bit  : flush the RSI cache
+    Last)                    // 1 bit  : end-of-context marker
+</code></pre>
+
+<p>The full functional model is the one in <code>WormholeB0/.../UNPACR_Regular.md</code> (621 lines). It is exactly the same on Blackhole; the field layout above is the BH-specific encoding (the <code>AddrCntContextId</code> / <code>OvrdThreadId</code> split is BH's renaming of WH's <code>ContextADC</code>/<code>MultiContextMode</code>).</p>
+
+<p>The high-level steps the hardware performs:</p>
+
+<pre><code>1. Pick state-bank from ThreadConfig[CurrentThread].CFG_STATE_ID_StateID  (0 or 1)
+2. Resolve WhichContext (0..7) from either CfgContextId or the per-unpacker
+   ContextCounter, then add UNPACK_MISC_CFG_CfgContextOffset[WhichUnpacker]
+3. Read the tile descriptor (THCON_SEC[u].REG0_TileDescriptor) → InDataFormat,
+   XDim, YDim, ZDim, WDim, IsUncompressed, BlobsPerXYPlane, DigestSize, ...
+4. Compute starting L1 address from REG3_Base_address (+ REG3_Base_cntx in MC mode)
+   and REG7_Offset_address, skip 16 bytes of tile header times (1+DigestSize).
+   If compressed: also read row-start indices from a sub-region.
+   If BFP format: also point at the per-16-datum exponent sub-region.
+5. Compute number of input datums = (ADC.Channel[1].X+1) - ADC.Channel[0].X
+6. Compute starting OUTPUT address inside SrcA/SrcB/Dst from:
+      UNP[u].ADDR_BASE_REG_1_Base + ADC.Ch1.Y*Ystride + Z*Zstride + W*Wstride
+   (in datums, not bytes; >>1 for 16-bit, >>2 for 32-bit output formats)
+7. For each input datum:
+      a. Read DatumSizeBytes from L1
+      b. If BFP: read shared 8-bit exponent (1 byte per 16 datums)
+      c. If compressed: read the 4-bit RLE delta and insert that many zeroes
+      d. FormatConversion(InDataFormat, OutDataFormat, datum, exp, unpacker, toDst)
+      e. Optional upsampling (insert 0/1/2/4 zero datums after each datum)
+      f. Write to SrcA[bank][row][col], SrcB[bank][row][col], or Dst32b/Dst16b
+         (wait if AllowedClient ≠ Unpackers — i.e. FPU hasn't released the bank)
+8. After the loop: bump ADC channels by AddrMod, optionally flip the SrcA/SrcB
+   bank (FlipSrc) and hand the now-full bank to the Matrix Unit, bump
+   ContextCounter if AutoIncContextID.
+</code></pre>
+
+<p>The address-wrap behaviour is the <strong>circular FIFO in L1</strong>: addresses beyond <code>Unpack_limit_address</code> wrap by subtracting <code>Unpack_fifo_size</code>. This is what lets the CB abstraction work — the CB is just a configured circular range in L1.</p>
+
+<h3 id="unpacr-nop">2.2 UNPACR sub-variants (UNPACR_NOP, opcode <code>0x41</code>)</h3>
+
+<p><code>UNPACR_NOP</code> (<code>TT_OP_UNPACR_NOP</code>) is a multi-mode "stall/control" instruction that runs in-order with the unpacker queue, used so the no-op effect happens at exactly the right point in the unpacker pipeline:</p>
+
+<table>
+<thead><tr><th>Mode</th><th>Effect</th><th>Doc</th></tr></thead>
+<tbody>
+<tr><td><code>ZEROSRC</code> mode</td><td>Set SrcA or SrcB bank to all zeroes, sequenced with UNPACR</td><td><code>UNPACR_NOP_ZEROSRC.md</code></td></tr>
+<tr><td><code>SETDVALID</code> mode (<code>Set_Dvalid</code>=1)</td><td>Mark Src bank as valid → hand to Matrix Unit (<code>AllowedClient = MatrixUnit</code>)</td><td><code>UNPACR_NOP_SETDVALID.md</code></td></tr>
+<tr><td><code>SETREG</code> mode</td><td>MMIO register write, sequenced with UNPACR</td><td><code>UNPACR_NOP_SETREG.md</code></td></tr>
+<tr><td><code>Msg_Clr_Cnt</code> mode</td><td>Stream/Overlay message clear</td><td><code>UNPACR_NOP_OverlayClear.md</code></td></tr>
+<tr><td>Nop mode</td><td>Occupy unpacker for one cycle (used as a barrier/replay padding)</td><td><code>UNPACR_NOP_Nop.md</code></td></tr>
+<tr><td><code>Unpack_Pop</code> mode</td><td>Pop unpacker FIFO</td><td>(covered in <code>UNPACR_NOP.md</code>)</td></tr>
+</tbody>
+</table>
+
+<p><code>UNPACR</code> itself has 3 special sub-modes when <code>Unpack_block_selection</code> / <code>SetDvalid</code> etc. are programmed unusually:</p>
+<ul>
+  <li><strong>"Increment context counter"</strong> (<code>UNPACR_IncrementContextCounter.md</code>) — bumps the per-unpacker <code>ContextCounter[CurrentThread]</code> without doing any L1 access.</li>
+  <li><strong>"Flush decompression row-start cache"</strong> (<code>UNPACR_FlushCache.md</code>) — invalidates the small RSI cache used when decompressing.</li>
+  <li><strong>"Move datums"</strong> (<code>UNPACR_Regular.md</code>) — the normal one described above.</li>
+</ul>
+
+<h3 id="unpacker-regs">2.3 Unpacker config registers (THCON_SEC[u] = sec 0 for Unpacker 0 / sec 1 for Unpacker 1)</h3>
+
+<p>These live in the global <code>Config[2][...]</code> array (<code>TENSIX_CFG_BASE</code>), with the symbols in <code>tt_metal/hw/inc/internal/tt-1xx/blackhole/cfg_defines.h</code>. There are ~370 packer/unpacker fields total; the ones that matter for unpack are:</p>
+
+<h4>REG0 — TileDescriptor (4 × 32-bit, written via <code>WRCFG ... wr128b=1</code> as a 128-bit blob).</h4>
+<p>This is the single most important block; <code>unpack_tile_descriptor_t</code> in <code>cunpack_common.h</code> shows the BH bitfield layout:</p>
+
+<table>
+<thead><tr><th>Field</th><th>Bits</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>in_data_format</code></td><td>[3:0]</td><td>Source format in L1: encoding table below.</td></tr>
+<tr><td><code>uncompressed</code></td><td>[4]</td><td>1 = no RLE; 0 = decompress on the fly (must also configure <code>Disable_zero_compress_cntx</code>).</td></tr>
+<tr><td><code>blobs_per_xy_plane</code></td><td>[11:8]</td><td>Sparsity ("blob") structure — used with <code>RowSearch</code> + <code>BlobsYStart</code>.</td></tr>
+<tr><td><code>x_dim</code></td><td>[31:16]</td><td>X (column) dim of the source tile in L1.</td></tr>
+<tr><td><code>y_dim</code></td><td>[47:32]</td><td>Y (row) dim.</td></tr>
+<tr><td><code>z_dim</code></td><td>[63:48]</td><td>Z stride count (0 means 1).</td></tr>
+<tr><td><code>w_dim</code></td><td>[79:64]</td><td>W stride count (0 means 1).</td></tr>
+<tr><td><code>blobs_y_start</code></td><td>[127:80]</td><td>Row-start table for sparse blob mode.</td></tr>
+<tr><td><code>digest_type</code>/<code>digest_size</code></td><td>[...:120]</td><td>Tile-header skip = <code>(1+digest_size)*16</code> bytes.</td></tr>
+</tbody>
+</table>
+
+<p><strong>Data-format 4-bit encoding</strong> (same field everywhere — TileDescriptor, REG2, REG7 contexted, ALU_FORMAT_SPEC, packer REG1):</p>
+
+<table class="fmt-encoding">
+<thead><tr><th></th><th><code>0b??11</code></th><th><code>0b??10</code></th><th><code>0b??01</code></th><th><code>0b??00</code></th></tr></thead>
+<tbody>
+<tr><th><code>0b00??</code></th><td>BFP4a</td><td>BFP8a</td><td><strong>FP16</strong></td><td><strong>FP32</strong></td></tr>
+<tr><th><code>0b01??</code></th><td>BFP4</td><td>BFP8</td><td><strong>BF16</strong></td><td><strong>TF32</strong></td></tr>
+<tr><th><code>0b10??</code></th><td>BFP2a</td><td><strong>FP8 (e5m2)</strong></td><td><strong>INT16</strong></td><td><strong>INT32</strong></td></tr>
+<tr><th><code>0b11??</code></th><td>BFP2</td><td><strong>INT8</strong></td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<p>Plus a 5th bit "<code>Unp_LF8_4b_exp</code>" turns FP8 e5m2 into <strong>FP8 e4m3</strong> — set when <code>DataFormat::Fp8_e4m3</code>; see <code>THCON_SEC0_REG1_Unp_LF8_4b_exp_RMW</code> programmed in <code>configure_unpack_AB()</code>.</p>
+
+<h4>REG1 / REG2 — main per-unpacker config (<code>unpack_config_t</code> is REG1+REG2 in 128-bit form):</h4>
+
+<table>
+<thead><tr><th>Field (BH name in cfg_defines.h)</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>THCON_SEC[u]_REG2_Out_data_format</code></td><td>OutDataFormat (4 bits) — what hardware presents to SrcA/SrcB/Dst (see §2.6 conversions).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Throttle_mode</code></td><td>x1/x2/x4 L1 read speed (0/1/2 — see §2.5).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Context_count</code></td><td>log₂ of how many UnpackContexts to round-robin (0..3 → 1/2/4/8 contexts).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Haloize_mode</code></td><td>Enables X/Y transpose on the way into SrcA (Unpacker 0 only).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Tileize_mode</code></td><td>"Discontiguous input rows" mode — rows are NOT contiguous in L1, hop by <code>Shift_amount_cntx</code>. Used by <code>llk_unpack_tilize.h</code>.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Unpack_Src_Reg_Set_Upd</code></td><td>If 1, after each UNPACR advance SrcRow by <code>16 + SrcA/B_SET_Base*16</code>. Used for ping-pong'ing within a bank.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Unpack_If_Sel</code></td><td>Unpacker 0 only: 0 = write to SrcA, 1 = write to Dst. (Per-context version: <code>REG2_Unpack_if_sel_cntx[]</code>.)</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Upsample_rate</code></td><td>0/1/2/3 → 0/1/2/4 inserted zeros per datum.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Upsample_and_interleave</code></td><td>If 1, skip output positions instead of inserting zeros.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Ovrd_data_format</code></td><td>If 1 (in MultiContext mode), use the per-context REG7 format instead of the descriptor.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Force_shared_exp</code></td><td>For BFP formats: ignore the L1 exponent stream, use <code>UNP[u].FORCED_SHARED_EXP_shared_exp</code> for all datums. Used when you want to upcast INT8 via the BFP path.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Shift_amount_cntx[0..3]</code></td><td>Tileize row stride (4 bits per ctx, concatenated to make a 12-bit byte stride) OR <code>ColShift</code> for SrcA writes.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Unpack_limit_address</code></td><td>Upper L1 bound (in 16-byte units) for FIFO wrap.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Unpack_fifo_size</code></td><td>FIFO size (in 16-byte units) — what gets subtracted on wrap.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG2_Disable_zero_compress_cntx[0..7]</code></td><td>Per-context: 1 = treat that context's data as uncompressed (overrides the TileDescriptor when in MultiContextMode).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG3_Base_address</code> (32b)</td><td>Base L1 address of the input buffer, in 16-byte units.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG3_Base_cntx[1..7].address</code></td><td>Per-context base addresses (context 0 uses <code>REG3_Base_address</code>).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG5_Tile_x_dim_cntx[0..3]</code></td><td>Unpacker 0 multi-context X override (16 bits per ctx, packed two-per-32).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG5_Dest_cntx[0..3].address</code></td><td>Unpacker 0 per-context Dst starting row.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG7_Offset_address</code></td><td>16-bit offset added to Base_address each instruction (set by <code>unpacker_wrapup()</code> to zero on flush).</td></tr>
+<tr><td><code>THCON_SEC[u]_REG7_Offset_cntx[1..3].address</code></td><td>Per-context offsets.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG7_Unpack_data_format_cntx[0..7]</code></td><td>Per-context InDataFormat override.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG7_Unpack_out_data_format_cntx[0..7]</code></td><td>Per-context OutDataFormat override.</td></tr>
+<tr><td><code>THCON_SEC[u]_REG1_Unp_LF8_4b_exp</code></td><td>1 = treat 8-bit float as e4m3 instead of e5m2.</td></tr>
+<tr><td><code>UNP[u].ADDR_BASE_REG_1_Base</code></td><td>Base "datum index" within SrcA/SrcB/Dst — combined with ADC Channel[1] Y/Z/W and the strides.</td></tr>
+<tr><td><code>UNP[u].ADDR_CTRL_XY_REG_1_Ystride</code></td><td>Y stride in <em>datums</em>.</td></tr>
+<tr><td><code>UNP[u].ADDR_CTRL_ZW_REG_1_Zstride</code>, <code>Wstride</code></td><td>Z, W strides.</td></tr>
+<tr><td><code>UNP[u].FORCED_SHARED_EXP_shared_exp</code></td><td>The fixed exponent used when <code>Force_shared_exp = 1</code>.</td></tr>
+<tr><td><code>UNP[u].ADD_DEST_ADDR_CNTR_add_dest_addr_cntr</code></td><td>If 1, add per-context Dst row to base; if 0, override.</td></tr>
+<tr><td><code>UNP0_BLOBS_Y_START_CNTX[0/2].blobs_y_start[8]</code></td><td>Per-context BlobsYStart (overrides TileDescriptor in MC mode).</td></tr>
+</tbody>
+</table>
+
+<h4>Thread-local unpacker config (ThreadConfig, written via <code>SETC16</code> since you can't <code>sw</code> to it):</h4>
+
+<table>
+<thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>CFG_STATE_ID_StateID</code></td><td>Selects which of the two Config banks (0/1) this thread reads — basic double-buffering of all backend config.</td></tr>
+<tr><td><code>UNPACK_MISC_CFG_CfgContextOffset_0</code>, <code>_1</code></td><td>Per-thread per-unpacker base for context index (added to <code>CfgContextId</code>).</td></tr>
+<tr><td><code>UNPACK_MISC_CFG_CfgContextCntReset_0</code>, <code>_1</code></td><td>Writing here resets that thread's context counter (immediate side-effect).</td></tr>
+<tr><td><code>SRCA_SET_Base</code>, <code>SRCB_SET_Base</code></td><td>Source-row base (×16) used when <code>Unpack_Src_Reg_Set_Upd=1</code> for ping-pong write addressing.</td></tr>
+<tr><td><code>SRCA_SET_SetOvrdWithAddr</code></td><td>If 1, write to a full 64-row range of SrcA using the address generator directly.</td></tr>
+<tr><td><code>ADDR_MOD_AB_SEC[0..3].SrcXIncr/SrcYIncr/...</code></td><td>Address-modifier slots for UNPACR / MOVD2A etc. — used to bump SrcA/SrcB row counters.</td></tr>
+<tr><td><code>ALU_FORMAT_SPEC_REG0_SrcA*</code>, <code>REG0_SrcB*</code>, <code>REG2_Dstacc*</code></td><td>The format the FPU sees (overrides for INT8 signed/unsigned and Dst accumulator format).</td></tr>
+<tr><td><code>ALU_ACC_CTRL_Fp32_enabled</code>, <code>SFPU_Fp32_enabled</code>, <code>INT8_math_enabled</code>, <code>Zero_Flag_disabled_src/dst</code></td><td>FPU/SFPU global modes.</td></tr>
+</tbody>
+</table>
+
+<h3 id="src-dst-writes">2.4 What "writing to SrcA / SrcB / Dst" looks like</h3>
+
+<svg viewBox="0 0 900 580" class="svg-diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Unpacker internal pipeline showing the stages an UNPACR instruction goes through, from L1 read to writing SrcA, SrcB, or Dst">
+  <defs>
+    <marker id="arrU-fg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--fg)"/>
+    </marker>
+    <marker id="arrU-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- Title at top -->
+  <text x="450" y="22" text-anchor="middle" class="title">UNPACR instruction pipeline (per face)</text>
+
+  <!-- Stage 1: L1 read -->
+  <rect x="280" y="40" width="340" height="46" rx="6" class="box-stage"/>
+  <text x="450" y="60" text-anchor="middle" class="title-sm">L1 read — 16 / 32 / 64 B per cycle</text>
+  <text x="450" y="77" text-anchor="middle" class="subtitle-mono">Throttle_mode (0/1/2), arbiter with other unpacker</text>
+
+  <!-- Stage 2: Header skip -->
+  <rect x="280" y="100" width="340" height="46" rx="6" class="box-stage"/>
+  <text x="450" y="120" text-anchor="middle" class="title-sm">Skip tile header — (1+digest_size) × 16 B</text>
+  <text x="450" y="137" text-anchor="middle" class="subtitle-mono">REG0.digest_size, REG3.Base_address, REG7.Offset_address</text>
+
+  <!-- Stage 3: BFP exp + RLE decompress -->
+  <rect x="280" y="160" width="340" height="46" rx="6" class="box-stage"/>
+  <text x="450" y="180" text-anchor="middle" class="title-sm">Read shared exponent (BFP) / RLE decompress</text>
+  <text x="450" y="197" text-anchor="middle" class="subtitle-mono">REG0.uncompressed, Force_shared_exp, blobs_per_xy_plane</text>
+
+  <!-- Stage 4: Format conversion -->
+  <rect x="280" y="220" width="340" height="46" rx="6" class="box-stage-hi"/>
+  <text x="450" y="240" text-anchor="middle" class="title-sm">Format conversion (per-datum)</text>
+  <text x="450" y="257" text-anchor="middle" class="subtitle-mono">REG0.in_data_format → REG2.Out_data_format (+ Unp_LF8_4b_exp)</text>
+
+  <!-- Stage 5: Upsample/interleave -->
+  <rect x="280" y="280" width="340" height="46" rx="6" class="box-stage"/>
+  <text x="450" y="300" text-anchor="middle" class="title-sm">Optional upsample / interleave</text>
+  <text x="450" y="317" text-anchor="middle" class="subtitle-mono">REG2.Upsample_rate, Upsample_and_interleave</text>
+
+  <!-- Stage 6: Haloize/Tileize -->
+  <rect x="280" y="340" width="340" height="46" rx="6" class="box-stage"/>
+  <text x="450" y="360" text-anchor="middle" class="title-sm">Haloize XY transpose / Tileize discontiguous rows</text>
+  <text x="450" y="377" text-anchor="middle" class="subtitle-mono">REG2.Haloize_mode, Tileize_mode, Shift_amount_cntx</text>
+
+  <!-- Stage 7: AllowedClient gate -->
+  <rect x="280" y="400" width="340" height="46" rx="6" class="box-stage-hi"/>
+  <text x="450" y="420" text-anchor="middle" class="title-sm">Wait until AllowedClient = Unpackers</text>
+  <text x="450" y="437" text-anchor="middle" class="subtitle">(blocks until FPU releases the Src bank)</text>
+
+  <!-- Stage 8: Three output destinations -->
+  <rect x="40" y="490" width="220" height="60" rx="6" class="box-src"/>
+  <text x="150" y="512" text-anchor="middle" class="title-sm">SrcA[bank][row+SrcRow][col]</text>
+  <text x="150" y="528" text-anchor="middle" class="subtitle">Unp 0, skip rows&lt;4 (header)</text>
+  <text x="150" y="542" text-anchor="middle" class="subtitle-mono">SRCA_SET_Base, ColShift</text>
+
+  <rect x="340" y="490" width="220" height="60" rx="6" class="box-src"/>
+  <text x="450" y="512" text-anchor="middle" class="title-sm">SrcB[bank][row+SrcRow][col]</text>
+  <text x="450" y="528" text-anchor="middle" class="subtitle">Unp 1</text>
+  <text x="450" y="542" text-anchor="middle" class="subtitle-mono">SRCB_SET_Base</text>
+
+  <rect x="640" y="490" width="220" height="60" rx="6" class="box-dst"/>
+  <text x="750" y="512" text-anchor="middle" class="title-sm">Dst[row][col] (direct)</text>
+  <text x="750" y="528" text-anchor="middle" class="subtitle">Unp 0, when Unpack_If_Sel=1</text>
+  <text x="750" y="542" text-anchor="middle" class="subtitle-mono">REG5.Dest_cntx, Dst16b/Dst32b</text>
+
+  <!-- Side annotations (right column: per-instruction effects after) -->
+  <rect x="660" y="40" width="220" height="386" rx="6" fill="none" class="divider" stroke-dasharray="4,3"/>
+  <text x="770" y="58" text-anchor="middle" class="title-sm">After the loop</text>
+  <text x="770" y="80" text-anchor="middle" class="subtitle">• ADC.AddrMod auto-increment</text>
+  <text x="770" y="98" text-anchor="middle" class="subtitle">  (ADDR_MOD_AB_SEC[0..3])</text>
+  <text x="770" y="120" text-anchor="middle" class="subtitle">• FlipSrc → next bank</text>
+  <text x="770" y="142" text-anchor="middle" class="subtitle">• SetDvalid → hand bank</text>
+  <text x="770" y="160" text-anchor="middle" class="subtitle">  to MatrixUnit (FPU)</text>
+  <text x="770" y="182" text-anchor="middle" class="subtitle">• AutoIncContextID →</text>
+  <text x="770" y="200" text-anchor="middle" class="subtitle">  bump ContextCounter</text>
+  <text x="770" y="222" text-anchor="middle" class="subtitle">• Last=1 → end-of-context</text>
+
+  <!-- Vertical arrows between stages -->
+  <path d="M450,86 L450,98" class="arrow" marker-end="url(#arrU-fg)"/>
+  <path d="M450,146 L450,158" class="arrow" marker-end="url(#arrU-fg)"/>
+  <path d="M450,206 L450,218" class="arrow" marker-end="url(#arrU-fg)"/>
+  <path d="M450,266 L450,278" class="arrow" marker-end="url(#arrU-fg)"/>
+  <path d="M450,326 L450,338" class="arrow" marker-end="url(#arrU-fg)"/>
+  <path d="M450,386 L450,398" class="arrow" marker-end="url(#arrU-fg)"/>
+
+  <!-- Branch from stage 7 to three outputs -->
+  <path d="M380,446 C320,466 230,468 150,488" class="arrow-thick" marker-end="url(#arrU-accent)"/>
+  <path d="M450,446 L450,488" class="arrow-thick" marker-end="url(#arrU-accent)"/>
+  <path d="M520,446 C580,466 670,468 750,488" class="arrow-thick" marker-end="url(#arrU-accent)"/>
+
+  <!-- Left config-source annotation -->
+  <text x="135" y="65" text-anchor="middle" class="label">REG3.Base_address +</text>
+  <text x="135" y="80" text-anchor="middle" class="label">REG7.Offset_address</text>
+  <text x="135" y="98" text-anchor="middle" class="label">+ ADC.Ch0.Y·stride…</text>
+
+  <text x="135" y="180" text-anchor="middle" class="label">decompress to</text>
+  <text x="135" y="195" text-anchor="middle" class="label">datum stream</text>
+
+  <text x="135" y="240" text-anchor="middle" class="label">see Fig. data-format</text>
+  <text x="135" y="255" text-anchor="middle" class="label">table (§2.3)</text>
+
+  <text x="135" y="360" text-anchor="middle" class="label">Unp 0: ColShift,</text>
+  <text x="135" y="375" text-anchor="middle" class="label">XY-swap into SrcA</text>
+
+  <text x="135" y="420" text-anchor="middle" class="label">ping-pong with</text>
+  <text x="135" y="435" text-anchor="middle" class="label">FPU consumer</text>
+</svg>
+<span class="svg-caption">Figure 2. The functional stages an UNPACR instruction goes through inside the unpacker pipeline. The bottom row shows the three possible destinations (SrcA, SrcB, or Dst directly), and the right column lists what the instruction does <em>after</em> the per-datum loop completes.</span>
+
+<p>From the UNPACR functional model (relevant slice):</p>
+
+<pre><code>if (WhichUnpacker == 1) {            // SrcB
+    while (SrcB[Bank].AllowedClient != SrcClient::Unpackers) wait;
+    Row = (Row + CurrentUnpacker.SrcRow[CurrentThread]) &amp; 0x3f;
+    SrcB[Bank][Row][Col] = Datum;
+} else if (!UnpackToDst) {           // SrcA
+    while (SrcA[Bank].AllowedClient != SrcClient::Unpackers) wait;
+    if (Row &lt; 4 || Col &lt; ColShift) continue;     // header rows are skipped
+    Row -= 4;
+    Col -= ColShift;                              // optional per-context column shift
+    Row += CurrentUnpacker.SrcRow[CurrentThread];
+    if (Transpose) std::swap(Row &amp; 0xf, Col);    // Haloize_mode XY transpose
+    SrcA[Bank][Row][Col] = Datum;
+} else {                              // Dst
+    Row -= 4;
+    if (OutDataFormat in {FP32,TF32,INT32}) Dst32b[Row][Col] = Datum;
+    else                                     Dst16b[Row][Col] = Datum;
+}
+</code></pre>
+
+<p>Key things:</p>
+<ul>
+  <li><strong>The SrcA/SrcB hand-off.</strong> Each Src bank has a state <code>AllowedClient ∈ {Unpackers, MatrixUnit}</code>. The unpacker stalls until the bank is "theirs"; after writing it, software issues a <code>SETDVALID</code> or sets <code>FlipSrc=1</code> on the next UNPACR to flip the bank and hand it to the FPU. The FPU then computes from it and eventually releases the bank (via <code>CLRDVALID</code> from <code>MVMUL</code>-style instructions, controlled by <code>CLR_DVALID_SrcA_Disable</code>/<code>SrcB_Disable</code>). This is the natural double-buffer: while FPU consumes bank 0, unpacker fills bank 1.</li>
+  <li><strong>The first 4 rows of SrcA are "reserved"</strong> (Row &lt; 4 is skipped). This is to leave 4 rows of "header" — used by the FPU's broadcast (<code>MVMUL</code> with <code>srcb_bcast</code>).</li>
+  <li><strong>Writing to Dst directly via Unpacker 0</strong> bypasses SrcA entirely — used when you want to do SFPU-only work on freshly-loaded data, or when you want to skip the FPU (<code>llk_unpack_A.h</code> with <code>BroadcastType::NONE</code> and <code>unpack_to_dest=1</code>).</li>
+</ul>
+
+<h3 id="throttle">2.5 Throttle / arbitration</h3>
+
+<p>There's one shared L1 read port. Each unpacker requests <strong>x1 (16 B/cyc)</strong>, <strong>x2 (32)</strong>, or <strong>x4 (64)</strong>, chosen by <code>THCON_SEC[u].Throttle_mode</code> (0/1/2). Constraints force x1 when decompressing, when upsampling ≥ 3, when BFP2/2a, etc. If both unpackers want bandwidth, an arbiter shaves one of them down — the full conflict table is in <code>UNPACR_Regular.md#performance</code>.</p>
+
+<h3 id="format-conv-unp">2.6 Unpacker format-conversion summary</h3>
+
+<table>
+<thead><tr><th>L1 in</th><th>→ SrcA/B as</th><th>→ Dst as</th></tr></thead>
+<tbody>
+<tr><td>FP32/TF32</td><td>TF32 / BF16 / FP16</td><td>FP32 / BF16 / FP16</td></tr>
+<tr><td>BF16</td><td>TF32 / BF16</td><td>BF16</td></tr>
+<tr><td>BFP8/4/2 (or INT8 via <code>Force_shared_exp</code>)</td><td>TF32 / BF16</td><td>BF16</td></tr>
+<tr><td>BFP8a/4a/2a</td><td>FP16</td><td>FP16</td></tr>
+<tr><td>FP16 / FP8</td><td>FP16</td><td>FP16</td></tr>
+<tr><td>INT32 (sign-magnitude)</td><td>—</td><td>Integer "32"</td></tr>
+<tr><td>INT16</td><td>Integer "16"</td><td>Integer "16"</td></tr>
+<tr><td>INT8 / UINT8</td><td>Integer "8" (via BFP8 path, needs <code>SrcAUnsigned</code>/<code>SrcBUnsigned</code>)</td><td>Integer "8"</td></tr>
+</tbody>
+</table>
+
+<p class="small">(From <code>tt-isa-documentation/WormholeB0/.../Unpackers/FormatConversion.md</code>; BH is identical apart from the e4m3 helper.)</p>
+
+<hr>
+
+<h2 id="packer">3. The Packer</h2>
+
+<p>There are <strong>four packers</strong>. They share one input port to Dst and one output port to L1, but each has its own pipeline and its own copy of REG1 in <code>Config</code> (the four packer configs live as <code>THCON_SEC[01]_REG[18]</code> etc., with <code>PackerIndex</code> selecting which one). Each <code>PACR</code> instruction kicks off one to four packers at once.</p>
+
+<h3 id="pacr-instr">3.1 The PACR instruction</h3>
+
+<p><code>tt-llk/tt_llk_blackhole/common/inc/ckernel_ops.h</code>, opcode <code>0x41</code>. BH encoding (notice it grew vs. WH):</p>
+
+<pre><code>TT_OP_PACR(
+    CfgContext,       // 3 bits : which packer config context to use
+    RowPadZero,       // 1 bit  : pad short rows with zero
+    DstAccessMode,    // 1 bit  : Dst input vs L1 input (Source_interface_selection)
+    AddrMode,         // 2 bits : ADDR_MOD_PACK_SEC slot 0..3
+    AddrCntContext,   // 2 bits : which ADC to use when OvrdThreadId=1
+    ZeroWrite,        // 1 bit  : pull from /dev/null (write zeros)
+    ReadIntfSel,      // 1 bit  : alternate Dst read interface
+    OvrdThreadId,     // 1 bit  : use AddrCntContext instead of CurrentThread
+    Concat,           // 1 bit  : continue current compression row
+    CtxtCtrl,         // 1 bit  : auto-context-counter behavior
+    Flush,            // 1 bit  : flush pre-L1 output buffers
+    Last)             // 1 bit  : flush + start next packer at fresh address
+</code></pre>
+
+<p>The <code>PackerMask</code> is <em>not</em> in the instruction on Blackhole the same way as the simplified WH model shows; the per-context <code>pack_start_intf_pos</code> (4 bits in <code>unpack_config_t</code>/<code>pack_config_t</code>) and <code>Enable_out_fifo</code> per packer together select which packers run. Typical kernels enable all four for one full tile (matching the 4 faces) or just one when packing untilized.</p>
+
+<p>There's also <code>TT_OP_PACR_SETREG</code> (sequenced MMIO-register write that retires <em>after</em> late format conversion of all in-flight packers — used to atomically tick a CB-write-pointer right when the data hits L1) and the helper instructions:</p>
+<ul>
+  <li><code>TT_OP_SETPKEDGOF(y_end, y_start, x_end, x_start)</code> — set edge-mask offsets used by edge-masking</li>
+  <li><code>TT_OP_CLREXPHIST</code> — clear all four packers' exponent histogram</li>
+  <li><code>TT_OP_SETASHRMH</code>, <code>TT_OP_SETASHRMH0</code>, <code>TT_OP_SETASHRMH1</code>, <code>TT_OP_SETASHRMV</code> — set "all-shared row mask" (used for halo/shift patterns)</li>
+</ul>
+
+<h3 id="packer-pipeline">3.2 The packer pipeline (in order)</h3>
+
+<svg viewBox="0 0 900 620" class="svg-diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Packer internal pipeline showing the stages a PACR instruction goes through, from Dst read to L1 write">
+  <defs>
+    <marker id="arrP-fg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--fg)"/>
+    </marker>
+  </defs>
+
+  <!-- Source: Dst -->
+  <rect x="320" y="20" width="260" height="50" rx="6" class="box-dst"/>
+  <text x="450" y="42" text-anchor="middle" class="title">Dst[Row][Col]  (or L1 if src_if_sel=1)</text>
+  <text x="450" y="60" text-anchor="middle" class="subtitle-mono">Input Address Generator → Channel[0]</text>
+
+  <!-- Pipeline stages -->
+  <g>
+    <!-- Edge masking -->
+    <rect x="320" y="90" width="260" height="44" rx="6" class="box-stage"/>
+    <text x="450" y="108" text-anchor="middle" class="title-sm">Edge masking</text>
+    <text x="450" y="124" text-anchor="middle" class="subtitle-mono">PCK_EDGE_OFFSET / TILE_ROW_SET_MAPPING</text>
+
+    <!-- Early format conversion -->
+    <rect x="320" y="146" width="260" height="44" rx="6" class="box-stage-hi"/>
+    <text x="450" y="164" text-anchor="middle" class="title-sm">Early format conversion</text>
+    <text x="450" y="180" text-anchor="middle" class="subtitle-mono">PCK_DEST_RD_CTRL_*  (Dst → intermediate)</text>
+
+    <!-- ReLU -->
+    <rect x="320" y="202" width="260" height="44" rx="6" class="box-stage"/>
+    <text x="450" y="220" text-anchor="middle" class="title-sm">ReLU stage</text>
+    <text x="450" y="236" text-anchor="middle" class="subtitle-mono">STACC_RELU_ApplyRelu, ReluThreshold</text>
+
+    <!-- Exp threshold -->
+    <rect x="320" y="258" width="260" height="44" rx="6" class="box-stage"/>
+    <text x="450" y="276" text-anchor="middle" class="title-sm">Exponent thresholding</text>
+    <text x="450" y="292" text-anchor="middle" class="subtitle-mono">Exp_threshold_en, Exp_threshold</text>
+
+    <!-- Downsampling -->
+    <rect x="320" y="314" width="260" height="44" rx="6" class="box-stage"/>
+    <text x="450" y="332" text-anchor="middle" class="title-sm">Downsampling (vcompress)</text>
+    <text x="450" y="348" text-anchor="middle" class="subtitle-mono">Downsample_mask, Downsample_rate</text>
+
+    <!-- Exp histogram -->
+    <rect x="320" y="370" width="260" height="44" rx="6" class="box-stage"/>
+    <text x="450" y="388" text-anchor="middle" class="title-sm">Exponent histogramming</text>
+    <text x="450" y="404" text-anchor="middle" class="subtitle-mono">ENABLE_ACC_STATS  (CLREXPHIST / SETDMAREG)</text>
+
+    <!-- Late format conversion -->
+    <rect x="320" y="426" width="260" height="44" rx="6" class="box-stage-hi"/>
+    <text x="450" y="444" text-anchor="middle" class="title-sm">Late format conversion</text>
+    <text x="450" y="460" text-anchor="middle" class="subtitle-mono">In_data_format → Out_data_format</text>
+
+    <!-- Compression -->
+    <rect x="320" y="482" width="260" height="44" rx="6" class="box-stage"/>
+    <text x="450" y="500" text-anchor="middle" class="title-sm">Compression</text>
+    <text x="450" y="516" text-anchor="middle" class="subtitle-mono">RLE-zero + BFP shared-exp assembler</text>
+
+    <!-- 16B buffer -->
+    <rect x="320" y="538" width="260" height="44" rx="6" class="box-stage"/>
+    <text x="450" y="556" text-anchor="middle" class="title-sm">16-byte buffers (data / exp / RSI)</text>
+    <text x="450" y="572" text-anchor="middle" class="subtitle">flushed on Flush / Last / full line</text>
+  </g>
+
+  <!-- Output: L1 -->
+  <rect x="320" y="592" width="260" height="22" rx="6" class="box-l1"/>
+  <text x="450" y="608" text-anchor="middle" class="title-sm">→ L1 write (16-byte aligned)</text>
+
+  <!-- Arrows -->
+  <path d="M450,70 L450,86" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,134 L450,144" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,190 L450,200" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,246 L450,256" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,302 L450,312" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,358 L450,368" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,414 L450,424" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,470 L450,480" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,526 L450,536" class="arrow" marker-end="url(#arrP-fg)"/>
+  <path d="M450,582 L450,590" class="arrow" marker-end="url(#arrP-fg)"/>
+
+  <!-- Right-side: Output Address Generator annotation -->
+  <rect x="610" y="430" width="260" height="150" rx="6" fill="none" class="divider" stroke-dasharray="4,3"/>
+  <text x="740" y="450" text-anchor="middle" class="title-sm">Output Address Generator</text>
+  <text x="740" y="468" text-anchor="middle" class="subtitle-mono">Channel[1] — L1 side</text>
+  <text x="740" y="488" text-anchor="middle" class="subtitle">L1_Dest_addr +</text>
+  <text x="740" y="504" text-anchor="middle" class="subtitle">YZW × strides (~0xf)</text>
+  <text x="740" y="520" text-anchor="middle" class="subtitle">+ optional offset</text>
+  <line x1="625" y1="532" x2="855" y2="532" class="divider"/>
+  <text x="740" y="550" text-anchor="middle" class="subtitle-mono">Pack_limit_address</text>
+  <text x="740" y="566" text-anchor="middle" class="subtitle-mono">Pack_fifo_size (wrap)</text>
+  <path d="M580,560 L610,520" class="arrow" marker-end="url(#arrP-fg)"/>
+
+  <!-- Left-side: per-packer + global config annotation -->
+  <rect x="30" y="90" width="260" height="200" rx="6" fill="none" class="divider" stroke-dasharray="4,3"/>
+  <text x="160" y="110" text-anchor="middle" class="title-sm">Per-packer (×4)</text>
+  <text x="160" y="130" text-anchor="middle" class="subtitle-mono">pack_config_t (REG1)</text>
+  <text x="160" y="148" text-anchor="middle" class="subtitle-mono">PCK_ADDR_BASE_REG_{0,1}</text>
+  <text x="160" y="164" text-anchor="middle" class="subtitle-mono">PCK_ADDR_CTRL_{XY,ZW}</text>
+  <text x="160" y="180" text-anchor="middle" class="subtitle-mono">PACK_COUNTERS_SEC[i]</text>
+  <text x="160" y="196" text-anchor="middle" class="subtitle-mono">DEST_TARGET_REG_CFG_PACK</text>
+  <line x1="40" y1="208" x2="280" y2="208" class="divider"/>
+  <text x="160" y="226" text-anchor="middle" class="title-sm">Global / shared</text>
+  <text x="160" y="244" text-anchor="middle" class="subtitle-mono">PCK_EDGE_OFFSET_SEC[0..3]</text>
+  <text x="160" y="260" text-anchor="middle" class="subtitle-mono">STACC_RELU, INT_DESCALE</text>
+  <text x="160" y="276" text-anchor="middle" class="subtitle-mono">ADDR_MOD_PACK_SEC[0..3]</text>
+
+  <!-- Right-side: Order/select annotation -->
+  <rect x="610" y="20" width="260" height="200" rx="6" fill="none" class="divider" stroke-dasharray="4,3"/>
+  <text x="740" y="40" text-anchor="middle" class="title-sm">PACR launches ≤4 packers</text>
+  <text x="740" y="60" text-anchor="middle" class="subtitle">selected by enable_out_fifo</text>
+  <text x="740" y="76" text-anchor="middle" class="subtitle">+ pack_start_intf_pos</text>
+  <line x1="625" y1="88" x2="855" y2="88" class="divider"/>
+  <text x="740" y="106" text-anchor="middle" class="subtitle">Packer 0 may source</text>
+  <text x="740" y="122" text-anchor="middle" class="subtitle">from L1 (src_if_sel=1)</text>
+  <text x="740" y="138" text-anchor="middle" class="subtitle">for L1↔L1 reshape</text>
+  <line x1="625" y1="150" x2="855" y2="150" class="divider"/>
+  <text x="740" y="168" text-anchor="middle" class="subtitle">Last=1 → flush all buffers,</text>
+  <text x="740" y="184" text-anchor="middle" class="subtitle">next packer starts at fresh</text>
+  <text x="740" y="200" text-anchor="middle" class="subtitle">aligned L1 address</text>
+</svg>
+<span class="svg-caption">Figure 3. The 10-stage packer pipeline from Dst to L1. The two highlighted stages (early &amp; late format conversion) are where the most non-trivial bit-level conversion happens; everything else is row-by-row processing. The left column lists the most-relevant per-packer and global config registers feeding the pipeline; the right column lists post-pipeline buffering and output-address rules. Diagram condensed from <code>Packers/README.md</code> and per-stage docs.</span>
+
+<h3 id="packer-regs">3.3 Packer config registers (per-packer "PCK[i]" + per-thread + global)</h3>
+
+<p>The four packers reuse <code>THCON_SEC0_REG1_*</code> (packer 0+1) and <code>THCON_SEC1_REG1_*</code> (packer 2+3), plus <code>THCON_SEC0_REG8_*</code> / <code>THCON_SEC1_REG8_*</code> for the other half — see <code>cfg_defines.h</code> for the exact mapping. The <code>pack_config_t</code> in <code>cpack_common.h</code> describes the <strong>per-packer 96-bit programmable block</strong> (REG1 in WH-language).</p>
+
+<h4>REG1 — per-packer "pack_config_t":</h4>
+
+<table>
+<thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>row_ptr_section_size</code></td><td>Bytes reserved in L1 for the RSI (row-start-index) section when compressing.</td></tr>
+<tr><td><code>exp_section_size</code></td><td>Bytes reserved for the per-16-datum exponent section (BFP outputs / FP8 / INT8).</td></tr>
+<tr><td><code>l1_dest_addr</code></td><td>Base L1 address (16-byte units) for this packer's output.</td></tr>
+<tr><td><code>uncompress</code></td><td>1 = no RLE-zero compression.</td></tr>
+<tr><td><code>add_l1_dest_addr_offset</code></td><td>If 1, add <code>l1_dest_addr_offset</code> (a 16b TDMA-RISC writable register) to base.</td></tr>
+<tr><td><code>disable_pack_zero_flag</code></td><td>If 1, never produce the per-datum zero flag (forces uncompressed).</td></tr>
+<tr><td><code>out_data_format</code> (4b)</td><td>"LateToFormat" — what hits L1. Format encoding from §2.3.</td></tr>
+<tr><td><code>in_data_format</code> (4b)</td><td>"LateFromFormat" — the intermediate format coming into late conversion.</td></tr>
+<tr><td><code>dis_shared_exp_assembler</code></td><td>Disable the BFP shared-exponent assembler.</td></tr>
+<tr><td><code>auto_set_last_pacr_intf_sel</code></td><td>Auto-flip interface-select on the last PACR of a packing burst.</td></tr>
+<tr><td><code>enable_out_fifo</code></td><td>Enable this packer's L1 output FIFO (must be 1 to write at all).</td></tr>
+<tr><td><code>sub_l1_tile_header_size</code></td><td>1 = the addr math subtracts the 16-byte tile-header bump that <code>L1_Dest_addr</code> otherwise has built in.</td></tr>
+<tr><td><code>src_if_sel</code> (also <code>Source_interface_selection</code>)</td><td><strong>Packer 0 only</strong>: 0 = source from Dst, 1 = source from L1 (DMA mode used by Mover-style copies).</td></tr>
+<tr><td><code>pack_start_intf_pos</code> (4b)</td><td>Which interfaces are "live" — bitmask selecting packers 0..3 per face.</td></tr>
+<tr><td><code>all_pack_disable_zero_compress_ovrd</code></td><td>If 1, the global <code>All_pack_disable_zero_compress[i]</code> mask overrides per-packer <code>uncompress</code>.</td></tr>
+<tr><td><code>add_tile_header_size</code></td><td>Add the 16-byte tile header to outputs.</td></tr>
+<tr><td><code>pack_dis_y_pos_start_offset</code></td><td>Disable applying Y-position start offset (used by un-tilize).</td></tr>
+<tr><td><code>l1_src_addr</code> (8b)</td><td>High bits of L1 source address when <code>src_if_sel=1</code>.</td></tr>
+</tbody>
+</table>
+
+<h4>Other per-packer ("PCK0_*" / "PCK[i]_*") regs (in cfg_defines.h):</h4>
+
+<table>
+<thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>PCK0_ADDR_BASE_REG_0_Base</code> / <code>_REG_1_Base</code></td><td>Base address for the <em>input</em> (Channel[0], Dst-side) and <em>output</em> (Channel[1], L1-side) sides.</td></tr>
+<tr><td><code>PCK0_ADDR_CTRL_XY_REG_0_Xstride</code> / <code>Ystride</code></td><td>Channel[0] X/Y strides (Dst-side, in bytes for X).</td></tr>
+<tr><td><code>PCK0_ADDR_CTRL_ZW_REG_0_Zstride</code> / <code>Wstride</code></td><td>Channel[0] Z/W strides.</td></tr>
+<tr><td><code>PCK0_ADDR_CTRL_XY_REG_1_Ystride</code></td><td>Channel[1] Y stride (L1-side; X stride on L1 side isn't used — output is always linear within a row).</td></tr>
+<tr><td><code>PCK0_ADDR_CTRL_ZW_REG_1_Zstride</code> / <code>Wstride</code></td><td>Channel[1] Z/W strides.</td></tr>
+<tr><td><code>PACK_COUNTERS_SEC[i].pack_per_xy_plane</code></td><td>Iteration count per face.</td></tr>
+<tr><td><code>PACK_COUNTERS_SEC[i].pack_reads_per_xy_plane</code></td><td>How many "reads" the TilePositionGenerator does before advancing Y or Z.</td></tr>
+<tr><td><code>PACK_COUNTERS_SEC[i].pack_xys_per_til</code></td><td>XY-plane count per tile.</td></tr>
+<tr><td><code>PACK_COUNTERS_SEC[i].pack_yz_transposed</code></td><td>If 1, advance Z before Y (transposed face order).</td></tr>
+<tr><td><code>PACK_COUNTERS_SEC[i].pack_per_xy_plane_offset</code></td><td>Per-packer Y offset.</td></tr>
+<tr><td><code>DEST_TARGET_REG_CFG_PACK_SEC[i].Offset</code></td><td>Per-packer Dst-row offset (in 16-row units) — where in Dst this packer starts reading.</td></tr>
+<tr><td><code>DEST_TARGET_REG_CFG_PACK_SEC[i].ZOffset</code></td><td>Per-packer Z-offset into Dst.</td></tr>
+<tr><td><code>THCON_SEC[01]_REG9.{Pack_limit_address, Pack_fifo_size}</code></td><td>Circular L1 wrap.</td></tr>
+</tbody>
+</table>
+
+<h4>Global / shared packer config:</h4>
+
+<table>
+<thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>PCK_DEST_RD_CTRL_Read_32b_data</code></td><td>1 = read 32-bit from Dst (Dst32b view), 0 = 16-bit (Dst16b view).</td></tr>
+<tr><td><code>PCK_DEST_RD_CTRL_Round_10b_mant</code></td><td>If 1, round mantissa to 10 bits during early conversion (TF32 path).</td></tr>
+<tr><td><code>PCK_DEST_RD_CTRL_Read_int8</code></td><td>"Read raw" — skip the early conversion rounding (truncate / bitcast).</td></tr>
+<tr><td><code>PCK_DEST_RD_CTRL_Read_unsigned</code></td><td>For INT8/UINT8 path — say whether the byte is signed or unsigned.</td></tr>
+<tr><td><code>ALU_FORMAT_SPEC_REG_Dstacc_override</code>, <code>ALU_FORMAT_SPEC_REG_Dstacc_val</code>, <code>ALU_FORMAT_SPEC_REG2_Dstacc</code></td><td>Specify the <strong>IntermediateFormat</strong> for the early conversion.</td></tr>
+<tr><td><code>ALU_ROUNDING_MODE_Packer_srnd_en</code></td><td>Stochastic rounding for the packer (BFP rounds).</td></tr>
+<tr><td><code>ALU_ROUNDING_MODE_Gasket_srnd_en</code></td><td>Stochastic rounding for the late conversion gasket.</td></tr>
+<tr><td><code>INT_DESCALE_Enable</code>, <code>INT_DESCALE_Mode</code>, <code>INT_DESCALE_VALUES_SEC[].Value</code></td><td>Shift-amount applied during INT32→INT8 conversion (for quantization).</td></tr>
+<tr><td><code>STACC_RELU_ApplyRelu</code> (4b)</td><td>NO_RELU / ZERO_RELU / MIN_THRESHOLD_RELU / MAX_THRESHOLD_RELU (2b per packer).</td></tr>
+<tr><td><code>STACC_RELU_ReluThreshold</code></td><td>16-bit BF16 or FP16 threshold value.</td></tr>
+<tr><td><code>PCK_EDGE_OFFSET_SEC[0..3].mask</code></td><td>16-bit column masks for edge masking.</td></tr>
+<tr><td><code>PCK_EDGE_OFFSET_SEC0.{mode, tile_row_set_select_pack[0..3]}</code></td><td>Which of the four masks each packer uses, and what <code>mode</code> means (per-row vs per-face).</td></tr>
+<tr><td><code>TILE_ROW_SET_MAPPING[0..3].row_set_mapping[16]</code></td><td>2 bits per row of a face → which mask slot to apply.</td></tr>
+<tr><td><code>PCK_EDGE_TILE_FACE_SET_SELECT_*</code>, <code>PCK_EDGE_TILE_ROW_SET_SELECT_*</code></td><td>Higher-level mask selectors.</td></tr>
+<tr><td><code>PCK_EDGE_MODE_mode</code></td><td>0 = replace masked datums with 0, 1 = replace with −∞ (for softmax-style max-reduce).</td></tr>
+<tr><td><code>ENABLE_ACC_STATS_Enable</code> (per-thread)</td><td>Enable exponent histogram.</td></tr>
+<tr><td><code>THCON_SEC[01]_REG1_Downsample_mask</code>, <code>Downsample_rate</code></td><td>16-bit downsample mask + rate.</td></tr>
+<tr><td><code>THCON_SEC[01]_REG1_Exp_threshold_en</code>, <code>Exp_threshold</code></td><td>Exponent-threshold clamp-to-zero.</td></tr>
+<tr><td><code>THCON_SEC[01]_REG1_pack_dis_y_pos_start_offset</code>, <code>pack_start_intf_pos</code></td><td>Packer interface position controls (untilize mode).</td></tr>
+<tr><td><code>THCON_SEC0_REG1_All_pack_disable_zero_compress</code> (4b mask)</td><td>Per-packer compression-disable when override is on.</td></tr>
+<tr><td><code>ADDR_MOD_PACK_SEC[0..3].{Y/Z}{src/dst}{Clear,CR,Incr}</code></td><td>Address-modifier slots used by <code>PACR.AddrMod</code>.</td></tr>
+<tr><td><code>DEST_ACCESS_CFG_{remap_addrs, swizzle_32b, disable_full_write_dest_q_bypass, zeroacc_absolute_tile_mode}</code></td><td>Affect both packer Dst-address swizzle and RISCV Dst access.</td></tr>
+</tbody>
+</table>
+
+<h3 id="pacr-in-addr">3.4 PACR input address generator (Channel[0])</h3>
+
+<pre><code>Addr = PCK0_ADDR_BASE_REG_0_Base
+     + ADC[w].Ch0.X * (Xstride &amp; 0xf)
+     + ADC[w].Ch0.Y * Ystride
+     + ADC[w].Ch0.Z * Zstride
+     + ADC[w].Ch0.W * Wstride
+
+InputNumDatums = Channel[1].X - Channel[0].X + 1     (one row of one face)
+</code></pre>
+
+<p>If <code>Source_interface_selection=1</code> and <code>i==0</code>, the packer fetches <em>from L1</em> (used for some L1-to-L1 reshape ops); otherwise it fetches <strong>from Dst</strong> with <code>InputSourceAddr = (Addr/BytesPerDatum) + DEST_TARGET_REG_CFG_PACK_SEC[i].Offset &lt;&lt; 4</code>, interpreted as <code>Row = addr &gt;&gt; 4</code>, <code>Col = addr &amp; 0xf</code> into Dst. <code>BytesPerDatum</code> is decided by <code>In_data_format</code>: <code>4 → FP32/TF32/I32</code>, <code>2 → FP16/BF16/I16</code>, else <code>1</code>.</p>
+
+<h3 id="pacr-out-addr">3.5 PACR output address generator (Channel[1])</h3>
+
+<pre><code>YZW_Addr = PCK0_ADDR_BASE_REG_1_Base
+         + ADC[w].Ch1.Y*Ystride + Z*Zstride + W*Wstride
+Addr = PackerIConfig.L1_Dest_addr + !Sub_l1_tile_header_size + (YZW_Addr &amp; ~0xf)
+       + (Add_l1_dest_addr_offset ? PackerI.l1_dest_addr_offset : 0)
+
+if (Addr > Pack_limit_address*2 + 1) Addr -= Pack_fifo_size*2   // circular CB wrap
+
+if (compressing) reserve Row_start_section_size bytes for RSI
+if (out_data_format &lt; 16b)  reserve Exp_section_size  bytes for exponents
+DataStream.ByteAddress = Addr     (only when NeedsNewAddress)
+</code></pre>
+
+<p>The Y/Z/W contribution is masked <code>&amp; ~0xf</code> so it only adjusts at <strong>256-byte granularity</strong> — fine-grained packing within a 16-byte L1 line is done by the buffered output below.</p>
+
+<p><strong>Output buffering and 16-byte alignment.</strong> Output is always aligned 16-byte writes to L1. Datums get accumulated into per-stream buffers (data / exp / RSI) and only flushed to L1 when full. The <code>Flush</code> and <code>Last</code> bits on <code>PACR</code> force the buffers to flush — but if a buffer is partially full it's <strong>zero-padded</strong> up to 16 B before flushing. This means: if you do many small PACRs, they share the same line; if you do one PACR with <code>Flush=1</code>, you might waste up to 15 B at the end of each stream.</p>
+
+<h3 id="packer-tt-ops">3.6 Packer-relevant TT instructions</h3>
+
+<table>
+<thead><tr><th>Op</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>TT_OP_PACR</code></td><td>The main pack instruction.</td></tr>
+<tr><td><code>TT_OP_PACR_SETREG</code></td><td>Atomic MMIO register write sequenced after late conversion (used to bump CB write pointers, set semaphore values, kick streams).</td></tr>
+<tr><td><code>TT_OP_SETPKEDGOF</code></td><td>Edge-mask offsets (x_start, x_end, y_start, y_end → PCK_EDGE_OFFSET masks).</td></tr>
+<tr><td><code>TT_OP_CLREXPHIST</code></td><td>Clear all four packers' exponent histograms.</td></tr>
+<tr><td><code>TT_OP_SETASHRMH(0/1)</code>, <code>TT_OP_SETASHRMV</code></td><td>Set ALL-SHARED row-mask H/V (halo column/row masks).</td></tr>
+<tr><td><code>TT_OP_SETDMAREG</code> mode 6/7</td><td>Read the exponent histogram bins into a Tensix GPR.</td></tr>
+<tr><td><code>TT_OP_SETDMAREG</code> mode 9</td><td>Read packer 0's max-exponent.</td></tr>
+<tr><td><code>TT_OP_STALLWAIT(stall_res, ...)</code></td><td>Wait for <code>THCON</code> / <code>PACK0..3</code> / <code>UNPACK0..1</code> resource idle (this is <em>how</em> <code>Last</code> becomes useful — you flush, then stall until L1 actually has the data).</td></tr>
+<tr><td><code>TT_OP_RESOURCEDECL</code></td><td>Auto-TTSync tracking declaration.</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2 id="walkthrough">4. Step-by-step: data going CB → SrcA/Dst → Dst → CB on Blackhole</h2>
+
+<p>Here is what the LLK (<code>llk_unpack_AB.h</code> + <code>llk_math_eltwise_*</code> + <code>llk_pack.h</code>) actually does for a simple "load tile A, load tile B, A+B, store tile" sequence:</p>
+
+<h3 id="setup">4.1 Setup (called once per format change)</h3>
+<p><code>configure_unpack_AB(...)</code> in <code>cunpack_common.h</code> writes (excerpt of actual register writes):</p>
+
+<pre><code>// Tell the FPU what format SrcA and SrcB hold:
+cfg_reg_rmw_tensix&lt;ALU_FORMAT_SPEC_REG_SrcA_val_ADDR32, ...&gt;(unp_src_format_A);
+cfg_reg_rmw_tensix&lt;ALU_FORMAT_SPEC_REG_SrcB_val_ADDR32, ...&gt;(unp_src_format_B);
+
+// Configure each unpacker's REG0_TileDescriptor (4-dword blob):
+cfg[THCON_SEC0_REG0_TileDescriptor_ADDR32 + 0..3] = {format/xdim/ydim/zdim/wdim/...};
+cfg[THCON_SEC1_REG0_TileDescriptor_ADDR32 + 0..3] = ...;
+
+// Configure REG2 (out format, throttle, context_count, tileize, etc.):
+cfg[THCON_SEC0_REG2_Out_data_format_ADDR32 word] = ...;
+cfg[THCON_SEC1_REG2_Out_data_format_ADDR32 word] = ...;
+
+// e4m3 helper:
+cfg_reg_rmw_tensix&lt;THCON_SEC0_REG1_Unp_LF8_4b_exp_RMW&gt;(unpA_is_e4m3);
+cfg_reg_rmw_tensix&lt;THCON_SEC1_REG1_Unp_LF8_4b_exp_RMW&gt;(unpB_is_e4m3);
+
+// REG3 base addresses (= base of the CB in L1, /16 since it's 16B units):
+cfg[THCON_SEC0_REG3_Base_address_ADDR32] = cb_a_base &gt;&gt; 4;
+cfg[THCON_SEC1_REG3_Base_address_ADDR32] = cb_b_base &gt;&gt; 4;
+
+// REG5 per-context Dst rows / face dims (multi-context unpacker 0 only):
+cfg[THCON_SEC0_REG5_Tile_x_dim_cntx0_ADDR32] = face_dim | (face_dim &lt;&lt; 16);
+cfg[THCON_SEC0_REG5_Dest_cntx0_address_ADDR32] = Dest_cntx0 | (Dest_cntx1 &lt;&lt; 16);
+
+// Reset ADC counters for the two unpackers + the packer:
+TTI_SETADCXY(p_setadc::UNP_A | p_setadc::UNP_B, 0,0,0,0, 0b1011);
+TTI_SETADCZW(p_setadc::UNP_A | p_setadc::UNP_B, 0,0,0,0, 0b1111);
+TTI_SETADCXY(0b100, 0,0,0,0, 0b1011);   // packer side
+TTI_SETADCZW(0b100, 0,0,0,0, 0b1111);
+
+// "X-end" per face, written into ADC[*].Unpacker[*].Channel[1].X:
+TT_SETADCXX(p_setadc::UNP_A, unpA_x_end, 0);
+TT_SETADCXX(p_setadc::UNP_B, (unpB_face_r_dim &lt;&lt; 4) - 1, 0);
+
+// SrcA row base for ping-pong:
+TTI_SETC16(SRCA_SET_Base_ADDR32, 0x4);
+</code></pre>
+
+<p>And the packer side from <code>cpack_common.h</code> (<code>set_packer_strides</code>):</p>
+
+<pre><code>TT_SETDMAREG(0, LOWER_HALFWORD(y_stride &lt;&lt; PCK0_ADDR_CTRL_XY_REG_0_Ystride_SHAMT), 0, LO_16(TMP0));
+TT_SETDMAREG(0, UPPER_HALFWORD(y_stride &lt;&lt; PCK0_ADDR_CTRL_XY_REG_0_Ystride_SHAMT), 0, HI_16(TMP0));
+TT_SETDMAREG(0, LOWER_HALFWORD(z_stride &lt;&lt; PCK0_ADDR_CTRL_ZW_REG_0_Zstride_SHAMT), 0, LO_16(TMP1));
+TT_SETDMAREG(0, UPPER_HALFWORD(w_stride &lt;&lt; PCK0_ADDR_CTRL_ZW_REG_0_Wstride_SHAMT), 0, HI_16(TMP1));
+TTI_STALLWAIT(p_stall::STALL_CFG, p_stall::THCON);
+TTI_WRCFG(TMP0, p_cfg::WRCFG_32b, PCK0_ADDR_CTRL_XY_REG_0_Xstride_ADDR32);
+TTI_WRCFG(TMP1, p_cfg::WRCFG_32b, PCK0_ADDR_CTRL_ZW_REG_0_Zstride_ADDR32);
+</code></pre>
+
+<h3 id="per-tile-unpack">4.2 Per-tile UNPACR (T0)</h3>
+<ol>
+  <li>The kernel waits on the producer CB semaphore (<code>cb_wait_front</code>) — done in RISCV, not Tensix.</li>
+  <li>T0 issues one <code>UNPACR</code> per face. Each <code>UNPACR</code> advances ADC Channel[0].Y → the next face row; on the 4th call the AddrMod flips back and bumps Z.</li>
+  <li>The unpacker reads <code>REG3_Base_address</code>, follows <code>REG7_Offset_address</code>, then iterates 16×16=256 datums, doing format conversion + writing to <code>SrcA[bank][row][col]</code> (and stalls on <code>AllowedClient</code>).</li>
+  <li>The last <code>UNPACR</code> of a tile sets <code>SetDatValid=1</code> (or it's followed by <code>UNPACR_NOP_SETDVALID</code>) — that flips <code>AllowedClient = MatrixUnit</code> so the FPU can read this bank.</li>
+  <li>The unpacker can immediately start filling the <em>other</em> bank while FPU consumes the first one.</li>
+</ol>
+
+<h3 id="math-step">4.3 Math (T1)</h3>
+<ul>
+  <li><code>ZEROACC</code> (sub-instruction of <code>ZEROSRC</code>) zeroes a 16×16 block of Dst.</li>
+  <li><code>MVMUL</code> / <code>ELWADD</code> / etc. read <code>SrcA[bank0]</code> + <code>SrcB[bank0]</code> and produce <code>Dst[Row][Col]</code>. Each writes one row at a time; the 4-cycle Dst scoreboard prevents the packer from reading until the write retires.</li>
+  <li>When done, the FPU implicitly does <code>CLRDVALID</code> (unless <code>CLR_DVALID_SrcA_Disable</code>/<code>SrcB_Disable</code> is set), returning the bank to <code>AllowedClient = Unpackers</code>.</li>
+</ul>
+
+<h3 id="pack-step">4.4 PACR (T2)</h3>
+<ol>
+  <li>T2 (sometimes T0/T1 in fused kernels) waits on free space in the output CB.</li>
+  <li>It issues <code>PACR</code> with <code>PackerMask = 0xF</code> to run all four packers in parallel — each packer is configured to point at a different quarter of Dst via <code>DEST_TARGET_REG_CFG_PACK_SEC[i].Offset</code>, and each lands in a different quarter of the output tile via <code>PCK0_ADDR_*_REG_1</code> strides.</li>
+  <li>After all faces are packed, a final <code>PACR</code> with <code>Last=1</code> (or <code>Flush=1</code>) flushes the 16-byte buffers to L1.</li>
+  <li><code>PACR_SETREG</code> (or a follow-up MMIO write) bumps the CB write pointer so the consumer can pick up the tile.</li>
+  <li><code>STALLWAIT(p_stall::PACK0|PACK1|PACK2|PACK3, ...)</code> is used if the kernel needs to <em>be sure</em> the L1 store has happened before proceeding (e.g. before triggering a NoC send).</li>
+</ol>
+
+<hr>
+
+<h2 id="instructions">5. Complete list of unpacker-related TT* instructions on Blackhole</h2>
+
+<p>From <code>tt-llk/tt_llk_blackhole/common/inc/ckernel_ops.h</code>. (<code>TT_OP_X</code> is the encoder; <code>TTI_X</code> is the form with immediate operands; <code>TT_X</code> allows GPR operands.)</p>
+
+<table>
+<thead><tr><th>Instruction</th><th>Opcode</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>TT_OP_UNPACR(...)</code></td><td><code>0x42</code></td><td>The unpack instruction. 13 fields described in §2.1.</td></tr>
+<tr><td><code>TT_OP_UNPACR_NOP(...)</code></td><td><code>0x41</code> (re-uses with subop)</td><td>Multi-mode unpacker-sequenced no-op: <code>ZEROSRC</code> / <code>SETDVALID</code> / <code>SETREG</code> / <code>MsgClr</code> / pure-NOP / <code>Unpack_Pop</code>. Used to flip Src banks, zero a bank, push register writes through the unpacker queue.</td></tr>
+<tr><td><code>TT_OP_ZEROSRC(zero_val, write_mode, bank_mask, src_mask)</code></td><td><code>0x11</code></td><td>Zero a SrcA/SrcB bank directly (bypasses unpacker pipeline; sometimes faster than going through <code>UNPACR_NOP</code>).</td></tr>
+<tr><td><code>TT_OP_SETDVALID(setvalid)</code></td><td><code>0x57</code></td><td>Set "AllowedClient = MatrixUnit" on a Src bank (i.e. mark unpacked data ready for FPU). Bit 0 = SrcA, bit 1 = SrcB.</td></tr>
+<tr><td><code>TT_OP_TRNSPSRCA</code></td><td><code>0x14</code></td><td>Transpose SrcA in place.</td></tr>
+<tr><td><code>TT_OP_TRNSPSRCB</code></td><td><code>0x16</code></td><td>Transpose SrcB in place (BH-specific; not on Wormhole).</td></tr>
+<tr><td><code>TT_OP_SETADC(CntSetMask, ChannelIndex, DimensionIndex, Value)</code></td><td>n/a</td><td>Set one of {X,Y,Z,W} on Channel[0] or Channel[1] of one ADC bank.</td></tr>
+<tr><td><code>TT_OP_SETADCXY(CntSetMask, Ch1_Y, Ch1_X, Ch0_Y, Ch0_X, BitMask)</code></td><td>n/a</td><td>Set X/Y on both channels of selected ADC banks at once. <code>BitMask</code> selects which of {Ch0X,Ch0Y,Ch1X,Ch1Y} are written.</td></tr>
+<tr><td><code>TT_OP_SETADCZW(CntSetMask, Ch1_W, Ch1_Z, Ch0_W, Ch0_Z, BitMask)</code></td><td>n/a</td><td>Same for Z/W.</td></tr>
+<tr><td><code>TT_OP_SETADCXX(CntSetMask, x_end2, x_start)</code></td><td><code>0x5e</code></td><td>Set Ch0.X = <code>x_start</code>, Ch1.X = <code>x_end2</code> in one shot (the typical "set face width minus 1").</td></tr>
+<tr><td><code>TT_OP_INCADCXY(CntSetMask, Ch1_Y, Ch1_X, Ch0_Y, Ch0_X)</code></td><td>n/a</td><td>Increment X/Y by the given deltas (signed).</td></tr>
+<tr><td><code>TT_OP_INCADCZW(CntSetMask, Ch1_Y, Ch1_X, Ch0_Y, Ch0_X)</code></td><td>n/a</td><td>Increment Z/W.</td></tr>
+<tr><td><code>TT_OP_ADDRCRXY(CntSetMask, Ch1_Y, Ch1_X, Ch0_Y, Ch0_X, BitMask)</code></td><td>n/a</td><td>Copy <code>Y_Cr → Y</code> / <code>X_Cr → X</code> (used to start a fresh face row).</td></tr>
+<tr><td><code>TT_OP_ADDRCRZW(CntSetMask, Ch1_Y, Ch1_X, Ch0_Y, Ch0_X, BitMask)</code></td><td>n/a</td><td>Same for Z/W.</td></tr>
+<tr><td><code>TT_OP_REG2FLOP(SizeSel, TargetSel, ByteOffset, ContextId_2, FlopIndex, RegIndex)</code></td><td>n/a</td><td>Load an ADC/RWC value (or per-context unpacker offset) from L1 via a register copy. Used to set up multi-context unpack from a descriptor in L1.</td></tr>
+<tr><td><code>TT_OP_SETC16(reg, val)</code></td><td><code>0xb2</code></td><td>Write a 16-bit immediate to <code>ThreadConfig[CurrentThread]</code> — the <strong>only way</strong> to set <code>UNPACK_MISC_CFG_CfgContextOffset_*</code>, <code>UNPACK_MISC_CFG_CfgContextCntReset_*</code>, <code>SRCA_SET_Base</code>, <code>SRCB_SET_Base</code>, <code>CFG_STATE_ID_StateID</code> and the rest of the per-thread unpacker config.</td></tr>
+<tr><td><code>TT_OP_WRCFG(GprAddress, wr128b, CfgReg)</code></td><td><code>0xb0</code></td><td>Write 32b (or 128b if <code>wr128b=1</code>) from a Tensix GPR to <code>Config[StateID]</code>. Used to set REG0 TileDescriptor (4 dwords as one 128b write), and all the THCON_SEC[u].REG[1..7] words.</td></tr>
+<tr><td><code>TT_OP_RDCFG(GprAddress, CfgReg)</code></td><td><code>0xb1</code></td><td>Read a <code>Config</code> word into a Tensix GPR — used by introspection / <code>read_unpack_tile_descriptor()</code>.</td></tr>
+<tr><td><code>TT_OP_RMWCIB0/1/2/3(Mask, Data, CfgRegAddr)</code></td><td><code>0xb3..0xb6</code></td><td>Read-modify-write a byte of a <code>Config</code> word — used for <code>cfg_reg_rmw_tensix&lt;...&gt;</code> to flip a single bit/field without disturbing neighbours (e.g. <code>Unp_LF8_4b_exp</code>, <code>Ovrd_data_format</code>). The 4 variants target the 4 bytes of the word.</td></tr>
+<tr><td><code>TT_OP_STREAMWRCFG(stream_id_sel, ...)</code></td><td>n/a</td><td>Write a <code>Config</code> word from a NoC overlay stream — used when descriptor data is being streamed in.</td></tr>
+<tr><td><code>TT_OP_STALLWAIT(stall_res, wait_res)</code></td><td>n/a</td><td>Block this thread until specified resources (e.g. <code>UNPACK0</code>, <code>UNPACK1</code>, <code>THCON</code>, <code>XSEARCH</code>) are idle. The single most common synchronization primitive between config writes and unpack/pack work.</td></tr>
+<tr><td><code>TT_OP_RESOURCEDECL(linger_time, ...)</code></td><td>n/a</td><td>Declare resources being used by upcoming instructions, for the BH Auto-TTSync hardware.</td></tr>
+<tr><td><code>TT_OP_REPLAY(start_idx, len, ...)</code></td><td>n/a</td><td>Execute a saved sequence of Tensix instructions (the LLK uses this to compress repetitive UNPACR sequences).</td></tr>
+<tr><td><code>TT_OP_XMOV(Mov_block_selection, ...)</code></td><td>n/a</td><td>Mover instruction — sometimes used by unpack-untilize when the data needs an L1↔L1 copy before unpack.</td></tr>
+<tr><td><code>TT_OP_MOVA2D(...)</code>, <code>TT_OP_MOVB2D(...)</code></td><td>n/a</td><td>Copy SrcA/SrcB → Dst directly via the FPU's data path — alternative to "UNPACR into SrcA, then FPU copies to Dst". Listed here because they are sometimes used inside <code>llk_unpack_*</code> paths when staging into Dst is needed.</td></tr>
+<tr><td><code>TT_OP_MOVD2A(...)</code>, <code>TT_OP_MOVD2B(...)</code></td><td>n/a</td><td>Reverse direction: Dst → SrcA/SrcB. Used by <code>llk_math_transpose_dest.h</code> and matmul to feed the next round of FPU ops from Dst.</td></tr>
+<tr><td><code>TT_OP_MOVDBGA2D(...)</code>, <code>TT_OP_MOVDBGB2D(...)</code></td><td>n/a</td><td>Debug-path variants of MOVA2D/MOVB2D used by the debug tooling.</td></tr>
+<tr><td><code>TT_OP_MOVB2A(...)</code></td><td><code>0x0b</code></td><td>Copy SrcB → SrcA.</td></tr>
+<tr><td><code>TT_OP_SETPKEDGOF(y_end, y_start, x_end, x_start)</code></td><td><code>0x1d</code></td><td>Edge-mask offsets (technically a <em>packer</em> control instruction, but uses the same ADC infrastructure and is often issued by the unpack thread when tile-padding state is being set up).</td></tr>
+<tr><td><code>TT_OP_SETASHRMH</code>, <code>SETASHRMH0</code>, <code>SETASHRMH1</code>, <code>SETASHRMV(reg_mask2)</code></td><td><code>0x1e</code>, <code>0x1a</code>, <code>0x1b</code>, <code>0x1c</code></td><td>"All-shared halo mask" — set the row/column halo bits used by the unpacker's halo-padding mode (also feeds into packer edge masks).</td></tr>
+<tr><td><code>TT_OP_CLREXPHIST</code></td><td><code>0x21</code></td><td>Clears packer exponent histograms; listed here because it's commonly placed in the unpack/setup phase to start fresh telemetry.</td></tr>
+<tr><td><code>TT_OP_SETRWC(...)</code>, <code>TT_OP_SETIBRWC(...)</code></td><td>n/a</td><td>Set the RWC (FPU-side row/word counters) — not strictly an unpacker op, but unpack sequences typically reset them between tiles since the FPU is the immediate consumer of unpacker output.</td></tr>
+</tbody>
+</table>
+
+<p class="small">(Opcodes I didn't list explicitly are not <code>0x__</code>-prefixed because the <code>TT_OP</code> macro packs the value differently — see <code>ckernel_ops.h</code> for the exact encoder.)</p>
+
+<hr>
+
+<h2 id="refs">6. Source references</h2>
+<ul>
+  <li><code>tt-isa-documentation/BlackholeA0/TensixTile/TensixCoprocessor/BackendConfiguration.md</code> — how <code>Config[2][...]</code> and <code>ThreadConfig[3][...]</code> are laid out.</li>
+  <li><code>tt-isa-documentation/BlackholeA0/TensixTile/TensixCoprocessor/ConfigurationUnit.md</code> — config-unit pipeline / latency / which instructions write config.</li>
+  <li><code>tt-isa-documentation/BlackholeA0/TensixTile/TensixCoprocessor/Dst.md</code> — Dst layout, swizzle, scoreboarding, RISCV access.</li>
+  <li><code>tt-isa-documentation/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md</code> — exhaustive (621-line) UNPACR functional model; <strong>applies unchanged to BH</strong> apart from the e4m3 helper and Auto-TTSync.</li>
+  <li><code>tt-isa-documentation/WormholeB0/TensixTile/TensixCoprocessor/PACR.md</code> + <code>Packers/{README,InputAddressGenerator,OutputAddressGenerator,FormatConversion,EdgeMasking,ReLU,Downsampling,Compression,ExponentHistogram,ExponentThresholding}.md</code> — full packer functional model.</li>
+  <li><code>tt-isa-documentation/WormholeB0/TensixTile/TensixCoprocessor/Unpackers/{README,FormatConversion}.md</code> — unpacker overview.</li>
+  <li><code>tt-metal/tt_metal/hw/inc/internal/tt-1xx/blackhole/cfg_defines.h</code> — concrete <code>_ADDR32</code>, <code>_MASK</code>, <code>_SHAMT</code> for all 800+ config fields on Blackhole.</li>
+  <li><code>tt-llk/tt_llk_blackhole/common/inc/{ckernel_ops.h, cunpack_common.h, cpack_common.h}</code> — the instruction macros and the C++ structs (<code>unpack_tile_descriptor_t</code>, <code>unpack_config_t</code>, <code>pack_config_t</code>, <code>relu_config_t</code>, <code>dest_rd_ctrl_t</code>, <code>pck_edge_offset_t</code>, <code>pack_counters_t</code>) the LLK actually writes.</li>
+  <li><code>tt-llk/tt_llk_blackhole/llk_lib/llk_unpack_*.h</code>, <code>llk_pack*.h</code> — the higher-level helpers (<code>llk_unpack_A</code>, <code>llk_unpack_AB</code>, <code>llk_unpack_tilize</code>, <code>llk_pack</code>, <code>llk_pack_untilize</code>).</li>
+</ul>
+
+</body>
+</html>
