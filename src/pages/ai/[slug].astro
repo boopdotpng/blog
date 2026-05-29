@@ -47,85 +47,180 @@ const escapeHtml = (value: string) => value
 
 const renderSvgPage = (rawSvg: string) => {
   const title = extractSvgData(rawSvg, 'ai-title') || 'svg';
-  const svg = rawSvg
-    .replace(/^<\?xml[^>]*>\s*/i, '')
-    .replace(/^<!DOCTYPE[\s\S]*?>\s*/i, '')
-    .replace(/<svg\b([^>]*)>/i, (match, attrs: string) => {
-      const withoutId = attrs.replace(/\s+id=(["']).*?\1/i, '');
-      return `<svg id="__ai-svg" ${withoutId}>`;
-    });
+
+  // Inline the SVG as real DOM (vector) rather than a base64 <img>, and drive
+  // pan/zoom by mutating the SVG's viewBox instead of a CSS transform. A CSS
+  // transform scales a cached raster (blurry text when zoomed); changing the
+  // viewBox re-renders the vector crisply at every zoom level — fast and sharp,
+  // including on iPad. Strip the XML prolog / DOCTYPE since the markup now lives
+  // inside HTML; the SVG fills the viewport via CSS and the viewBox is the camera.
+  const svgStart = rawSvg.search(/<svg\b/i);
+  const inlineSvg = svgStart >= 0 ? rawSvg.slice(svgStart) : rawSvg;
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>${escapeHtml(title)}</title>
 <style>
-  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0f1117; }
-  #__ai-svg { display: block; width: 100vw; height: 100vh; cursor: grab; touch-action: none; user-select: none; }
-  #__ai-svg:active { cursor: grabbing; }
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0f1117; overscroll-behavior: none; }
+  #__ai-svg-viewer { position: fixed; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+  #__ai-svg-viewer.is-grabbing { cursor: grabbing; }
+  #__ai-svg-viewer > svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
 </style>
 </head>
-<body>${svg}
+<body>
+<div id="__ai-svg-viewer" aria-label="${escapeHtml(title)}">${inlineSvg}</div>
 <script>
 (() => {
-  const svg = document.getElementById('__ai-svg');
-  if (!svg) return;
+  const viewer = document.getElementById('__ai-svg-viewer');
+  const svg = viewer && viewer.querySelector('svg');
+  if (!viewer || !svg) return;
 
-  const initial = svg.getAttribute('viewBox');
-  const box = initial
-    ? initial.trim().split(/\\s+|,/).map(Number)
-    : [0, 0, Number.parseFloat(svg.getAttribute('width')) || 1000, Number.parseFloat(svg.getAttribute('height')) || 1000];
+  const base = (svg.getAttribute('viewBox') || '').split(/[\\s,]+/).map(Number);
+  if (base.length !== 4 || base.some(Number.isNaN)) return;
+  const GRAPH = { x: base[0], y: base[1], w: base[2], h: base[3] };
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-  let viewBox = box;
-  let dragging = false;
-  let lastX = 0;
-  let lastY = 0;
+  const MAX_IN = 32;     // furthest zoom-in (viewBox = fit / MAX_IN)
+  const MAX_OUT = 2.5;   // furthest zoom-out (viewBox = fit * MAX_OUT)
+  const PINCH_SENS = 4.5;   // touch / Safari-gesture pinch sensitivity (>1 = more)
+  const WHEEL_ZOOM = 0.0075; // ctrl+wheel pinch sensitivity (Chrome/FF trackpads; higher = more)
 
-  const render = () => svg.setAttribute('viewBox', viewBox.join(' '));
+  // Current camera (viewBox). Kept at the window's aspect ratio so screen
+  // pixels map linearly to user units with no letterbox maths.
+  const vb = { x: 0, y: 0, w: GRAPH.w, h: GRAPH.h };
+  let fitW = GRAPH.w;
 
-  const point = (event) => {
-    const rect = svg.getBoundingClientRect();
-    return {
-      x: viewBox[0] + ((event.clientX - rect.left) / rect.width) * viewBox[2],
-      y: viewBox[1] + ((event.clientY - rect.top) / rect.height) * viewBox[3],
-    };
+  const vw = () => viewer.clientWidth || window.innerWidth;
+  const vh = () => viewer.clientHeight || window.innerHeight;
+  const apply = () => svg.setAttribute('viewBox', vb.x + ' ' + vb.y + ' ' + vb.w + ' ' + vb.h);
+
+  // Smallest window-aspect box that fully contains the graph.
+  const fitBox = () => {
+    const winA = vw() / vh();
+    return winA > GRAPH.w / GRAPH.h
+      ? { w: GRAPH.h * winA, h: GRAPH.h }
+      : { w: GRAPH.w, h: GRAPH.w / winA };
   };
 
-  svg.addEventListener('wheel', (event) => {
+  const reset = () => {
+    const f = fitBox();
+    fitW = f.w;
+    vb.w = f.w; vb.h = f.h;
+    vb.x = GRAPH.x + (GRAPH.w - vb.w) / 2;
+    vb.y = GRAPH.y + (GRAPH.h - vb.h) / 2;
+    apply();
+  };
+
+  const clampZoom = () => {
+    const a = vb.w / vb.h;
+    const min = fitW / MAX_IN;
+    const max = fitW * MAX_OUT;
+    if (vb.w < min) { vb.w = min; vb.h = min / a; }
+    else if (vb.w > max) { vb.w = max; vb.h = max / a; }
+  };
+
+  // Zoom by factor k (k < 1 zooms in) keeping the client point fixed.
+  const zoomAt = (k, cx, cy) => {
+    const rect = viewer.getBoundingClientRect();
+    const fx = (cx - rect.left) / rect.width;
+    const fy = (cy - rect.top) / rect.height;
+    const sx = vb.x + fx * vb.w;
+    const sy = vb.y + fy * vb.h;
+    vb.w *= k; vb.h *= k;
+    clampZoom();
+    vb.x = sx - fx * vb.w;
+    vb.y = sy - fy * vb.h;
+    apply();
+  };
+
+  // Pan so content follows a client-pixel delta.
+  const panPixels = (dx, dy) => {
+    vb.x -= dx * vb.w / vw();
+    vb.y -= dy * vb.h / vh();
+    apply();
+  };
+
+  reset();
+  window.addEventListener('resize', () => {
+    const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+    vb.h = vb.w / (vw() / vh());
+    fitW = fitBox().w;
+    clampZoom();
+    vb.x = cx - vb.w / 2;
+    vb.y = cy - vb.h / 2;
+    apply();
+  });
+
+  // Trackpad / mouse: ctrl+wheel (pinch on Chrome/FF trackpads) zooms, a plain
+  // two-finger swipe pans.
+  viewer.addEventListener('wheel', (event) => {
     event.preventDefault();
-    const before = point(event);
-    const factor = Math.exp(event.deltaY * 0.001);
-    const nextWidth = Math.max(box[2] / 32, Math.min(box[2] * 8, viewBox[2] * factor));
-    const nextHeight = Math.max(box[3] / 32, Math.min(box[3] * 8, viewBox[3] * factor));
-    const rect = svg.getBoundingClientRect();
-    const rx = (event.clientX - rect.left) / rect.width;
-    const ry = (event.clientY - rect.top) / rect.height;
-    viewBox = [before.x - rx * nextWidth, before.y - ry * nextHeight, nextWidth, nextHeight];
-    render();
+    if (event.ctrlKey) {
+      zoomAt(Math.exp(event.deltaY * WHEEL_ZOOM), event.clientX, event.clientY);
+      return;
+    }
+    const m = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? Math.max(vw(), vh()) : 1;
+    panPixels(-event.deltaX * m, -event.deltaY * m);
   }, { passive: false });
 
-  svg.addEventListener('pointerdown', (event) => {
-    dragging = true;
-    lastX = event.clientX;
-    lastY = event.clientY;
-    svg.setPointerCapture(event.pointerId);
+  // Pointers: one finger / drag pans, two fingers pinch-zoom and pan together.
+  const pts = new Map();
+  let pinch = null;
+  viewer.addEventListener('pointerdown', (event) => {
+    viewer.setPointerCapture(event.pointerId);
+    pts.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    viewer.classList.add('is-grabbing');
+    if (pts.size === 2) pinch = null;
   });
-
-  svg.addEventListener('pointermove', (event) => {
-    if (!dragging) return;
-    const rect = svg.getBoundingClientRect();
-    viewBox[0] -= ((event.clientX - lastX) / rect.width) * viewBox[2];
-    viewBox[1] -= ((event.clientY - lastY) / rect.height) * viewBox[3];
-    lastX = event.clientX;
-    lastY = event.clientY;
-    render();
+  viewer.addEventListener('pointermove', (event) => {
+    if (!pts.has(event.pointerId)) return;
+    const prev = pts.get(event.pointerId);
+    pts.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pts.size === 1) {
+      panPixels(event.clientX - prev.x, event.clientY - prev.y);
+    } else if (pts.size === 2) {
+      const [a, b] = [...pts.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+      if (pinch) {
+        if (pinch.dist > 0 && dist > 0) zoomAt(Math.pow(pinch.dist / dist, PINCH_SENS), midX, midY);
+        panPixels(midX - pinch.midX, midY - pinch.midY);
+      }
+      pinch = { dist, midX, midY };
+    }
   });
+  const endPointer = (event) => {
+    pts.delete(event.pointerId);
+    if (pts.size < 2) pinch = null;
+    if (!pts.size) viewer.classList.remove('is-grabbing');
+  };
+  viewer.addEventListener('pointerup', endPointer);
+  viewer.addEventListener('pointercancel', endPointer);
 
-  svg.addEventListener('pointerup', () => { dragging = false; });
-  svg.addEventListener('pointercancel', () => { dragging = false; });
-  svg.addEventListener('dblclick', () => { viewBox = [...box]; render(); });
-  render();
+  // Desktop Safari trackpad pinch fires gesture events (no touch pointers down).
+  // Skip them while fingers are on the screen — the pointer handler owns that.
+  let lastScale = 1;
+  viewer.addEventListener('gesturestart', (event) => { event.preventDefault(); lastScale = event.scale || 1; }, { passive: false });
+  viewer.addEventListener('gesturechange', (event) => {
+    event.preventDefault();
+    if (pts.size) return;
+    const s = event.scale || 1;
+    zoomAt(Math.pow(lastScale / s, PINCH_SENS), event.clientX || vw() / 2, event.clientY || vh() / 2);
+    lastScale = s;
+  }, { passive: false });
+  viewer.addEventListener('gestureend', (event) => { event.preventDefault(); lastScale = 1; }, { passive: false });
+
+  // Double-click / double-tap resets to the fitted view.
+  viewer.addEventListener('dblclick', reset);
+  let lastTap = 0;
+  viewer.addEventListener('pointerup', (event) => {
+    if (event.pointerType !== 'touch') return;
+    if (event.timeStamp - lastTap < 300) reset();
+    lastTap = event.timeStamp;
+  });
 })();
 </script>
 </body>
