@@ -15,19 +15,24 @@ interface AiEntry {
 }
 
 /** Extract <meta name="ai-model" content="..."> from a raw html string. */
-const extractAiModel = (html: string): string | undefined => {
-  const re = /<meta\s+[^>]*name=["']ai-model["'][^>]*>/i;
+const extractHtmlMeta = (html: string, name: string): string | undefined => {
+  const re = new RegExp(`<meta\\s+[^>]*name=["']${name}["'][^>]*>`, 'i');
   const tag = html.match(re)?.[0];
   if (!tag) return undefined;
   const content = tag.match(/content=["']([^"']+)["']/i)?.[1];
   return content?.trim() || undefined;
 };
 
-/** Extract data-ai-model="..." from a raw svg string. */
-const extractSvgModel = (svg: string): string | undefined => {
+const extractHtmlTitle = (html: string): string | undefined => {
+  const title = html.match(/<title[^>]*>(.*?)<\/title>/is)?.[1];
+  return title?.replace(/\s+/g, ' ').trim() || undefined;
+};
+
+/** Extract data-* metadata from a raw svg string. */
+const extractSvgData = (svg: string, name: string): string | undefined => {
   const tag = svg.match(/<svg\b[^>]*>/i)?.[0];
   if (!tag) return undefined;
-  const content = tag.match(/\sdata-ai-model=["']([^"']+)["']/i)?.[1];
+  const content = tag.match(new RegExp(`\\sdata-${name}=["']([^"']+)["']`, 'i'))?.[1];
   return content?.trim() || undefined;
 };
 
@@ -54,15 +59,17 @@ if (fs.existsSync(aiDir)) {
     const filePath = path.join(aiDir, file);
     const stat = fs.statSync(filePath);
     const mtime = stat.mtime;
-    const ymd = mtime.toISOString().slice(0, 10);
     const raw = fs.readFileSync(filePath, 'utf-8');
+    const metadataDate = kind === 'html' ? extractHtmlMeta(raw, 'ai-date') : extractSvgData(raw, 'ai-date');
+    const date = metadataDate || mtime.toISOString().slice(0, 10);
+    const parsedDate = parseLocalDate(date);
     aiEntries.push({
       slug,
-      title: slug.replace(/[-_]/g, ' '),
-      date: ymd,
-      dateLabel: formatShort(mtime),
+      title: kind === 'html' ? extractHtmlTitle(raw) || slug.replace(/[-_]/g, ' ') : extractSvgData(raw, 'ai-title') || slug.replace(/[-_]/g, ' '),
+      date,
+      dateLabel: formatShort(parsedDate || mtime),
       kind,
-      model: kind === 'html' ? extractAiModel(raw) : extractSvgModel(raw),
+      model: kind === 'html' ? extractHtmlMeta(raw, 'ai-model') : extractSvgData(raw, 'ai-model'),
       href: `/ai/${slug}`,
     });
   }

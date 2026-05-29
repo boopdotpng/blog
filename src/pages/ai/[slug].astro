@@ -32,7 +32,21 @@ const BACK_PILL = `<a href="/ai" id="__ai-corner-back" aria-label="Back to ai co
 @media print{#__ai-corner-back,#__ai-corner-back-style{display:none!important}}
 </style>`;
 
+const extractSvgData = (svg: string, name: string): string | undefined => {
+  const tag = svg.match(/<svg\b[^>]*>/i)?.[0];
+  if (!tag) return undefined;
+  const content = tag.match(new RegExp(`\\sdata-${name}=["']([^"']+)["']`, 'i'))?.[1];
+  return content?.trim() || undefined;
+};
+
+const escapeHtml = (value: string) => value
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
 const renderSvgPage = (rawSvg: string) => {
+  const title = extractSvgData(rawSvg, 'ai-title') || 'svg';
   const svg = rawSvg
     .replace(/^<\?xml[^>]*>\s*/i, '')
     .replace(/^<!DOCTYPE[\s\S]*?>\s*/i, '')
@@ -45,7 +59,7 @@ const renderSvgPage = (rawSvg: string) => {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>svg</title>
+<title>${escapeHtml(title)}</title>
 <style>
   html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0f1117; }
   #__ai-svg { display: block; width: 100vw; height: 100vh; cursor: grab; touch-action: none; user-select: none; }
