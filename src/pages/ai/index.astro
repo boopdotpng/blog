@@ -9,7 +9,7 @@ interface AiEntry {
   description?: string;
   date: string; // YYYY-MM-DD when known, else ''
   dateLabel: string;
-  kind: string; // 'writing' | 'html' | custom
+  kind: string; // 'writing' | 'html' | 'svg' | custom
   model?: string;
   href: string;
 }
@@ -20,6 +20,14 @@ const extractAiModel = (html: string): string | undefined => {
   const tag = html.match(re)?.[0];
   if (!tag) return undefined;
   const content = tag.match(/content=["']([^"']+)["']/i)?.[1];
+  return content?.trim() || undefined;
+};
+
+/** Extract data-ai-model="..." from a raw svg string. */
+const extractSvgModel = (svg: string): string | undefined => {
+  const tag = svg.match(/<svg\b[^>]*>/i)?.[0];
+  if (!tag) return undefined;
+  const content = tag.match(/\sdata-ai-model=["']([^"']+)["']/i)?.[1];
   return content?.trim() || undefined;
 };
 
@@ -35,37 +43,38 @@ const formatShort = (date: Date) => {
   return `${month} ${day} ${date.getFullYear()}`;
 };
 
-// Scan src/content/ai for raw .html files (served via /ai/[slug]).
+// Scan src/content/ai for raw .html and .svg files (served via /ai/[slug]).
 const aiDir = path.resolve('./src/content/ai');
-const htmlEntries: AiEntry[] = [];
+const aiEntries: AiEntry[] = [];
 if (fs.existsSync(aiDir)) {
   for (const file of fs.readdirSync(aiDir)) {
-    if (!file.endsWith('.html')) continue;
-    const slug = file.replace(/\.html$/, '');
+    if (!file.endsWith('.html') && !file.endsWith('.svg')) continue;
+    const kind = file.endsWith('.svg') ? 'svg' : 'html';
+    const slug = file.replace(/\.(html|svg)$/, '');
     const filePath = path.join(aiDir, file);
     const stat = fs.statSync(filePath);
     const mtime = stat.mtime;
     const ymd = mtime.toISOString().slice(0, 10);
     const raw = fs.readFileSync(filePath, 'utf-8');
-    htmlEntries.push({
+    aiEntries.push({
       slug,
       title: slug.replace(/[-_]/g, ' '),
       date: ymd,
       dateLabel: formatShort(mtime),
-      kind: 'html',
-      model: extractAiModel(raw),
+      kind,
+      model: kind === 'html' ? extractAiModel(raw) : extractSvgModel(raw),
       href: `/ai/${slug}`,
     });
   }
 }
 
-const allEntries = htmlEntries.sort((a, b) =>
+const allEntries = aiEntries.sort((a, b) =>
   b.date.localeCompare(a.date),
 );
 ---
 <Layout
   title="ai corner"
-  description="A small corner for AI-generated writings and dropped html files. Not written by anuraag."
+  description="A small corner for AI-generated writings, html, and random svgs."
   robots="noindex,follow"
 >
   <section class="ai-corner">
@@ -73,7 +82,7 @@ const allEntries = htmlEntries.sort((a, b) =>
       <div class="kicker">// ai corner</div>
       <h1 class="corner-title">ai corner</h1>
       <p class="corner-blurb">
-        a place for ai-generated writings and <code>.html</code> files.
+        a place for ai-generated writings, html, and random svgs.
       </p>
       <p class="corner-note">
         my own posts live on the <a href="/">main index</a>.
@@ -81,7 +90,7 @@ const allEntries = htmlEntries.sort((a, b) =>
     </header>
 
     {allEntries.length === 0 ? (
-      <p class="empty">nothing here yet — drop <code>.md</code> or <code>.html</code> files into <code>src/content/ai/</code>.</p>
+      <p class="empty">nothing here yet — drop <code>.html</code> or <code>.svg</code> files into <code>src/content/ai/</code>.</p>
     ) : (
       <ol class="entry-list">
         {allEntries.map((entry, idx) => {

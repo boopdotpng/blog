@@ -2,22 +2,28 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+type AiPageProps = {
+  content: string;
+  kind: 'html' | 'svg';
+};
+
 export async function getStaticPaths() {
   const aiDir = path.resolve('./src/content/ai');
-  const htmlPaths: Array<{ params: { slug: string }; props: { html: string } }> = [];
+  const paths: Array<{ params: { slug: string }; props: AiPageProps }> = [];
   if (fs.existsSync(aiDir)) {
     for (const file of fs.readdirSync(aiDir)) {
-      if (!file.endsWith('.html')) continue;
-      const slug = file.replace(/\.html$/, '');
-      const html = fs.readFileSync(path.join(aiDir, file), 'utf-8');
-      htmlPaths.push({ params: { slug }, props: { html } });
+      if (!file.endsWith('.html') && !file.endsWith('.svg')) continue;
+      const kind = file.endsWith('.svg') ? 'svg' : 'html';
+      const slug = file.replace(/\.(html|svg)$/, '');
+      const content = fs.readFileSync(path.join(aiDir, file), 'utf-8');
+      paths.push({ params: { slug }, props: { content, kind } });
     }
   }
 
-  return htmlPaths;
+  return paths;
 }
 
-const props = Astro.props as { html: string };
+const props = Astro.props as AiPageProps;
 
 const BACK_PILL = `<a href="/ai" id="__ai-corner-back" aria-label="Back to ai corner">← ai corner</a><style id="__ai-corner-back-style">
 #__ai-corner-back{position:fixed;top:14px;left:14px;z-index:2147483647;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px;line-height:1;letter-spacing:.04em;color:#1a1a1a;background:rgba(255,255,255,.88);border:1px solid rgba(0,0,0,.14);border-radius:999px;text-decoration:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(0,0,0,.16);transition:transform .12s ease,background .12s ease,box-shadow .12s ease}
@@ -26,14 +32,101 @@ const BACK_PILL = `<a href="/ai" id="__ai-corner-back" aria-label="Back to ai co
 @media print{#__ai-corner-back,#__ai-corner-back-style{display:none!important}}
 </style>`;
 
+const renderSvgPage = (rawSvg: string) => {
+  const svg = rawSvg
+    .replace(/^<\?xml[^>]*>\s*/i, '')
+    .replace(/^<!DOCTYPE[\s\S]*?>\s*/i, '')
+    .replace(/<svg\b([^>]*)>/i, (match, attrs: string) => {
+      const withoutId = attrs.replace(/\s+id=(["']).*?\1/i, '');
+      return `<svg id="__ai-svg" ${withoutId}>`;
+    });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>svg</title>
+<style>
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0f1117; }
+  #__ai-svg { display: block; width: 100vw; height: 100vh; cursor: grab; touch-action: none; user-select: none; }
+  #__ai-svg:active { cursor: grabbing; }
+</style>
+</head>
+<body>${svg}
+<script>
+(() => {
+  const svg = document.getElementById('__ai-svg');
+  if (!svg) return;
+
+  const initial = svg.getAttribute('viewBox');
+  const box = initial
+    ? initial.trim().split(/\\s+|,/).map(Number)
+    : [0, 0, Number.parseFloat(svg.getAttribute('width')) || 1000, Number.parseFloat(svg.getAttribute('height')) || 1000];
+
+  let viewBox = box;
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  const render = () => svg.setAttribute('viewBox', viewBox.join(' '));
+
+  const point = (event) => {
+    const rect = svg.getBoundingClientRect();
+    return {
+      x: viewBox[0] + ((event.clientX - rect.left) / rect.width) * viewBox[2],
+      y: viewBox[1] + ((event.clientY - rect.top) / rect.height) * viewBox[3],
+    };
+  };
+
+  svg.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const before = point(event);
+    const factor = Math.exp(event.deltaY * 0.001);
+    const nextWidth = Math.max(box[2] / 32, Math.min(box[2] * 8, viewBox[2] * factor));
+    const nextHeight = Math.max(box[3] / 32, Math.min(box[3] * 8, viewBox[3] * factor));
+    const rect = svg.getBoundingClientRect();
+    const rx = (event.clientX - rect.left) / rect.width;
+    const ry = (event.clientY - rect.top) / rect.height;
+    viewBox = [before.x - rx * nextWidth, before.y - ry * nextHeight, nextWidth, nextHeight];
+    render();
+  }, { passive: false });
+
+  svg.addEventListener('pointerdown', (event) => {
+    dragging = true;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    svg.setPointerCapture(event.pointerId);
+  });
+
+  svg.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    const rect = svg.getBoundingClientRect();
+    viewBox[0] -= ((event.clientX - lastX) / rect.width) * viewBox[2];
+    viewBox[1] -= ((event.clientY - lastY) / rect.height) * viewBox[3];
+    lastX = event.clientX;
+    lastY = event.clientY;
+    render();
+  });
+
+  svg.addEventListener('pointerup', () => { dragging = false; });
+  svg.addEventListener('pointercancel', () => { dragging = false; });
+  svg.addEventListener('dblclick', () => { viewBox = [...box]; render(); });
+  render();
+})();
+</script>
+</body>
+</html>`;
+};
+
 let passthroughHtml = '';
 // Inject the pill right after the opening <body> tag; fall back to prepend.
-const bodyMatch = props.html.match(/<body\b[^>]*>/i);
+const sourceHtml = props.kind === 'svg' ? renderSvgPage(props.content) : props.content;
+const bodyMatch = sourceHtml.match(/<body\b[^>]*>/i);
 if (bodyMatch) {
   const idx = bodyMatch.index! + bodyMatch[0].length;
-  passthroughHtml = props.html.slice(0, idx) + BACK_PILL + props.html.slice(idx);
+  passthroughHtml = sourceHtml.slice(0, idx) + BACK_PILL + sourceHtml.slice(idx);
 } else {
-  passthroughHtml = BACK_PILL + props.html;
+  passthroughHtml = BACK_PILL + sourceHtml;
 }
 ---
 <Fragment set:html={passthroughHtml} />
