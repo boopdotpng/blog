@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ai-model" content="Opus 4.8">
+<title>blackhole-py — an evolution</title>
+<style>
+  :root{
+    --bg:#0c0e12; --bg2:#12151c; --panel:#161a22; --line:#232a36;
+    --ink:#d6dde8; --dim:#8a94a6; --faint:#5b6577;
+    --acc:#7aa2ff; --acc2:#5be3c0; --warn:#ffb454; --red:#ff6b6b; --grn:#9ece6a; --vio:#bb9af7;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 700px at 70% -200px,#19202e 0%,var(--bg) 55%);
+    color:var(--ink);font-family:var(--sans);line-height:1.62;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--acc);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:980px;margin:0 auto;padding:0 22px}
+  code,.mono{font-family:var(--mono);font-size:.88em}
+  code{background:#1b212c;border:1px solid var(--line);border-radius:5px;padding:.08em .38em;color:var(--acc2)}
+  .hash{color:var(--warn);font-family:var(--mono);font-size:.84em}
+
+  /* hero */
+  header.hero{padding:90px 0 50px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+  .hero .eye{font-family:var(--mono);color:var(--acc2);letter-spacing:.32em;font-size:.72rem;text-transform:uppercase;margin-bottom:18px}
+  .hero h1{font-size:clamp(2.6rem,7vw,5rem);line-height:1.02;margin:0 0 .35em;letter-spacing:-.03em;font-weight:800}
+  .hero h1 .py{color:var(--acc)}
+  .hero p.lede{font-size:1.18rem;color:var(--dim);max-width:760px;margin:0}
+  .hero .meta{display:flex;flex-wrap:wrap;gap:26px;margin-top:34px;font-family:var(--mono);font-size:.82rem;color:var(--faint)}
+  .hero .meta b{color:var(--ink);font-weight:600}
+  .grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px;opacity:.15;mask-image:radial-gradient(600px 380px at 78% 10%,#000,transparent 75%);pointer-events:none}
+
+  /* stat strip */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:42px 0}
+  .stat{background:var(--panel);padding:22px 20px}
+  .stat .n{font-size:1.9rem;font-weight:800;letter-spacing:-.02em}
+  .stat .n.a{color:var(--acc)} .stat .n.b{color:var(--acc2)} .stat .n.c{color:var(--vio)} .stat .n.d{color:var(--warn)}
+  .stat .l{font-size:.74rem;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;margin-top:6px}
+
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:1.7rem;letter-spacing:-.02em;margin:0 0 6px}
+  h2 .num{font-family:var(--mono);color:var(--faint);font-size:1rem;margin-right:12px}
+  .sub{color:var(--dim);margin:0 0 26px;max-width:760px}
+  h3{font-size:1.12rem;margin:30px 0 8px;color:var(--ink)}
+  p{margin:0 0 14px}
+  .lead{color:var(--dim)}
+
+  /* layer stack diagram */
+  .stack{display:flex;flex-direction:column;gap:7px;margin:8px 0 6px}
+  .layer{display:grid;grid-template-columns:160px 1fr;gap:16px;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-left:3px solid var(--lc,var(--acc));border-radius:9px;padding:13px 16px}
+  .layer .lh{font-weight:700;font-size:.96rem}
+  .layer .lh small{display:block;font-family:var(--mono);font-size:.72rem;color:var(--faint);font-weight:400;margin-top:3px}
+  .layer .ld{color:var(--dim);font-size:.9rem}
+
+  /* timeline */
+  .phase{position:relative;padding:6px 0 30px 34px;border-left:2px solid var(--line);margin-left:8px}
+  .phase:last-child{border-color:transparent}
+  .phase .dot{position:absolute;left:-9px;top:6px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:3px solid var(--pc,var(--acc))}
+  .phase .when{font-family:var(--mono);font-size:.74rem;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+  .phase h3{margin:3px 0 8px;font-size:1.18rem}
+  .phase h3 .tag{font-family:var(--mono);font-size:.7rem;color:var(--pc,var(--acc));border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin-left:8px;vertical-align:middle}
+  .phase p{font-size:.96rem;color:var(--dim)}
+  .phase .commits{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+  .cm{font-family:var(--mono);font-size:.8rem;background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;color:var(--dim)}
+  .cm .h{color:var(--warn)} .cm .d{color:var(--faint);margin-left:8px}
+  .cm em{color:var(--ink);font-style:normal}
+
+  /* chart */
+  .chartwrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px 20px 14px;margin:10px 0}
+  .chartwrap h4{margin:0 0 2px;font-size:1rem}
+  .chartwrap .cap{color:var(--faint);font-size:.8rem;margin:0 0 16px}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .axis{stroke:var(--line);stroke-width:1}
+  .gl{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4;opacity:.5}
+  .albl{fill:var(--faint);font-family:var(--mono);font-size:10px}
+  .area{fill:url(#ag);opacity:.9}
+  .curve{fill:none;stroke:var(--acc);stroke-width:2.5}
+  .pt{fill:var(--bg);stroke:var(--acc);stroke-width:2.5}
+  .ptl{fill:var(--ink);font-family:var(--mono);font-size:10px;font-weight:600}
+  .pann{fill:var(--faint);font-family:var(--mono);font-size:9px}
+
+  /* callout */
+  .callout{background:linear-gradient(180deg,#1a1410,#13110d);border:1px solid #3a2c18;border-left:3px solid var(--warn);
+    border-radius:10px;padding:18px 20px;margin:20px 0}
+  .callout.red{background:linear-gradient(180deg,#1a0f0f,#130c0c);border-color:#3a1c1c;border-left-color:var(--red)}
+  .callout.grn{background:linear-gradient(180deg,#0f1a12,#0c130d);border-color:#1c3a24;border-left-color:var(--grn)}
+  .callout h4{margin:0 0 6px;font-size:1rem}
+  .callout p{margin:0;color:var(--dim);font-size:.94rem}
+
+  /* deps box */
+  .tree{font-family:var(--mono);font-size:.82rem;color:var(--dim);background:var(--bg2);border:1px solid var(--line);
+    border-radius:10px;padding:18px 20px;white-space:pre;overflow-x:auto;line-height:1.7}
+  .tree .d{color:var(--acc)} .tree .f{color:var(--ink)} .tree .c{color:var(--faint)}
+
+  /* quote gallery */
+  .quotes{columns:2;column-gap:14px;margin-top:8px}
+  @media(max-width:720px){.quotes{columns:1}.stats{grid-template-columns:repeat(2,1fr)}.layer{grid-template-columns:1fr}.hero{padding:60px 0 40px}}
+  .q{break-inside:avoid;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin:0 0 14px}
+  .q .msg{font-size:.92rem;color:var(--ink)}
+  .q .by{font-family:var(--mono);font-size:.72rem;color:var(--faint);margin-top:7px}
+  .q.win{border-left:3px solid var(--grn)} .q.pain{border-left:3px solid var(--red)}
+  .q.wtf{border-left:3px solid var(--warn)} .q.zen{border-left:3px solid var(--vio)}
+
+  /* code block */
+  pre{background:#0a0c10;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;
+    font-family:var(--mono);font-size:.8rem;line-height:1.6;color:var(--dim);margin:14px 0}
+  pre .k{color:var(--vio)} pre .s{color:var(--grn)} pre .c{color:var(--faint)} pre .f{color:var(--acc)} pre .n{color:var(--acc2)}
+
+  table{width:100%;border-collapse:collapse;font-size:.86rem;margin:14px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:600}
+  td.mono{font-family:var(--mono);color:var(--dim)}
+  tr:hover td{background:#14181f}
+
+  footer{padding:46px 0 70px;color:var(--faint);font-size:.84rem}
+  .pill{display:inline-block;font-family:var(--mono);font-size:.7rem;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim);margin-right:6px}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:720px){.twocol{grid-template-columns:1fr}}
+  .note{font-size:.82rem;color:var(--faint);font-style:italic}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="grid-bg"></div>
+  <div class="wrap">
+    <div class="eye">a git archaeology report</div>
+    <h1>blackhole&#8203;<span class="py">-py</span></h1>
+    <p class="lede">How one developer spent four and a half months writing a pure-Python userspace driver, runtime, RISC-V assembler, and kernel compiler for a Tenstorrent Blackhole AI accelerator — from a single <code>ioctl</code> to a 120-core kernel launch.</p>
+    <div class="meta">
+      <span><b>339</b> commits</span>
+      <span><b>Jan 13</b> → <b>May 30, 2026</b></span>
+      <span><b>1</b> author · <span class="mono">anu &lt;hi@anuraagw.me&gt;</span></span>
+      <span><b>~8,000</b> lines of Python at HEAD</span>
+      <span>arch · <span class="mono">blackhole p100a / p150b</span></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat"><div class="n a">5</div><div class="l">RISC-V cores per tile, driven from Python</div></div>
+    <div class="stat"><div class="n b">~5k</div><div class="l">lines of C++ firmware deleted in one commit</div></div>
+    <div class="stat"><div class="n c">120</div><div class="l">cores in the final working launch</div></div>
+    <div class="stat"><div class="n d">81</div><div class="l">the iteration fast-dispatch still breaks on</div></div>
+  </div>
+
+  <section id="what">
+    <h2><span class="num">00</span>What is this thing?</h2>
+    <p class="sub">A reverse-engineered, dependency-free replacement for Tenstorrent's entire <code>tt-metal</code> software stack — written in Python, talking straight to the silicon.</p>
+
+    <p class="lead">Tenstorrent's <b>Blackhole</b> is an AI accelerator. A normal program reaches it through <code>tt-metal</code>: tens of thousands of lines of C++, an LLVM-based RISC-V toolchain, a kernel-mode driver, and a host runtime. <b>blackhole-py</b> throws all of that out and asks a harder question: <em>what is the absolute minimum you need to make this chip compute?</em></p>
+
+    <p class="lead">The answer, built up commit by commit, is a stack of pure-Python layers. At the bottom it opens a character device and fires raw <code>ioctl</code>s; at the top it lets you write a Tensix compute kernel in a Python DSL, assembles it to RISC-V machine code <em>in-process</em>, uploads the firmware over PCIe, and launches it across the whole chip. No C++. No external assembler. No <code>tt-metal</code>.</p>
+
+    <h3>The layer cake (as it stands at HEAD)</h3>
+    <div class="stack">
+      <div class="layer" style="--lc:#7aa2ff">
+        <div class="lh">kernel ABI<small>pcie.py · 1059 LOC</small></div>
+        <div class="ld">Opens <code>/dev/tenstorrent</code> (and later <b>VFIO</b>), drives the card with hand-written <code>ctypes</code> ioctl structs, pins host DMA pages, maps PCIe BAR windows.</div>
+      </div>
+      <div class="layer" style="--lc:#5be3c0">
+        <div class="lh">TLB windows<small>TLBWindow / _MappedBar</small></div>
+        <div class="ld">The chip's address space dwarfs the PCIe BAR. Programmable <b>TLB apertures</b> retarget a BAR window at any <code>(noc_x, noc_y, addr)</code> on-chip location for mmap'd reads/writes.</div>
+      </div>
+      <div class="layer" style="--lc:#bb9af7">
+        <div class="lh">NOC + harvesting<small>ttk/noc.py · device.py</small></div>
+        <div class="ld">A 2D mesh wiring cores, DRAM and PCIe. Two physical NOCs, coordinate translation, multicast upload. Reads the <b>harvesting mask</b> from ARC telemetry to find which cores actually exist.</div>
+      </div>
+      <div class="layer" style="--lc:#ffb454">
+        <div class="lh">dispatch<small>cq.py · fw/cq.py · 463+699 LOC</small></div>
+        <div class="ld"><b>Slow dispatch</b> pushes every command over PCIe synchronously. <b>Fast dispatch</b> streams commands through an on-device prefetch/dispatch firmware ring buffer.</div>
+      </div>
+      <div class="layer" style="--lc:#9ece6a">
+        <div class="lh">assembler + DSL<small>dsl.py · asm.py · program.py</small></div>
+        <div class="ld">A from-scratch RISC-V encoder (R/I/S/B/U/J types) <em>plus</em> Tensix custom ops (<code>TTUNPACR</code>, <code>TTPACR</code>, <code>TTSFPLOADI</code>…). Labels, fixups, ELF-style segments, mixin-built kernels.</div>
+      </div>
+      <div class="layer" style="--lc:#ff6b6b">
+        <div class="lh">firmware<small>fw/{brisc,ncrisc,trisc,cq}.py</small></div>
+        <div class="ld">The five RISC-V cores' firmware — once C++, now written in the Python DSL and assembled at runtime: NOC command buffers, subordinate-sync mailboxes, go-message dispatch.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="deps">
+    <h2><span class="num">01</span>The one dependency it couldn't fake: <span class="mono" style="color:var(--acc2)">tt-metal-deps</span></h2>
+    <p class="sub">Even a "from scratch" project needs ground truth. <code>tt-metal-deps</code> is the carved-out skeleton of <code>tt-metal</code> that blackhole-py measured itself against — and eventually outgrew.</p>
+
+    <p class="lead">For most of the project, <code>tt-metal-deps</code> was the lifeline: a ~219&nbsp;MB extraction of just the pieces of Tenstorrent's stack that the Python code genuinely couldn't reproduce — chiefly a <b>real RISC-V toolchain</b> and the <b>header definitions</b> that describe the hardware's mailboxes and memory map.</p>
+
+    <div class="tree"><span class="d">tt-metal-deps/</span>
+├── <span class="d">sfpi-toolchain/</span>      <span class="c"># the real GCC: riscv-tt-elf-{gcc,g++,as,ld,objcopy,nm}</span>
+│   └── bin/riscv-tt-elf-gcc-15.1.0
+├── <span class="d">toolchain/</span><span class="d">blackhole/</span>   <span class="c"># 16 linker scripts: firmware_*.ld, kernel_*.ld</span>
+│   ├── firmware_brisc.ld  firmware_ncrisc.ld
+│   └── firmware_trisc0.ld  trisc1.ld  trisc2.ld   ...
+├── <span class="d">firmware-src/</span>         <span class="c"># reference C firmware: brisck.cc, ncrisck.cc, trisck.cc</span>
+├── <span class="d">lib/</span><span class="d">blackhole/</span>        <span class="c"># prebuilt objects: noc.o, substitutes.o, tmu-crt0.o</span>
+└── <span class="d">include/</span>             <span class="c"># the hardware contract — what every register means</span>
+    ├── hostdev/dev_msgs.h           <span class="c"># host↔device mailbox layout</span>
+    └── tt_metal/{hw,api,hostdevcommon}</div>
+
+    <p class="lead" style="margin-top:18px">Three things mattered here. The <code>include/</code> headers (<code>dev_msgs.h</code> and friends) define the <b>host↔device contract</b> — the exact byte layout of launch messages, go-signals and mailboxes the firmware reads. The <code>toolchain/blackhole/*.ld</code> <b>linker scripts</b> encode each core's memory map. And <code>sfpi-toolchain/</code> was the actual compiler used while firmware was still C++.</p>
+
+    <p class="lead">The whole arc of the back half of the project is the story of <em>shedding this dependency</em>. The setup script marched through <span class="hash">tt-metal-deps v0.7.0</span> → <span class="hash">v0.8.0</span>, and then on <span class="hash">Apr 21</span> came the line that changed everything: <span class="cm" style="display:inline">"…<em>no more tt-metal-deps</em>. not functional"</span>. Once the Python assembler could emit RISC-V directly, the GCC toolchain became dead weight. The headers' knowledge got absorbed into <code>ttk/addrs.py</code> and <code>ttk/_cfg_regs.py</code>. Today <code>tt-metal-deps</code> survives only in the <em>old snapshot</em> next door — kept around as an oracle to diff against, not a thing the live code needs.</p>
+  </section>
+
+  <section id="growth">
+    <h2><span class="num">02</span>The shape of the code over time</h2>
+    <p class="sub">Python LOC tracked at ten checkpoints. The story isn't a line going up — it's a mountain. The codebase grew to almost 19k lines, then the author <em>deleted more than half of it</em>.</p>
+
+    <div class="chartwrap">
+      <h4>Python lines of code, by commit</h4>
+      <p class="cap">Peak (~18.8k) includes the throwaway emulator + C++ firmware + tests. The cliff is the pure-Python pivot: delete the emulator, delete C++, and relentlessly simplify.</p>
+      <svg id="locchart" viewBox="0 0 900 380" role="img" aria-label="Line of code growth chart">
+        <defs>
+          <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#7aa2ff" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#7aa2ff" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <p class="note">LOC counted as raw <code>wc -l</code> across all <code>.py</code> files present at each commit (includes emulator &amp; tests at the peak). Directional, not exact.</p>
+  </section>
+
+  <section id="timeline">
+    <h2><span class="num">03</span>Eight phases of bring-up</h2>
+    <p class="sub">Reading the commit log front to back, the project moves through distinct epochs — each one a layer of the stack coming alive, breaking, and getting rebuilt.</p>
+
+    <div class="phase" style="--pc:#7aa2ff">
+      <div class="dot"></div>
+      <div class="when">Jan 13 – Jan 16 · 2 files</div>
+      <h3>Phase 0 — A device handle and a heartbeat<span class="tag">ioctl + mmap</span></h3>
+      <p>The repo is born as exactly two files: <code>main.py</code> and <code>autogen.py</code>, 253 lines total. <code>main.py</code> opens <code>/dev/tenstorrent/0</code>, builds a <code>TenstorrentGetDeviceInfoIn/Out</code> struct by hand, and fires <code>GET_DEVICE_INFO</code> to decode the PCIe BDF. It asserts <code>arch in ("p100a","p150b")</code> — <em>"only blackhole is supported"</em> — and mmaps BAR0/BAR1. <code>autogen.py</code> is generated <code>ctypes</code> for the kernel driver's ioctl ABI.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">23e5abe</span><span class="d">Jan 13</span> · <em>first commit</em></div>
+        <div class="cm"><span class="h">9184b56</span><span class="d">Jan 14</span> · <em>refactor setup and open</em></div>
+        <div class="cm"><span class="h">62a65a5</span><span class="d">Jan 16</span> · <em>rename autogen to abi, trim &gt;150 char lines, add abi for kernel launch</em></div>
+      </div>
+    </div>
+
+    <div class="phase" style="--pc:#5be3c0">
+      <div class="dot"></div>
+      <div class="when">Jan 16 – Jan 20</div>
+      <h3>Phase 1 — Windows into the chip<span class="tag">TLB · ARC · NOC</span></h3>
+      <p>To touch anything beyond the BAR you need <b>TLB windows</b>: programmable apertures that retarget a slice of the PCIe BAR at an on-chip <code>(noc_x, noc_y, addr)</code>. They land in <span class="hash">a256625</span> — but ARC harvesting reads don't work yet, a fact the author dutifully records in the commit message. The fix arrives the next morning at <b>4:40 AM</b>. The NOC coordinate system and tile-indexing math follow.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">a256625</span><span class="d">Jan 16</span> · <em>add TLB windows, arc harvesting reading not working</em></div>
+        <div class="cm"><span class="h">7b40602</span><span class="d">Jan 17 04:40</span> · <em>harvesting mask working</em></div>
+        <div class="cm"><span class="h">0ed19d9</span><span class="d">Jan 19</span> · <em>add noc helpers and tile indexing calculations</em></div>
+        <div class="cm"><span class="h">823f771</span><span class="d">Jan 20</span> · <em>added interleaved dram allocator, add noc1 coordinate translation</em></div>
+      </div>
+    </div>
+
+    <div class="phase" style="--pc:#bb9af7">
+      <div class="dot"></div>
+      <div class="when">Jan 20 – Feb 3</div>
+      <h3>Phase 2 — Firmware, and the first computation<span class="tag">brisc/ncrisc/trisc</span></h3>
+      <p>Each Tensix tile has <b>five</b> RISC-V cores: <b>BRISC</b> &amp; <b>NCRISC</b> (data-movement babies that drive NOC transfers) and <b>TRISC0/1/2</b> (the compute trio — unpacker, FPU/math, packer). Firmware starts as prebuilt <code>.elf</code> files checked into the repo, then self-compiled C++ via the <code>sfpi</code> toolchain. The payoff is an all-caps milestone, immediately undercut by a hardware reality.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">b930c49</span><span class="d">Jan 16</span> · <em>tensix tile firmware loaded successfully</em></div>
+        <div class="cm"><span class="h">0f4494e</span><span class="d"></span> · <em>KERNEL WORKING (both cores use noc0)</em></div>
+        <div class="cm"><span class="h">c5a6165</span><span class="d"></span> · <em>fix firmware, add kernel running logic. <span style="color:var(--red)">dram read appears broken.</span></em></div>
+      </div>
+    </div>
+
+    <div class="phase" style="--pc:#ff6b6b">
+      <div class="dot"></div>
+      <div class="when">late Jan – Feb 14</div>
+      <h3>Phase 3 — The DRAM read saga &amp; fast dispatch war<span class="tag">command queues</span></h3>
+      <p>Two long-running battles overlap here. First, DRAM reads keep returning mismatched data — interleaved bank tables get rewritten again and again. Second, the move from <b>slow dispatch</b> (host pushes every command over PCIe) to <b>fast dispatch</b> (host writes commands into a host-memory ring; on-device <code>cq_prefetch</code>/<code>cq_dispatch</code> firmware streams them to cores). Fast dispatch was a multi-week grind — including a commit literally named "non-working," promptly reverted.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">2085b2c</span><span class="d"></span> · <em>add dram interleaved tables, <span style="color:var(--red)">mismatch remains</span></em></div>
+        <div class="cm"><span class="h">529c7c7</span><span class="d"></span> · <em>add abi for fast dispatch</em></div>
+        <div class="cm"><span class="h">201ecf3</span><span class="d"></span> · <em>non-working fast dispatch</em> &nbsp;→&nbsp; <span class="h">ef910dc</span> · <em>Revert "non-working fast dispatch"</em></div>
+      </div>
+    </div>
+
+    <div class="phase" style="--pc:#ffb454">
+      <div class="dot"></div>
+      <div class="when">Feb – Mar 13</div>
+      <h3>Phase 4 — Chasing TFLOPs, building tools<span class="tag">matmul · profiler · p150</span></h3>
+      <p>With kernels running, attention turns to performance. The <code>matmul_peak</code> benchmark climbs through blocking strategies, packer L1 accumulation, HiFi2 math fidelity and bf16 — from ~60 to <b>94</b> to <b>151 TFLOPs</b> (the very first PR is literally <span class="mono">#1 matmul-block-94tflops</span>). A profiler appears that reads on-device perf counters and renders an HTML flame UI. Board detection grows to handle P150 alongside P100. A <code>compiler.py</code> + IR (<code>dispatch.py</code>, <code>hw.py</code>, <code>kernels.py</code>) splits out, and the old <code>abi</code>/<code>autogen</code> gets removed.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">3bbc91f</span><span class="d"></span> · <em>…151 TFLOPs</em></div>
+        <div class="cm"><span class="h">82c186c</span><span class="d">Mar 13</span> · <em>IR + lowering split; abi/autogen removed</em></div>
+        <div class="cm"><span class="h">72c11fd</span><span class="d">Apr 3</span> · <em>removes the tt-kmd dependency — talks to the card over VFIO instead</em></div>
+      </div>
+    </div>
+
+    <div class="phase" style="--pc:#9ece6a">
+      <div class="dot"></div>
+      <div class="when">Mar 25 – Apr 21</div>
+      <h3>Phase 5 — The Great Pivot: burn the C++<span class="tag">DSL · emulator · assembler</span></h3>
+      <p>The most radical phase. The author bets that the entire LLVM/GCC toolchain <em>and</em> the C++ firmware can be replaced by Python. First a DSL that emits "all riscv + tenstorrent ops" (<span class="hash">cc94cf1</span>). Then a full instruction-level <b>emulator</b> (<code>emulator part 1</code> / <code>part 2</code>) so kernels can be brought up off-device. Then the scorched-earth commits: the profiler, the IR, and <code>tt-metal-deps</code> all go in one swing — with an honest <em>"not functional"</em> tacked on — followed by the deletion of <b>~5,000 lines of C++ firmware</b> in a single commit.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">cc94cf1</span><span class="d">Mar 25</span> · <em>add dsl with all riscv + tenstorrent ops</em></div>
+        <div class="cm"><span class="h">0511943</span><span class="d">Apr 15</span> · <em>emulator part 1</em> · <span class="h">d570394</span> · <em>emulator part 2</em></div>
+        <div class="cm"><span class="h">4ae247e</span><span class="d">Apr 21</span> · <em>delete profiler, rvir … no more tt-metal-deps. not functional</em></div>
+        <div class="cm"><span class="h">d463403</span><span class="d">Apr 21</span> · <em>delete c++ firmware. python risc-v only</em> &nbsp;<span style="color:var(--red)">−4955 lines</span></div>
+      </div>
+    </div>
+
+    <div class="phase" style="--pc:#7aa2ff">
+      <div class="dot"></div>
+      <div class="when">May 9 – May 19</div>
+      <h3>Phase 6 — Re-deriving firmware, in pure Python<span class="tag">asm.py final form</span></h3>
+      <p>The assembler stabilizes (<code>asm.py final form</code>; split into <code>asm</code>/<code>program</code>/<code>dsl</code>), and then — core by core — all five RISC-V firmwares come back to life, now <em>authored in Python and assembled in-process</em>. Once the real firmware works on the device, the emulator that bootstrapped it is deleted; it had done its job. The assembler grows composable <b>mixins</b> that become today's <code>ttk/</code> toolkit.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">fb64fa1</span><span class="d">May 9</span> · <em>asm.py final form</em></div>
+        <div class="cm"><span class="h">7713bb1</span><span class="d">May 15</span> · <em>brisc firmware working in fast dispatch</em></div>
+        <div class="cm"><span class="h">4a8de11</span><span class="d">May 16</span> · <em>…python firmware works on the device</em></div>
+        <div class="cm"><span class="h">61f5726</span><span class="d">May 16</span> · <em>Remove emulator</em> &nbsp;<span class="d">(it served its purpose)</span></div>
+        <div class="cm"><span class="h">87f5c1c</span><span class="d">May 18</span> · <em>slow dispatch fw working!</em></div>
+      </div>
+    </div>
+
+    <div class="phase" style="--pc:#5be3c0">
+      <div class="dot"></div>
+      <div class="when">May 28 – May 30</div>
+      <h3>Phase 7 — Validation, 120 cores, and one stubborn bug<span class="tag">ttsim · ttas · add1</span></h3>
+      <p>The final stretch ties the bow: match Tenstorrent's <code>ttas</code> assembler output, integrate their <code>ttsim</code> simulator for validation, and use it to auto-name mystery registers. The canonical "add 1 to every element" kernel runs end-to-end on the all-Python stack and scales to <b>120 cores</b>. And then — true to form — the project ends <em>mid-debugging</em>: fast dispatch works, but breaks after the 81st iteration.</p>
+      <div class="commits">
+        <div class="cm"><span class="h">f576c92</span><span class="d">May 28</span> · <em>match ttas, thanks Zaneham</em></div>
+        <div class="cm"><span class="h">cc4d80f</span><span class="d">May 28</span> · <em>ttsim integration</em></div>
+        <div class="cm"><span class="h">192525e</span><span class="d">May 28</span> · <em>working add1 (one run)</em></div>
+        <div class="cm"><span class="h">6afb021</span><span class="d">May 30</span> · <em>…working launch on 120 cores. <span style="color:var(--warn)">fast dispatch breaks after 81st iteration</span></em></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="great-deletion">
+    <h2><span class="num">04</span>The commit that defines the project</h2>
+    <p class="sub">Every from-scratch project has a moment of conviction. For blackhole-py it's <span class="hash">d463403</span>.</p>
+    <div class="callout red">
+      <h4><span class="mono">d463403 · Apr 21 · "delete c++ firmware. python risc-v only"</span></h4>
+      <p>One commit removes 11 files and <b>4,955 lines</b> of C++: <code>cq_prefetch.cpp</code> (1,608), <code>cq_dispatch.cpp</code> (1,019), <code>cq_common.hpp</code> (538), <code>brisc.cc</code> (419), and the rest. At that exact moment the tree was <em>not functional</em> — the author had already admitted as much in the previous commit. It took three weeks of Python firmware work (Phase 6) to climb back to a working device. Deleting working C++ to bet on unwritten Python is the whole personality of this repo.</p>
+    </div>
+
+    <div class="twocol">
+      <div>
+        <h3>Before — C++ firmware</h3>
+        <pre><span class="c">// firmware/cq/cq_prefetch.cpp — 1608 lines</span>
+<span class="c">// compiled with riscv-tt-elf-g++,</span>
+<span class="c">// linked against firmware_brisc.ld,</span>
+<span class="c">// from tt-metal-deps/</span></pre>
+      </div>
+      <div>
+        <h3>After — Python DSL → bytes</h3>
+<pre><span class="k">from</span> dsl <span class="k">import</span> TTPACR, TTUNPACR, jal, sw
+<span class="k">class</span> <span class="f">Asm</span>(Tensix, Noc, Cb, Flow, Debug):
+  <span class="k">def</span> <span class="f">emit</span>(self, *insns): ...
+<span class="c"># asm.py: labels, fixups, segments</span>
+<span class="c"># every instruction → 4 little-endian bytes</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="asm">
+    <h2><span class="num">05</span>How the assembler actually works</h2>
+    <p class="sub">The crown jewel: ~1,400 lines of Python replacing an entire LLVM/GCC RISC-V toolchain.</p>
+
+    <p class="lead"><code>dsl.py</code> (566 LOC) is a metaclass-driven instruction encoder. Each RISC-V format — <code>RType</code>, <code>IType</code>, <code>SType</code>, <code>BType</code>, <code>UType</code>, <code>JType</code> — is a class whose fields are <code>BitField</code> descriptors that pack/sign-extend into a 32-bit word. On top of the base ISA sit the <b>Tensix custom ops</b> the matrix engine speaks: <code>TTUNPACR</code> (unpack), <code>TTPACR</code> (pack), <code>TTSFPLOADI</code> (vector-engine load-immediate), <code>TTSEMWAIT</code>, <code>TTZEROACC</code>, and dozens more — each one a bitfield struct that emits a single instruction word.</p>
+
+<pre><span class="k">class</span> <span class="f">BitField</span>:
+  <span class="k">def</span> <span class="f">encode</span>(self, val): <span class="c"># pack into [hi:lo], sign-extend if signed</span>
+<span class="k">class</span> <span class="f">SType</span>(Inst):       <span class="c"># split immediate: imm[11:5] | imm[4:0]</span>
+  <span class="k">def</span> <span class="f">imm</span>(self): <span class="k">return</span> _sext((self.imm11_5 &lt;&lt; 5) | self.imm4_0, 12)
+<span class="k">class</span> <span class="f">JType</span>(Inst):       <span class="c"># the gnarly scrambled jump immediate</span>
+  <span class="k">def</span> <span class="f">imm</span>(self): <span class="k">return</span> _sext((self.imm20&lt;&lt;20)|(self.imm19_12&lt;&lt;12)|(self.imm11&lt;&lt;11)|(self.imm10_1&lt;&lt;1), 21)</pre>
+
+    <p class="lead"><code>asm.py</code> (469 LOC) is the assembler proper. The <code>Asm</code> class inherits from five <code>ttk</code> mixins — <code>Tensix, Noc, Cb, Flow, Debug</code> — so a kernel author writes <code>self.write32(addr, val)</code>, <code>self.delay_cycles(n)</code>, <code>self.cb_wait_front(...)</code> instead of raw instructions. It tracks register constants for peephole optimization (<code>_reg_const</code>, <code>_const_delta</code>), resolves <code>label()</code>/<code>Fixup</code> references in a second pass, and emits raw bytes. <code>program.py</code> (407 LOC) handles ELF-like <code>ptload</code> segments, dtypes and tile sizes.</p>
+
+    <p class="lead">The result is that <code>examples/add1.py</code> — the canonical kernel — is written entirely in this DSL: MOP (macro-op) expander templates of <code>TTPACR</code>/<code>TTUNPACR</code>/<code>TTNOP</code> slots, semaphore handshakes between TRISC cores, and circular-buffer bookkeeping, all in Python that compiles to machine code with no external tool in the loop.</p>
+  </section>
+
+  <section id="human">
+    <h2><span class="num">06</span>The commit log as a diary</h2>
+    <p class="sub">339 messages, one author, no filter. The log reads like a lab notebook — triumph, defeat, and dry self-awareness, often in the same line.</p>
+
+    <div class="quotes">
+      <div class="q win"><div class="msg">"harvesting mask working"</div><div class="by">7b40602 · the 4:40 AM victory</div></div>
+      <div class="q win"><div class="msg">"KERNEL WORKING (both cores use noc0)"</div><div class="by">0f4494e · all-caps elation</div></div>
+      <div class="q pain"><div class="msg">"fix firmware, add kernel running logic. dram read appears broken."</div><div class="by">c5a6165 · triumph &amp; defeat, one line</div></div>
+      <div class="q pain"><div class="msg">"add dram interleaved tables, mismatch remains"</div><div class="by">2085b2c · the saga continues</div></div>
+      <div class="q wtf"><div class="msg">"non-working fast dispatch" → Revert "non-working fast dispatch"</div><div class="by">201ecf3 / ef910dc · naming it, then reverting it</div></div>
+      <div class="q pain"><div class="msg">"…not functional"</div><div class="by">4ae247e · admitting the tree is broken on purpose</div></div>
+      <div class="q wtf"><div class="msg">"add delay to trisc1; our kernel runs too fast"</div><div class="by">175667b · the rare too-fast bug</div></div>
+      <div class="q zen"><div class="msg">"remove rvir and rvlib; wrong direction"</div><div class="by">ba5a1ed · an honest dead end</div></div>
+      <div class="q wtf"><div class="msg">"add1 working e2egit statusgit status!"</div><div class="by">1c71335 · a literal `git status` mashed into the message</div></div>
+      <div class="q zen"><div class="msg">"format like tinygrad" / "like tinygrad" / "de-slopifying part 1"</div><div class="by">f7fa2d8 · tinygrad is the aesthetic north star</div></div>
+      <div class="q wtf"><div class="msg">"opus 4.6 rewrites fast dispatch"</div><div class="by">75de285 · crediting an LLM for a subsystem</div></div>
+      <div class="q win"><div class="msg">"match ttas, thanks Zaneham"</div><div class="by">f576c92 · the one human shout-out in 339 commits</div></div>
+      <div class="q pain"><div class="msg">"use WC-only TLB mapping — dual UC/WC mmap silently breaks"</div><div class="by">37709f0 · a real hardware gotcha, captured</div></div>
+      <div class="q wtf"><div class="msg">"…working launch on 120 cores. fast dispatch breaks after 81st iteration"</div><div class="by">6afb021 · ending on a specific, unsolved heisenbug</div></div>
+    </div>
+
+    <div class="callout">
+      <h4>Solo dev, full process</h4>
+      <p>Even as a one-person project, it ran on feature branches and pull requests — 18 merged PRs from the author's own branches (<span class="mono">#1 matmul-block-94tflops</span>, <span class="mono">#8 codex/always-upload-firmware-startup</span>, <span class="mono">#11 tlb-window-fix</span>). There's even a <span class="hash">5700518</span> "migrate to jj" — a detour into the Jujutsu version-control system mid-project.</p>
+    </div>
+  </section>
+
+  <section id="state">
+    <h2><span class="num">07</span>Where it stands at HEAD</h2>
+    <p class="sub"><span class="hash">6afb021</span> · May 30, 2026 · ~8,079 lines of Python across 23 files.</p>
+    <table>
+      <thead><tr><th>File</th><th>LOC</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">pcie.py</td><td class="mono">1059</td><td>ioctl/VFIO ABI, BAR mapping, TLB windows, sysmem, board detection</td></tr>
+        <tr><td class="mono">examples/add1.py</td><td class="mono">701</td><td>the canonical kernel, hand-written in the DSL</td></tr>
+        <tr><td class="mono">fw/cq.py</td><td class="mono">699</td><td>fast-dispatch prefetch/dispatch firmware (was 2,600+ lines of C++)</td></tr>
+        <tr><td class="mono">tt-smi.py</td><td class="mono">628</td><td>a clone of Tenstorrent's status tool, with a TUI fan editor</td></tr>
+        <tr><td class="mono">dsl.py</td><td class="mono">566</td><td>RISC-V + Tensix instruction encoder</td></tr>
+        <tr><td class="mono">asm.py</td><td class="mono">469</td><td>assembler: labels, fixups, segments, mixin kernels</td></tr>
+        <tr><td class="mono">cq.py</td><td class="mono">463</td><td>host-side command queue / dispatch</td></tr>
+        <tr><td class="mono">program.py</td><td class="mono">407</td><td>ELF-style ptload segments, dtypes, tile sizes</td></tr>
+        <tr><td class="mono">device.py</td><td class="mono">232</td><td>high-level device: open, harvest, map, launch</td></tr>
+        <tr><td class="mono">dram.py</td><td class="mono">122</td><td>DRAM bank allocator</td></tr>
+        <tr><td class="mono">ttk/ · fw/</td><td class="mono">~3.4k</td><td>toolkit mixins (cb, noc, tensix, sfpu, flow, debug, addrs) + Python firmware</td></tr>
+      </tbody>
+    </table>
+    <div class="callout grn">
+      <h4>From 253 lines to a working accelerator runtime</h4>
+      <p>The journey: open the device → read ARC harvesting → map TLBs → load core firmware → run one kernel (slow dispatch) → build fast dispatch and chase matmul TFLOPs → add a profiler &amp; board support → then the big bet: <b>delete the C++ toolchain and firmware</b>, write a Python RISC-V assembler + emulator + firmware, validate against <code>ttsim</code>/<code>ttas</code>, and land <code>add1</code> on 120 cores. It ends, fittingly, mid-debug on the 81st iteration.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <span class="pill">git archaeology</span>
+    <span class="pill">339 commits</span>
+    <span class="pill">Jan 13 – May 30 2026</span>
+    <span class="pill">blackhole-py</span>
+    <p style="margin-top:16px">Generated by reading the full commit history of <code>blackhole-py</code> — hashes, dates, and messages are quoted verbatim from the log. Nothing was run on hardware to produce this report.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // LOC checkpoints: [label, date, loc]
+  var data = [
+    {h:"23e5abe", d:"Jan 13", loc:253,  note:"first commit"},
+    {h:"b930c49", d:"Jan 16", loc:887,  note:"fw loads"},
+    {h:"8c1446f", d:"Feb 06", loc:2602, note:"C++ fw era"},
+    {h:"943ed3f", d:"Mar 01", loc:5089, note:"compiler+profiler"},
+    {h:"82c186c", d:"Mar 13", loc:3233, note:"IR split"},
+    {h:"0511943", d:"Apr 15", loc:8707, note:"emulator"},
+    {h:"d463403", d:"Apr 21", loc:13001,note:"peak-ish"},
+    {h:"e174d37", d:"May 12", loc:15669,note:""},
+    {h:"4a8de11", d:"May 16", loc:18767,note:"PEAK 18.8k"},
+    {h:"6afb021", d:"May 30", loc:8079, note:"HEAD"}
+  ];
+  var W=900,H=380,L=52,R=24,T=28,B=46;
+  var iw=W-L-R, ih=H-T-B;
+  var maxV=20000;
+  var svg=document.getElementById("locchart");
+  var NS="http://www.w3.org/2000/svg";
+  function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  // gridlines + y labels
+  for(var v=0;v<=20000;v+=5000){
+    var y=T+ih-(v/maxV)*ih;
+    svg.appendChild(el("line",{class:"gl",x1:L,y1:y,x2:L+iw,y2:y}));
+    var lb=el("text",{class:"albl",x:L-8,y:y+3,"text-anchor":"end"});lb.textContent=(v/1000)+"k";svg.appendChild(lb);
+  }
+  function X(i){return L+(i/(data.length-1))*iw;}
+  function Y(v){return T+ih-(v/maxV)*ih;}
+  // area + curve
+  var dp="M"+X(0)+","+(T+ih);
+  var lp="";
+  data.forEach(function(p,i){dp+=" L"+X(i)+","+Y(p.loc);lp+=(i?" L":"M")+X(i)+","+Y(p.loc);});
+  dp+=" L"+X(data.length-1)+","+(T+ih)+" Z";
+  svg.appendChild(el("path",{class:"area",d:dp}));
+  svg.appendChild(el("path",{class:"curve",d:lp}));
+  // axis baseline
+  svg.appendChild(el("line",{class:"axis",x1:L,y1:T+ih,x2:L+iw,y2:T+ih}));
+  // points + labels
+  data.forEach(function(p,i){
+    var x=X(i),y=Y(p.loc);
+    svg.appendChild(el("circle",{class:"pt",cx:x,cy:y,r:4.5}));
+    // value label above
+    var vl=el("text",{class:"ptl",x:x,y:y-12,"text-anchor":"middle"});vl.textContent=(p.loc>=1000?(p.loc/1000).toFixed(p.loc>=10000?1:1)+"k":p.loc);svg.appendChild(vl);
+    // x label (date)
+    var dl=el("text",{class:"albl",x:x,y:T+ih+18,"text-anchor":"middle"});dl.textContent=p.d;svg.appendChild(dl);
+    // note
+    if(p.note){var nl=el("text",{class:"pann",x:x,y:T+ih+32,"text-anchor":"middle"});nl.textContent=p.note;svg.appendChild(nl);}
+  });
+})();
+</script>
+</body>
+</html>
