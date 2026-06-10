@@ -100,7 +100,7 @@ export default function KernelPipeline() {
   }, []);
 
   return (
-    <div class="dgm dgm-pipe">
+    <div class="dgm dgm-pipe" data-zoomable>
       <svg
         class="dgm-svg"
         viewBox={`0 0 ${VB_W} ${VB_H}`}

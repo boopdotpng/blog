@@ -8,6 +8,7 @@ useKatex: true
 ---
 import NocGrid from '../../components/diagrams/NocGrid.tsx';
 import KernelPipeline from '../../components/diagrams/KernelPipeline.tsx';
+import TensixTile from '../../components/diagrams/TensixTile.tsx';
 
 I bought a Tenstorrent blackhole p100a. The idea of a fully open source toolchain, from the kernel mode driver to the software stack that runs the models, is super exciting. Some parts of the card (like the firmware binaries for certain tiny components) aren't open source because of 3rd party IP, but this is pretty much the best it gets. You own every part of the card above the Verilog. 
 
@@ -37,7 +38,7 @@ This article serves as a reference to the low level workings of the Blackhole p1
 You don't need to know anything about the device firmware to figure out how the card works (we're only touching above this layer). The only reason this section is included is because I spent 5 or 6 hours in Ghidra trying to decompile the firmware bundle in `tt-firmware` to search for the fan control logic. This card has a single-fan blower style cooler, and by default the fan curve is set very high (40% when the temp is under 49c). Shortly afterwards, I realized `tt-zephyr-platforms` (their firmware) was open source. I made a [quick change](https://github.com/tenstorrent/tt-zephyr-platforms/compare/main...boopdotpng:tt-zephyr-platforms:fan-curve-adjust?diff=split&w), flashed the new firmware, and then the noise was gone! You can also change the fan speed dynamically by sending a message to the ARC tile: [this is a short python script to do that](https://gist.github.com/boopdotpng/1ebe5d5aa4f658240798e2b2253707fe). 
 ## hardware / programming model: Everything is tile.
 
-<img src="/images/tensix-tile-map.svg" alt="Blackhole p150b tile layout showing Tensix, DRAM, ETH, PCIe, and ARC tiles on a grid" />
+<TensixTile />
 
 This is the tile diagram / layout for the p150b (the full non-binned card). All tiles in this grid can communicate with each other via 2 NoCs (networks on chip). Communication to host is routed through the PCIe tile (PCIe 0 on p100a and PCIe 1 on p150b). 
 

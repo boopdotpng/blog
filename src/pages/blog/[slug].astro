@@ -3,6 +3,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection, render } from 'astro:content';
 import galleryScriptUrl from '../../scripts/gallery.ts?url';
+import diagramZoomScriptUrl from '../../scripts/diagram-zoom.ts?url';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => data.published);
@@ -455,6 +456,7 @@ article.post-plain :global(img[width]) {
     </article>
   </div>
   <script type="module" src={galleryScriptUrl}></script>
+  <script type="module" src={diagramZoomScriptUrl}></script>
   <script>
     const tocEntries = [...document.querySelectorAll('.toc-entry')];
     if (tocEntries.length) {
