@@ -6,6 +6,8 @@ description: "deep dive into the tenstorrent blackhole p100a architecture — te
 cat: tenstorrent
 useKatex: true
 ---
+import NocGrid from '../../components/diagrams/NocGrid.tsx';
+
 I bought a Tenstorrent blackhole p100a. The idea of a fully open source toolchain, from the kernel mode driver to the software stack that runs the models, is super exciting. Some parts of the card (like the firmware binaries for certain tiny components) aren't open source because of 3rd party IP, but this is pretty much the best it gets. You own every part of the card above the Verilog. 
 
 The hardware also has potential. Since they haven't raised prices yet (as of 2/28/26), you can get a card with 28GB GDDR6 (yes, it's slow; it's the main bottleneck) that has approximately equal matmul performance to a 5090 for \$999! And there's a "buy now" button on the website!!
@@ -34,7 +36,7 @@ This article serves as a reference to the low level workings of the Blackhole p1
 You don't need to know anything about the device firmware to figure out how the card works (we're only touching above this layer). The only reason this section is included is because I spent 5 or 6 hours in Ghidra trying to decompile the firmware bundle in `tt-firmware` to search for the fan control logic. This card has a single-fan blower style cooler, and by default the fan curve is set very high (40% when the temp is under 49c). Shortly afterwards, I realized `tt-zephyr-platforms` (their firmware) was open source. I made a [quick change](https://github.com/tenstorrent/tt-zephyr-platforms/compare/main...boopdotpng:tt-zephyr-platforms:fan-curve-adjust?diff=split&w), flashed the new firmware, and then the noise was gone! You can also change the fan speed dynamically by sending a message to the ARC tile: [this is a short python script to do that](https://gist.github.com/boopdotpng/1ebe5d5aa4f658240798e2b2253707fe). 
 ## hardware / programming model: Everything is tile.
 
-<img src="/images/tensix-tile-map.svg" alt="Blackhole p150b tile layout showing Tensix, DRAM, ETH, PCIe, and ARC tiles on a grid">
+<img src="/images/tensix-tile-map.svg" alt="Blackhole p150b tile layout showing Tensix, DRAM, ETH, PCIe, and ARC tiles on a grid" />
 
 This is the tile diagram / layout for the p150b (the full non-binned card). All tiles in this grid can communicate with each other via 2 NoCs (network on chips). Communication to host is routed through the PCIe tile (PCIe 0 on p100a and PCIe 1 on p150b). 
 
@@ -47,11 +49,9 @@ The first network, **noc0**, originates at the top-left corner of the grid, and 
 
 Both networks can be used concurrently. In typical usage, **noc0** is used to read data from DRAM, while **noc1** is used to write data back to DRAM. ((Separating reads and writes onto different NoCs avoids head-of-line blocking that would otherwise occur if read and write traffic shared the same unidirectional ring.))
 
-**NoC 0**
-<img src="/images/blackhole-noc0.png" alt="NoC 0 routing diagram showing downward and rightward packet flow with wraparound">
-*from tenstorrent/tt-isa-documentation on github*
-
 It wraps around; if you wanted to send a message from T121 to T0, it would wrap around the right edge and end up at the top left. 
+
+<NocGrid client:visible cols={14} rows={12} src={[11, 9]} dst={[2, 1]} />
 
 Tiles can be accessed by their coordinate (x,y). On the p150b (the full card) there are 17 columns and 12 rows. On p100a, there are 14 columns. 
 
@@ -105,7 +105,7 @@ Functionally, a single PCIe tile handles all host communication. It translates M
 Given that one tile is sufficient, it’s unclear why the design includes two instead of having both SKUs use the same one. The second tile seems to exist for layout, binning, or SKU flexibility rather than for concurrent use.
 ### tensix (T)
 
-<img src="/images/tensix-l1-map.svg" alt="Tensix tile internals: 5 RISC-V cores, Tensix coprocessor, SFPU, and 1.5MB L1 memory">
+<img src="/images/tensix-l1-map.svg" alt="Tensix tile internals: 5 RISC-V cores, Tensix coprocessor, SFPU, and 1.5MB L1 memory" />
 These tiles are responsible for *all* AI compute. Inside each Tensix tile there are **5** baby RISC-V cores, a Tensix coprocessor, and 1.5 MB of L1 memory. It's called L1 because of the memory speed; it's not cache. There is no cache anywhere on this card. 
 
 A kernel executes similarly to how it would on a GPU, but with notable differences in how the computation is actually done.
@@ -132,7 +132,7 @@ Because the hardware operates strictly on 32×32 tiles, tensors that don’t nat
 
 *1*: The kernel binary, scratchpad, and RAM (per-core) take up some space in L1, so in reality you have a little bit less usable space for CBs (around 1.3MB).
 
-<img src="/images/blackhole-circular-buffer.png" alt="Circular buffer in L1 with producer/consumer pointers for overlapping DRAM transfers with compute">
+<img src="/images/blackhole-circular-buffer.png" alt="Circular buffer in L1 with producer/consumer pointers for overlapping DRAM transfers with compute" />
 
 The main point of the CB is that you can overlap reading/writing to/from DRAM with compute. Your compute tile can consume tiles from the CB when they're marked as ready while more tiles are being read from DRAM. Same for writing. 
 #### tensix coprocessor
@@ -143,11 +143,11 @@ There are two computation paths: the SFPU and the Matrix engine. They ultimately
 | **Buffer** | **Logical shape**         | **Capacity**             | **Typical use**               |
 | ---------- | ------------------------- | ------------------------ | ----------------------------- |
 | dst16b     | 1024 rows × 16 cols × 16b | 16 tiles (8 per half)    | bfloat16/float16 accumulation |
-| dst32b     | 512 rows × 16 cols × 32b  | 8 tiles (4 per half)<br> | fp32 accumulation             |
+| dst32b     | 512 rows × 16 cols × 32b  | 8 tiles (4 per half)<br/> | fp32 accumulation             |
 
 In 32-bit mode, each logical row spans two physical rows (high 16b in row R, low 16b in row R+8), so same physical storage, half the logical rows. 
 #### matrix engine / fpu 
-The FPU uses 4 registers, 2 srcA and 2 srcB. Both are 64 rows by 16 cols, 19 bits per entry. The entries are 19 bits wide to accommodate tf32 inputs. In 16-bit datatypes, the low 3 mantissa bits are zeroed. Interestingly, the bits are stored in a shuffled layout: {Sign, Mantissa, Exponent}, not the typical IEEE order.
+The FPU uses 4 registers, 2 srcA and 2 srcB. Both are 64 rows by 16 cols, 19 bits per entry. The entries are 19 bits wide to accommodate tf32 inputs. In 16-bit datatypes, the low 3 mantissa bits are zeroed. Interestingly, the bits are stored in a shuffled layout: `{Sign, Mantissa, Exponent}`, not the typical IEEE order.
 
 The two banks per register enable double-buffering: at any moment, one bank is owned by the Unpackers (being filled from L1), the other by the Matrix Unit (being read for compute). The flip happens as part of the compute instruction itself — every MVMUL, ELWMUL, etc. has FlipSrcA and FlipSrcB bits. When set, the instruction releases its current bank back to the unpackers and switches the FPU's bank pointer to the other bank:
 
@@ -379,7 +379,7 @@ Every kernel is actually 5 kernels (you only have to write 3). A dataflow kernel
 
 With that said, here's the simplest possible 3-set of tt-metal kernels that adds 1 to an array of 65,536 `f16` values stored in dram. The long-term goal is to autogenerate these types of kernels based on tinygrad's IR (a graph of Ops). There is a little extra complexity because you have to write three separate kernels for one operation, but the kernels themselves are short. Most of this code is boilerplate -- the actual compute part is only a few lines. 
 
-<img src="/images/kernel-execution-pipeline.svg" alt="Anatomy of a tt-metal kernel: data-in (ncrisc), compute (trisc), and data-out (brisc) phases">
+<img src="/images/kernel-execution-pipeline.svg" alt="Anatomy of a tt-metal kernel: data-in (ncrisc), compute (trisc), and data-out (brisc) phases" />
 
 This example kernel runs on *one* Tensix tile (core). That one core is responsible for processing all 64 input tiles. If you wanted to run this on 64 cores there would be no inner loop, because every core would process exactly one tile of the input. 
 
@@ -573,5 +573,5 @@ These kernels aren't very generic. There are a lot of templates, abstraction lay
 It's probably going to look something like this: 
 
 1. Determine which dataflow in / out kernels will be used. There are around 6 or 7 unique dataflow kernels that can handle 99% of kernels that are generated by tinygrad. These will use `tt-llk` functions for tile movement, copies to `Dst`, etc. 
-2. The tinygrad renderer will generate only the compute kernel (trisc{0,1,2}). We'll try to use `tt-llk` as little as possible in this kernel. The inner compute loop will be expressed using raw SFPU/FPU instrinsics. I'm not sure if we'll go the level of configuring the MOP replay buffer ourselves, but it will read like sort of regular GPU code. This allows a lot of the kernel fusion described above. 
+2. The tinygrad renderer will generate only the compute kernel (`trisc{0,1,2}`). We'll try to use `tt-llk` as little as possible in this kernel. The inner compute loop will be expressed using raw SFPU/FPU instrinsics. I'm not sure if we'll go the level of configuring the MOP replay buffer ourselves, but it will read like sort of regular GPU code. This allows a lot of the kernel fusion described above. 
 3. `BEAM` will probably be disabled. It should be possible to figure out the absolute fastest kernel for every operation, due to how templated things are and how little variation there is between kernels. See the planner / optimizer for [matmul_peak](https://github.com/boopdotpng/blackhole-py/blob/master/examples/matmul_peak.py) for a peek into how this might look. Essentially, I don't think there's much to search over. The decision space is extremely constrained. 

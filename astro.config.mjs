@@ -2,6 +2,9 @@ import { defineConfig } from 'astro/config';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import sitemap from '@astrojs/sitemap';
+import mdx from '@astrojs/mdx';
+import preact from '@astrojs/preact';
+import { unified } from '@astrojs/markdown-remark';
 import fs from 'node:fs';
 import path from 'node:path';
 import remarkGallery from './scripts/remark-gallery.mjs';
@@ -89,6 +92,9 @@ export default defineConfig({
   trailingSlash: 'never',
   build: { format: 'file' },
   integrations: [
+    // preact powers interactive diagram islands; mdx lets posts import them.
+    preact(),
+    mdx(),
     sitemap({
       filter: (page) => {
         const pathname = new URL(page).pathname;
@@ -136,14 +142,18 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote, remarkTableWrap],
-    rehypePlugins: [rehypeKatex],
-    shikiConfig: {
-      themes: {
-        light: 'github-light',
-        dark: 'github-dark-dimmed',
+    // Astro 6.4+: plugins + shiki live on a single unified() processor
+    // (the old markdown.remarkPlugins/rehypePlugins/shikiConfig keys are deprecated).
+    processor: unified({
+      remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote, remarkTableWrap],
+      rehypePlugins: [rehypeKatex],
+      shikiConfig: {
+        themes: {
+          light: 'github-light',
+          dark: 'github-dark-dimmed',
+        },
+        defaultColor: false,
       },
-      defaultColor: false,
-    },
+    }),
   },
 });

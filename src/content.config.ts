@@ -15,7 +15,7 @@ const requireDescriptionWhenPublished = (label: string) =>
   };
 
 const blog = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
   schema: z.object({
     title: z.string(),
     pubDate: isoDate,
@@ -28,7 +28,7 @@ const blog = defineCollection({
 });
 
 const books = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/books', ignore: ['**/CLAUDE.md'] }),
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/books', ignore: ['**/CLAUDE.md'] }),
   schema: z.object({
     title: z.string(),
     pubDate: isoDate,

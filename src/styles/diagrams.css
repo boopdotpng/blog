@@ -1,0 +1,177 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   diagrams.css — shared design system for inline diagrams / charts / widgets.
+
+   Every diagram component pulls from these tokens so the whole set stays on
+   one palette and types-cale, in both light and dark, WITHOUT the invert()
+   hack. Author SVGs with these classes / CSS vars (never hardcoded hex), and
+   they theme natively.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.dgm {
+  --dgm-cell: var(--surface-soft);
+  --dgm-cell-stroke: var(--border-muted);
+  --dgm-label: var(--fg-muted);
+  --dgm-line: var(--border-strong);
+
+  margin: 2rem auto;
+  font-family: var(--font-mono);
+  color: var(--fg);
+}
+
+/* Diagram SVGs must opt OUT of the global dark-mode invert filter. */
+:root[data-theme='dark'] .markdown-body .dgm svg,
+.markdown-body .dgm svg {
+  filter: none;
+}
+
+.dgm svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  margin: 0;
+  overflow: visible;
+}
+
+/* ── toolbar / controls ─────────────────────────────────────────────────── */
+
+.dgm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.dgm-seg {
+  display: inline-flex;
+  border: 1px solid var(--border-muted);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dgm-seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  padding: 0.32rem 0.7rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dgm-seg button + button {
+  border-left: 1px solid var(--border-muted);
+}
+
+.dgm-seg button:hover {
+  color: var(--fg);
+}
+
+.dgm-seg button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--fg-strong);
+}
+
+.dgm-readout {
+  font-size: 0.74rem;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.dgm-readout b {
+  color: var(--fg-soft);
+  font-weight: 600;
+}
+
+.dgm-hint {
+  font-size: 0.72rem;
+  color: var(--fg-subtle);
+  margin: 0.75rem 0 0;
+  line-height: 1.5;
+}
+
+.dgm-caption {
+  font-size: 0.74rem;
+  color: var(--fg-faint);
+  line-height: 1.55;
+  margin: 0.8rem 0 0;
+}
+
+.dgm-caption .dgm-swatch {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 2px;
+  vertical-align: baseline;
+  margin: 0 0.15em 0 0.4em;
+}
+
+/* ── NoC routing grid ───────────────────────────────────────────────────── */
+
+.dgm-noc[data-active='noc0'] { --noc: var(--cat-tenstorrent); }
+.dgm-noc[data-active='noc1'] { --noc: var(--cat-ml); }
+
+.dgm-noc .dgm-cell {
+  fill: var(--dgm-cell);
+  stroke: var(--dgm-cell-stroke);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill-opacity 0.15s ease, fill 0.15s ease, stroke 0.15s ease;
+}
+
+.dgm-noc .dgm-cell:hover {
+  stroke: var(--fg-faint);
+}
+
+.dgm-noc .dgm-cell.is-preview {
+  fill: var(--noc);
+  fill-opacity: 0.12;
+}
+
+.dgm-noc .dgm-cell.is-path {
+  fill: var(--noc);
+  fill-opacity: 0.26;
+  stroke: var(--noc);
+  stroke-opacity: 0.5;
+}
+
+.dgm-noc .dgm-cell.is-src {
+  fill: var(--accent);
+  fill-opacity: 0.92;
+  stroke: var(--accent);
+}
+
+.dgm-noc .dgm-cell.is-dst {
+  fill: var(--cat-gpu);
+  fill-opacity: 0.9;
+  stroke: var(--cat-gpu);
+}
+
+.dgm-noc .dgm-marker {
+  fill: var(--noc);
+  stroke: var(--bg);
+  stroke-width: 1.2;
+  pointer-events: none;
+}
+
+.dgm-noc .dgm-endcap {
+  font-family: var(--font-mono);
+  font-size: 6px;
+  font-weight: 700;
+  fill: var(--bg);
+  pointer-events: none;
+  dominant-baseline: central;
+  text-anchor: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dgm-seg button,
+  .dgm-noc .dgm-cell {
+    transition: none;
+  }
+}

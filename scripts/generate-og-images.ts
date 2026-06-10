@@ -35,10 +35,10 @@ const catColors: Record<string, string> = {
 
 mkdirSync(OUT_DIR, { recursive: true });
 
-const files = readdirSync(BLOG_DIR).filter(f => f.endsWith('.md'));
+const files = readdirSync(BLOG_DIR).filter(f => f.endsWith('.md') || f.endsWith('.mdx'));
 
 for (const file of files) {
-  const slug = file.replace(/\.md$/, '');
+  const slug = file.replace(/\.mdx?$/, '');
   const content = readFileSync(path.join(BLOG_DIR, file), 'utf8');
   const fm = parseFrontmatter(content);
 
@@ -132,9 +132,9 @@ if (existsSync(BOOKS_DIR)) {
     mkdirSync(bookOutDir, { recursive: true });
     const bookName = bookId.replace(/-/g, ' ');
 
-    const docs = readdirSync(bookDir).filter(f => f.endsWith('.md'));
+    const docs = readdirSync(bookDir).filter(f => f.endsWith('.md') || f.endsWith('.mdx'));
     for (const file of docs) {
-      const slug = file.replace(/\.md$/, '');
+      const slug = file.replace(/\.mdx?$/, '');
       const content = readFileSync(path.join(bookDir, file), 'utf8');
       const fm = parseFrontmatter(content);
 
