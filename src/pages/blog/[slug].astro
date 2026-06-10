@@ -135,13 +135,17 @@ pre {
   transform: translateY(-50%);
   z-index: 100;
   width: 24px;
+  max-height: calc(100vh - 2rem);
   padding: 1.2rem 0 1.2rem 0.4rem;
   transition: width 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
   border-radius: 0 8px 8px 0;
 }
 
-.toc-rail:hover {
+.toc-rail:hover,
+.toc-rail:focus-within {
   width: 280px;
   background: var(--bg);
   box-shadow: 2px 0 16px rgba(var(--shadow-rgb), 0.24);
@@ -194,7 +198,8 @@ pre {
   transition: opacity 0.2s ease 0.1s;
 }
 
-.toc-rail:hover .toc-label {
+.toc-rail:hover .toc-label,
+.toc-rail:focus-within .toc-label {
   opacity: 1;
 }
 

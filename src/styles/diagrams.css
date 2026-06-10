@@ -152,6 +152,23 @@
   stroke: var(--cat-gpu);
 }
 
+/* multicast box — every tile in the rectangle receives the write */
+.dgm-noc .dgm-cell.is-mcast {
+  fill: var(--noc);
+  fill-opacity: 0.28;
+  stroke: var(--noc);
+  stroke-opacity: 0.45;
+  user-select: none;
+}
+
+/* dots that fan out from the entry corner to every tile in the box */
+.dgm-noc .dgm-fan {
+  fill: var(--noc);
+  stroke: var(--bg);
+  stroke-width: 0.8;
+  pointer-events: none;
+}
+
 .dgm-noc .dgm-marker {
   fill: var(--noc);
   stroke: var(--bg);
@@ -167,6 +184,84 @@
   pointer-events: none;
   dominant-baseline: central;
   text-anchor: middle;
+}
+
+/* ── kernel dataflow pipeline ───────────────────────────────────────────── */
+
+.dgm-pipe .dgm-pipe-rail {
+  stroke: var(--border-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.dgm-pipe .dgm-pipe-box {
+  fill: color-mix(in srgb, var(--c) 14%, transparent);
+  stroke: color-mix(in srgb, var(--c) 65%, transparent);
+  stroke-width: 1.2;
+}
+
+.dgm-pipe .dgm-pipe-box.is-mem {
+  fill: var(--surface-soft);
+  stroke: var(--border-strong);
+  stroke-dasharray: 3 2;
+}
+
+.dgm-pipe .dgm-pipe-group {
+  fill: none;
+  stroke: color-mix(in srgb, var(--c) 45%, transparent);
+  stroke-width: 1.2;
+}
+
+.dgm-pipe .dgm-pipe-cell {
+  fill: color-mix(in srgb, var(--c) 12%, transparent);
+  stroke: color-mix(in srgb, var(--c) 50%, transparent);
+  stroke-width: 1;
+}
+
+.dgm-pipe .dgm-pipe-cell.is-hot {
+  fill: color-mix(in srgb, var(--c) 22%, transparent);
+}
+
+.dgm-pipe .dgm-pipe-slot {
+  fill: color-mix(in srgb, var(--c) 35%, transparent);
+}
+
+.dgm-pipe .dgm-pipe-name {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  fill: var(--fg-soft);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.dgm-pipe .dgm-pipe-sub {
+  font-family: var(--font-mono);
+  font-size: 6px;
+  fill: var(--fg-faint);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.dgm-pipe .dgm-pipe-op {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  fill: var(--fg-subtle);
+  text-anchor: middle;
+}
+
+.dgm-pipe .dgm-pipe-chev {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dgm-pipe .dgm-pipe-token {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 1.2;
 }
 
 @media (prefers-reduced-motion: reduce) {

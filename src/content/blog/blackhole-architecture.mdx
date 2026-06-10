@@ -7,6 +7,7 @@ cat: tenstorrent
 useKatex: true
 ---
 import NocGrid from '../../components/diagrams/NocGrid.tsx';
+import KernelPipeline from '../../components/diagrams/KernelPipeline.tsx';
 
 I bought a Tenstorrent blackhole p100a. The idea of a fully open source toolchain, from the kernel mode driver to the software stack that runs the models, is super exciting. Some parts of the card (like the firmware binaries for certain tiny components) aren't open source because of 3rd party IP, but this is pretty much the best it gets. You own every part of the card above the Verilog. 
 
@@ -38,7 +39,7 @@ You don't need to know anything about the device firmware to figure out how the 
 
 <img src="/images/tensix-tile-map.svg" alt="Blackhole p150b tile layout showing Tensix, DRAM, ETH, PCIe, and ARC tiles on a grid" />
 
-This is the tile diagram / layout for the p150b (the full non-binned card). All tiles in this grid can communicate with each other via 2 NoCs (network on chips). Communication to host is routed through the PCIe tile (PCIe 0 on p100a and PCIe 1 on p150b). 
+This is the tile diagram / layout for the p150b (the full non-binned card). All tiles in this grid can communicate with each other via 2 NoCs (networks on chip). Communication to host is routed through the PCIe tile (PCIe 0 on p100a and PCIe 1 on p150b). 
 
 **harvesting (p100a)**
 The tile layout on the p100a has the rightmost 2 columns of Tensix tiles and 1 bank (4GB) of dram fused off, but the exact coordinates of the disabled tiles vary from board to board. On my p100a, DRAM bank 3 is fused off. 
@@ -55,7 +56,7 @@ It wraps around; if you wanted to send a message from T121 to T0, it would wrap 
 
 Tiles can be accessed by their coordinate (x,y). On the p150b (the full card) there are 17 columns and 12 rows. On p100a, there are 14 columns. 
 
-Each NoC has two modes for writing data: unicast and multicast. Multicast is a massive speedup when you have to issue the same writes to many tiles (uploading firmware, kernel binaries, etc). Due to the number of Tensix tiles, you'll lose considerable performance if you try to unicast write to every single core sequentially, so multicasts are imperative. 
+Each NoC has two modes for writing data: unicast and multicast. Multicast is a massive speedup when you have to issue the same writes to many tiles (uploading firmware, kernel binaries, etc). Due to the number of Tensix tiles, you'll lose considerable performance if you try to unicast write to every single core sequentially, so multicasts are imperative. A multicast is addressed with a *rectangle* of tiles (a start and end NoC coordinate); the packet routes to the box's entry corner and then fans out to every tile inside it. Flip the routing widget above to **multicast** and drag a box to watch the packet fan out.
 
 On the host, you can access tile memory by using the `allocate_tlb` ioctl to open a 2MB TLB window and then configuring it with a base address offset and two NoC coordinates (start, end) with the `configure_tlb` ioctl. You can also set `mcast=True` here. This returns two mmap offsets into the PCIe bar (UC, WC); all reads and writes here get translated into NoC reads and writes by the PCIe tile. This is the core mechanism behind the `TT_USB=1` slow dispatch mode in blackhole-py. This gives you access to the L1 memory in each tile, all the registers, the RAM used by each core in the Tensix tile, etc. This is enough to launch kernels and run workloads on the card. 
 
@@ -77,7 +78,7 @@ const InterleavedAddrGenFast<true> dram = {
 
 There are two ways to access DRAM: 
 1. Perform a WC `mmap` write directly to the PCIe BAR exposed through a TLB window on a DRAM tile.
-2. Launch a dataflow kernel on the BRISC or NCRISC cores that performs `noc_async_read_tile` / `noc_async_write_tile`. 
+2. Launch a dataflow kernel on the brisc or ncrisc cores that performs `noc_async_read_tile` / `noc_async_write_tile`. 
 
 **p100a dram bandwidth benchmark (512 MB xfer)**
 
@@ -90,7 +91,7 @@ The MMIO read path is catastrophically slow (~32 MB/s) — that's the uncacheabl
 
 Writes are less dramatic but still a solid 7.5x improvement with kernels, since MMIO posted writes (~3.9 GB/s) are already reasonably fast through the write-combining TLB path.
 
-One architectural detail that’s hard to justify is the presence of three DRAM tiles per bank. In practice, `tt-metal` selects a single tile from each three-tile group (e.g., D0, D3, D6, …) and uses only that one as the access point for the bank. The other two tiles in each group remain unused.
+One architectural detail that's hard to justify is the presence of three DRAM tiles per bank. In practice, `tt-metal` selects a single tile from each three-tile group (e.g., D0, D3, D6, …) and uses only that one as the access point for the bank. The other two tiles in each group remain unused.
 
 Round-robin scheduling across the three tiles within a bank would not increase effective bandwidth, since all three ultimately feed the same GDDR controller. From a software perspective, they behave as redundant front-ends to a single memory endpoint rather than independent channels.
 ### l2cpu (16)—SiFive x280 
@@ -98,11 +99,11 @@ These are wasted silicon. I see absolutely no use for these. The cores are too s
 ### ethernet (E)
 These are all disabled on p100a, so I haven't been able to experiment with them. They're mainly used for distributed training, i.e. multiple tenstorrent cards in the same system would communicate over ethernet instead of through the host (PCIe). 
 ### pcie 
-There are two PCIe tiles in the grid, but only one is ever active. On the p100a, PCIe tile 0 is enabled and tile 1 is disabled; on the P150b, it’s the reverse.
+There are two PCIe tiles in the grid, but only one is ever active. On the p100a, PCIe tile 0 is enabled and tile 1 is disabled; on the P150b, it's the reverse.
 
-Functionally, a single PCIe tile handles all host communication. It translates MMIO writes (via TLB windows mapped into the PCIe BAR) into NoC transactions and manages general PCIe traffic. There’s no mode where both tiles are active or where bandwidth is shared between them.
+Functionally, a single PCIe tile handles all host communication. It translates MMIO writes (via TLB windows mapped into the PCIe BAR) into NoC transactions and manages general PCIe traffic. There's no mode where both tiles are active or where bandwidth is shared between them.
 
-Given that one tile is sufficient, it’s unclear why the design includes two instead of having both SKUs use the same one. The second tile seems to exist for layout, binning, or SKU flexibility rather than for concurrent use.
+Given that one tile is sufficient, it's unclear why the design includes two instead of having both SKUs use the same one. The second tile seems to exist for layout, binning, or SKU flexibility rather than for concurrent use.
 ### tensix (T)
 
 <img src="/images/tensix-l1-map.svg" alt="Tensix tile internals: 5 RISC-V cores, Tensix coprocessor, SFPU, and 1.5MB L1 memory" />
@@ -112,7 +113,7 @@ A kernel executes similarly to how it would on a GPU, but with notable differenc
 
 Write tensors to global DRAM. 
 
-Ncrisc: Reads from global memory, pushes a tile into the CB (circular buffer).
+ncrisc: Reads from global memory, pushes a tile into the CB (circular buffer).
 
 trisc0: Unpacks tile and copies to the Tensix coprocessor's registers (SFPU). 
 
@@ -122,28 +123,26 @@ trisc2: Packs tile and copies from the compute engine's `dst` register into the 
 
 brisc: Writes tiles from output CB back to global memory. 
 
-> Note: The roles of Ncrisc and brisc are commonly interchanged in tt-metal, you can switch them and your program will function the exact same. 
+> Note: The roles of ncrisc and brisc are commonly interchanged in tt-metal, you can switch them and your program will function the exact same. 
 
 A circular buffer is just a ring queue of tiles stored in the L1 memory of each tile. Each tile has 32 CBs; the first 16 are input, and the last 16 are output. For example, if you were adding two tensors, you would need 3 CBs: Tensor A (CB 0), Tensor B (1), and then the output Tensor (16).
 
-The tile abstraction goes one level deeper. Each entry in a circular buffer is a 32×32 matrix in some datatype, physically organized as four 16×16 “faces.” The circular buffer itself is just a ring of these tiles in L1, and you can choose how many tiles it holds, bounded only by the ~1.5 MB of L1 available per tile (minus kernel code and scratch space). ((The four-face layout is a hardware constraint from the FPU's internal register organization, not an arbitrary software choice — the unpacker has to feed data into the FPU in 16×16 chunks.))
+The tile abstraction goes one level deeper. Each entry in a circular buffer is a 32×32 matrix in some datatype, physically organized as four 16×16 "faces." The circular buffer itself is just a ring of these tiles in L1, and you can choose how many tiles it holds, bounded only by the ~1.5 MB of L1 available per tile (minus kernel code and scratch space).((The kernel binary, scratchpad, and per-core RAM eat into L1, so in reality you have a bit less — around 1.3 MB — usable for CBs.)) ((The four-face layout is a hardware constraint from the FPU's internal register organization, not an arbitrary software choice — the unpacker has to feed data into the FPU in 16×16 chunks.))
 
-Because the hardware operates strictly on 32×32 tiles, tensors that don’t naturally align to that shape must be padded before upload. The compute kernel then has to account for the padded regions so that zeroed elements don’t affect the result. The unpack and pack stages exist to bridge this mismatch: they translate between the flat tensor layout in DRAM/L1 and the internal data layout expected by the Tensix coprocessor, which follows a different tilized representation.
-
-*1*: The kernel binary, scratchpad, and RAM (per-core) take up some space in L1, so in reality you have a little bit less usable space for CBs (around 1.3MB).
+Because the hardware operates strictly on 32×32 tiles, tensors that don't naturally align to that shape must be padded before upload. The compute kernel then has to account for the padded regions so that zeroed elements don't affect the result. The unpack and pack stages exist to bridge this mismatch: they translate between the flat tensor layout in DRAM/L1 and the internal data layout expected by the Tensix coprocessor, which follows a different tilized representation.
 
 <img src="/images/blackhole-circular-buffer.png" alt="Circular buffer in L1 with producer/consumer pointers for overlapping DRAM transfers with compute" />
 
 The main point of the CB is that you can overlap reading/writing to/from DRAM with compute. Your compute tile can consume tiles from the CB when they're marked as ready while more tiles are being read from DRAM. Same for writing. 
 #### tensix coprocessor
-This is a fully custom coprocessor built by Tenstorrent. The TRISC1 core does not actually run the compute--it's just responsible for dispatching ops to this coprocessor. If you disassemble the TRISC1 ELF and read the raw rv32 instructions, you'll see some that start with `tt`; these are custom additions to rv32 that dispatch a particular op to the coprocessor. The instruction set and behavior is mostly documented in `tt-isa-documentation`.
+This is a fully custom coprocessor built by Tenstorrent. The trisc1 core does not actually run the compute — it's just responsible for dispatching ops to this coprocessor. If you disassemble the trisc1 ELF and read the raw rv32 instructions, you'll see some that start with `tt`; these are custom additions to rv32 that dispatch a particular op to the coprocessor. The instruction set and behavior is mostly documented in `tt-isa-documentation`.
 
 There are two computation paths: the SFPU and the Matrix engine. They ultimately write to the same destination register, `dst`, which can be viewed two ways depending on the output datatype. 
 
 | **Buffer** | **Logical shape**         | **Capacity**             | **Typical use**               |
 | ---------- | ------------------------- | ------------------------ | ----------------------------- |
 | dst16b     | 1024 rows × 16 cols × 16b | 16 tiles (8 per half)    | bfloat16/float16 accumulation |
-| dst32b     | 512 rows × 16 cols × 32b  | 8 tiles (4 per half)<br/> | fp32 accumulation             |
+| dst32b     | 512 rows × 16 cols × 32b  | 8 tiles (4 per half)      | fp32 accumulation             |
 
 In 32-bit mode, each logical row spans two physical rows (high 16b in row R, low 16b in row R+8), so same physical storage, half the logical rows. 
 #### matrix engine / fpu 
@@ -196,7 +195,7 @@ HiFi4: 4 multiplier steps.
 
 Each phase just replays the same `MVMUL` instructions again, with a register configured to tell the processor which fidelity phase it's on. LoFi takes 16 `MVMUL` instructions per tile and HiFi4 takes 64, hence the 4x throughput decrease. Generally, for 16-bit inputs, HiFi2 is enough precision. You only need to use HiFi4 if your inputs are tf32. 
 #### sfpu 
- The SFPU handles transcendentals and other misc ops not covered by the matrix engine. It operates on `Lreg[17]` (sfpu local registers) where each `Lreg` is 32 lanes, 32 bits per lane (sort of like an AMD wavefront). The 32 lanes are arranged as a 4x8 grid (4 rows of 8 lanes), which matters for `SFPTRANSP` (4x4 transpose within columns) and `SFPSHFT2` (lane rotation). The SFPU does not read directly from CBs or L1. The data is read from `Dst` into `Lreg`, the operation is done, and then the result is stored back into `Dst`. Typically, the outputs of your computation will already be in `Dst` (imagine an FPU matmul just finished and you want to add on another op), or you can set TRISC0 to unpack directly to `Dst` so that you can issue SFPU ops without having to use the matrix engine. The `UNPACK_TO_DEST` semaphore synchronizes TRISC0 and TRISC1 so SFPLOAD doesn't read Dst before the unpacker finishes writing it.
+ The SFPU handles transcendentals and other misc ops not covered by the matrix engine. It operates on `Lreg[17]` (sfpu local registers) where each `Lreg` is 32 lanes, 32 bits per lane (sort of like an AMD wavefront). The 32 lanes are arranged as a 4x8 grid (4 rows of 8 lanes), which matters for `SFPTRANSP` (4x4 transpose within columns) and `SFPSHFT2` (lane rotation). The SFPU does not read directly from CBs or L1. The data is read from `Dst` into `Lreg`, the operation is done, and then the result is stored back into `Dst`. Typically, the outputs of your computation will already be in `Dst` (imagine an FPU matmul just finished and you want to add on another op), or you can set trisc0 to unpack directly to `Dst` so that you can issue SFPU ops without having to use the matrix engine. The `UNPACK_TO_DEST` semaphore synchronizes trisc0 and trisc1 so SFPLOAD doesn't read Dst before the unpacker finishes writing it.
 
 **Data movement instructions**
 
@@ -282,7 +281,7 @@ The MOP expander is a **hardware loop controller** that sits upstream of the rep
 
 Because the MOP Expander sits *before* the Replay Expander in the pipeline, the MOP can emit `REPLAY` instructions as part of its expansion, and those get further expanded downstream into the recorded instruction sequences. The reverse is not possible — a replay expansion can't contain MOP instructions.
 
-There are two hardcoded templates. BRISC cannot use MOP (its instructions enter the pipeline after the MOP Expander stage), but this doesn't matter since BRISC handles dataflow, not compute.
+There are two hardcoded templates. brisc cannot use MOP (its instructions enter the pipeline after the MOP Expander stage), but this doesn't matter since brisc handles dataflow, not compute.
 
 **Template 0 (unpacker / mask template):**
 
@@ -310,7 +309,7 @@ for i in range(Count1 + 1):
         if HasB:    emit(SkipB)
 ```
 
-This is how unpackers skip zero-faces in sparse tiles. The 32-bit zmask has one bit per face; 0 means unpack this face, 1 means skip it. TRISC0 uses this to conditionally emit UNPACK vs NOP per face.
+This is how unpackers skip zero-faces in sparse tiles. The 32-bit zmask has one bit per face; 0 means unpack this face, 1 means skip it. trisc0 uses this to conditionally emit UNPACK vs NOP per face.
 
 **Template 1 (double-nested loop, used for matmul):**
 
@@ -377,9 +376,9 @@ After any FPU instruction writes to `Dst`, that aligned 8x16 block can't be read
 
 Every kernel is actually 5 kernels (you only have to write 3). A dataflow kernel that copies memory from global memory to each core's L1, the 3 trisc compute kernels (you only write one), and another dataflow kernel that copies data from L1 to global memory. The convention in tt-metal is to use the ncrisc core for data in and brisc for data out. These use separate NoCs to increase bandwidth. 
 
-With that said, here's the simplest possible 3-set of tt-metal kernels that adds 1 to an array of 65,536 `f16` values stored in dram. The long-term goal is to autogenerate these types of kernels based on tinygrad's IR (a graph of Ops). There is a little extra complexity because you have to write three separate kernels for one operation, but the kernels themselves are short. Most of this code is boilerplate -- the actual compute part is only a few lines. 
+With that said, here's the simplest possible 3-set of tt-metal kernels that adds 1 to an array of 65,536 `f16` values stored in dram. The long-term goal is to autogenerate these types of kernels based on tinygrad's IR (a graph of Ops). There is a little extra complexity because you have to write three separate kernels for one operation, but the kernels themselves are short. Most of this code is boilerplate — the actual compute part is only a few lines. 
 
-<img src="/images/kernel-execution-pipeline.svg" alt="Anatomy of a tt-metal kernel: data-in (ncrisc), compute (trisc), and data-out (brisc) phases" />
+<KernelPipeline client:visible />
 
 This example kernel runs on *one* Tensix tile (core). That one core is responsible for processing all 64 input tiles. If you wanted to run this on 64 cores there would be no inner loop, because every core would process exactly one tile of the input. 
 
@@ -479,7 +478,7 @@ void MAIN { // compiler defines find-replace for real main
     // compute done, notifies PACK core
     tile_regs_commit();
 
-    // run on TRISC2 (pack core) 
+    // run on trisc2 (pack core) 
     // set pack core up to receive above message
     tile_regs_wait();
 
