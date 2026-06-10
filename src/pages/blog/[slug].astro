@@ -226,9 +226,86 @@ pre {
 .toc-d2 a { padding-left: 0.6rem; }
 .toc-d3 a { padding-left: 1.2rem; }
 
-/* Hidden on mobile/narrow screens */
+/* --- Tap-to-toggle controls (touch / narrow screens only) --- */
+.toc-toggle { display: none; }
+.toc-backdrop { display: none; }
+
+/* On wide screens the rail is hover-driven; below that it becomes a
+   tap-to-toggle panel with a floating button and a backdrop. */
 @media (max-width: 1024px) {
-  .toc-rail { display: none; }
+  /* Rail off-canvas by default, slides in when toggled open */
+  .toc-rail {
+    width: 280px;
+    max-width: calc(100vw - 4rem);
+    padding: 1.2rem 0.8rem;
+    background: var(--bg);
+    box-shadow: 2px 0 16px rgba(var(--shadow-rgb), 0.24);
+    border-radius: 0 12px 12px 0;
+    transform: translateY(-50%) translateX(-100%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.28s ease, visibility 0.28s;
+  }
+
+  .toc-rail.is-open {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* labels are always shown inside the toggled panel */
+  .toc-label { opacity: 1; }
+
+  /* Floating toggle button */
+  .toc-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 101;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--fg);
+    box-shadow: 0 2px 12px rgba(var(--shadow-rgb), 0.24);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+
+  .toc-toggle svg { width: 20px; height: 20px; display: block; }
+  .toc-toggle .toc-toggle-close { display: none; }
+
+  .toc-toggle.is-active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .toc-toggle.is-active .toc-toggle-open { display: none; }
+  .toc-toggle.is-active .toc-toggle-close { display: block; }
+
+  /* Dismiss backdrop */
+  .toc-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(var(--shadow-rgb), 0.32);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.28s ease, visibility 0.28s;
+  }
+  .toc-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 /* Perfect centering wrapper */
@@ -319,8 +396,30 @@ article.post-plain :global(img[width]) {
   }}
 >
   {showTocRail && (
-    <nav class="toc-rail" aria-label="Table of contents">
-      <ol class="toc-entries">
+    <Fragment>
+      <button
+        class="toc-toggle"
+        type="button"
+        aria-label="Toggle table of contents"
+        aria-expanded="false"
+        aria-controls="toc-rail"
+      >
+        <svg class="toc-toggle-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <circle cx="3.5" cy="6" r="1" fill="currentColor" stroke="none" />
+          <circle cx="3.5" cy="12" r="1" fill="currentColor" stroke="none" />
+          <circle cx="3.5" cy="18" r="1" fill="currentColor" stroke="none" />
+        </svg>
+        <svg class="toc-toggle-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="6" y1="6" x2="18" y2="18" />
+          <line x1="18" y1="6" x2="6" y2="18" />
+        </svg>
+      </button>
+      <div class="toc-backdrop"></div>
+      <nav id="toc-rail" class="toc-rail" aria-label="Table of contents">
+        <ol class="toc-entries">
         <li class="toc-entry toc-entry-title" data-target="top">
           <a href="#">
             <span class="toc-tick"></span>
@@ -334,9 +433,10 @@ article.post-plain :global(img[width]) {
               <span class="toc-label">{heading.text}</span>
             </a>
           </li>
-        ))}
-      </ol>
-    </nav>
+          ))}
+        </ol>
+      </nav>
+    </Fragment>
   )}
   <div class="centered-wrapper">
     <article class="post-plain markdown-body">
@@ -358,6 +458,31 @@ article.post-plain :global(img[width]) {
   <script>
     const tocEntries = [...document.querySelectorAll('.toc-entry')];
     if (tocEntries.length) {
+      // --- tap-to-toggle panel (touch / narrow screens) ---
+      const tocRail = document.getElementById('toc-rail');
+      const tocToggle = document.querySelector('.toc-toggle');
+      const tocBackdrop = document.querySelector('.toc-backdrop');
+      const narrowQuery = window.matchMedia('(max-width: 1024px)');
+
+      const isTocOpen = () => !!tocRail?.classList.contains('is-open');
+      const setTocOpen = (open) => {
+        tocRail?.classList.toggle('is-open', open);
+        tocBackdrop?.classList.toggle('is-open', open);
+        tocToggle?.classList.toggle('is-active', open);
+        tocToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+      const closeToc = () => setTocOpen(false);
+
+      tocToggle?.addEventListener('click', () => setTocOpen(!isTocOpen()));
+      tocBackdrop?.addEventListener('click', closeToc);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isTocOpen()) closeToc();
+      });
+      // reset when returning to the desktop hover layout
+      narrowQuery.addEventListener('change', (event) => {
+        if (!event.matches) closeToc();
+      });
+
       const topEntry = tocEntries.find((entry) => entry.dataset.target === 'top') ?? null;
       const sectionItems = tocEntries
         .map((entry) => {
@@ -419,6 +544,7 @@ article.post-plain :global(img[width]) {
           event.preventDefault();
           setActive(entry);
           lockUntil = Date.now() + 800;
+          if (narrowQuery.matches) closeToc();
 
           if (target === 'top') {
             window.scrollTo({ top: 0 });
