@@ -28,6 +28,7 @@
 
 .markdown-body h2 {
   font-size: 1.45rem;
+  margin-top: 2em;
 }
 
 .markdown-body h3 {
@@ -117,8 +118,12 @@
   text-decoration: var(--shiki-dark-text-decoration);
 }
 
-.markdown-body pre, .markdown-body code, .markdown-body pre code {
-  white-space: pre-wrap;
+.markdown-body pre,
+.markdown-body pre code {
+  white-space: pre;
+}
+
+.markdown-body :not(pre) > code {
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -241,11 +246,16 @@
 
 .markdown-body a {
   color: var(--accent);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(var(--accent-rgb), 0.32);
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
 .markdown-body a:hover {
-  text-decoration: underline;
+  color: var(--accent-hover);
+  text-decoration-color: rgba(var(--accent-rgb), 0.9);
 }
 
 .markdown-body img {

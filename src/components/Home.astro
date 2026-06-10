@@ -26,11 +26,10 @@ const parseLocalDate = (dateString: string) => {
   const [, year, month, day] = match;
   return new Date(Number(year), Number(month) - 1, Number(day));
 };
-const formatLongDate = (date: Date) => date.toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-}).toLowerCase();
+const formatMonthYear = (date: Date) => {
+  const month = date.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
+  return `${month} ${date.getFullYear()}`;
+};
 const formatShortDate = (date: Date) => {
   const month = date.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
   const day = String(date.getDate()).padStart(2, '0');
@@ -41,7 +40,7 @@ const latestPostDate = posts.reduce((latest, post) => {
   const date = parseLocalDate(post.data.pubDate);
   return date && date > latest ? date : latest;
 }, new Date(0));
-const latestPostLabel = latestPostDate.getTime() ? formatLongDate(latestPostDate) : '—';
+const latestPostLabel = latestPostDate.getTime() ? formatMonthYear(latestPostDate) : '—';
 
 const catColors: Record<string, string> = {
   'gpu': 'var(--cat-gpu)',
@@ -52,8 +51,6 @@ const catColors: Record<string, string> = {
   'misc': 'var(--cat-misc)',
 };
 const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
-
-const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
 ---
 
 <section class="home">
@@ -61,14 +58,8 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
 
   <div class="meta">
     <span>{posts.length} posts</span>
-    <span class="sep">/</span>
-    <span>{categoryCount} cats</span>
-    <span class="sep">/</span>
-    <span>{books.length} {books.length === 1 ? 'book' : 'books'}</span>
-    <span class="sep">/</span>
+    <span class="sep">·</span>
     <span>updated {latestPostLabel}</span>
-    <span class="sep">/</span>
-    <a class="meta-link" href="/ai">ai corner →</a>
   </div>
 
   {books.length > 0 && (
@@ -167,18 +158,6 @@ const categoryCount = new Set(posts.map(p => p.data.cat).filter(Boolean)).size;
 
   .meta .sep {
     color: var(--border-strong);
-  }
-
-  .meta-link {
-    color: var(--fg-subtle);
-    text-decoration: none;
-    transition: color 0.12s;
-  }
-
-  .meta-link:hover {
-    color: var(--fg);
-    text-decoration: underline;
-    text-underline-offset: 3px;
   }
 
   .ai-chip {

@@ -46,7 +46,7 @@ const readingTimeLabel = readingTimeMinutes < 60
 <style>
 :root {
   /* adjust these to taste */
-  --content-max-width: 800px;
+  --content-max-width: 700px;
   --side-gutter: 1rem;
 }
 
@@ -57,10 +57,13 @@ html, body {
   overflow-x: hidden;
 }
 
-/* make all code blocks wrap */
-code,
+/* code blocks scroll horizontally rather than wrapping (preserves indentation) */
 pre {
-  white-space: pre-wrap;
+  white-space: pre;
+}
+
+/* inline code may still break to avoid overflow */
+:not(pre) > code {
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -76,7 +79,7 @@ pre {
   line-height: 1.2;
   margin: 0 0 0.5rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   font-family: var(--font-mono);
   color: var(--fg-strong);
 }
