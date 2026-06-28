@@ -1,7 +1,11 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
+import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+import BookCard from '../../components/BookCard.astro';
+import { getBookConfigs } from '../../data/books';
+import { resolveBookFromDocs } from '../../lib/books';
 
 interface AiEntry {
   slug: string;
@@ -88,6 +92,20 @@ if (fs.existsSync(aiDir)) {
 const allEntries = aiEntries.sort((a, b) =>
   b.date.localeCompare(a.date),
 );
+
+// Structured, AI-written long-form books (reading order with chapters).
+const bookDocs = await getCollection('books', ({ data }) => data.published);
+const books = getBookConfigs()
+  .filter((config) => bookDocs.some((doc) => doc.id.startsWith(`${config.id}/`)))
+  .map((config) => {
+    const resolved = resolveBookFromDocs(config.id, bookDocs);
+    return {
+      id: config.id,
+      title: config.title,
+      description: config.shortDescription ?? config.description,
+      chapterCount: resolved.chapters.length,
+    };
+  });
 ---
 <Layout
   title="ai corner"
@@ -99,47 +117,72 @@ const allEntries = aiEntries.sort((a, b) =>
       <div class="kicker">// ai corner</div>
       <h1 class="corner-title">ai corner</h1>
       <p class="corner-blurb">
-        a place for ai-generated writings, html, and random svgs.
+        everything ai-generated lives here — long-form books, writings, html, and random svgs.
       </p>
       <p class="corner-note">
-        my own posts live on the <a href="/">main index</a>.
+        my own writing lives on the <a href="/">main index</a>.
       </p>
     </header>
 
-    {allEntries.length === 0 ? (
-      <p class="empty">nothing here yet — drop <code>.html</code> or <code>.svg</code> files into <code>src/content/ai/</code>.</p>
-    ) : (
-      <ol class="entry-list">
-        {allEntries.map((entry, idx) => {
-          const num = allEntries.length - idx;
-          const hex = `0x${num.toString(16).padStart(2, '0')}`;
-          return (
-            <li class="entry-row">
-              <a class="entry-link" href={entry.href}>
-                <span class="entry-num">{hex}</span>
-                <span class="entry-body">
-                  <span class="entry-title">{entry.title}</span>
-                  {entry.description && (
-                    <span class="entry-desc">{entry.description}</span>
-                  )}
-                </span>
-                <span class="entry-meta">
-                  <span class="entry-kind">{entry.kind}</span>
-                  {entry.model && (
-                    <>
-                      <span class="entry-sep" aria-hidden="true">·</span>
-                      <span class="entry-model">{entry.model.toLowerCase()}</span>
-                    </>
-                  )}
-                  <span class="entry-sep" aria-hidden="true">·</span>
-                  <span class="entry-date">{entry.dateLabel}</span>
-                </span>
-              </a>
-            </li>
-          );
-        })}
-      </ol>
+    {books.length > 0 && (
+      <section class="ai-group">
+        <div class="group-head">
+          <span class="group-title">// reading</span>
+          <span class="group-rule" aria-hidden="true"></span>
+        </div>
+        <div class="book-grid">
+          {books.map((book) => (
+            <BookCard
+              id={book.id}
+              name={book.title}
+              chapterCount={book.chapterCount}
+              description={book.description}
+            />
+          ))}
+        </div>
+      </section>
     )}
+
+    <section class="ai-group">
+      <div class="group-head">
+        <span class="group-title">// experiments</span>
+        <span class="group-rule" aria-hidden="true"></span>
+      </div>
+      {allEntries.length === 0 ? (
+        <p class="empty">nothing here yet — drop <code>.html</code> or <code>.svg</code> files into <code>src/content/ai/</code>.</p>
+      ) : (
+        <ol class="entry-list">
+          {allEntries.map((entry, idx) => {
+            const num = allEntries.length - idx;
+            const hex = `0x${num.toString(16).padStart(2, '0')}`;
+            return (
+              <li class="entry-row">
+                <a class="entry-link" href={entry.href}>
+                  <span class="entry-num">{hex}</span>
+                  <span class="entry-body">
+                    <span class="entry-title">{entry.title}</span>
+                    {entry.description && (
+                      <span class="entry-desc">{entry.description}</span>
+                    )}
+                  </span>
+                  <span class="entry-meta">
+                    <span class="entry-kind">{entry.kind}</span>
+                    {entry.model && (
+                      <>
+                        <span class="entry-sep" aria-hidden="true">·</span>
+                        <span class="entry-model">{entry.model.toLowerCase()}</span>
+                      </>
+                    )}
+                    <span class="entry-sep" aria-hidden="true">·</span>
+                    <span class="entry-date">{entry.dateLabel}</span>
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
   </section>
 </Layout>
 
@@ -213,6 +256,37 @@ const allEntries = aiEntries.sort((a, b) =>
     color: var(--fg-muted);
     font-size: 0.9rem;
     padding: 1rem 0;
+  }
+
+  .ai-group {
+    margin-bottom: 2.25rem;
+  }
+
+  .group-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .group-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--fg-subtle);
+    text-transform: lowercase;
+    flex-shrink: 0;
+  }
+
+  .group-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border-soft);
+  }
+
+  .book-grid {
+    display: grid;
+    gap: 0.6rem;
   }
 
   .entry-list {

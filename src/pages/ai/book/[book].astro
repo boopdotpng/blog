@@ -1,8 +1,8 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
-import { getBookConfigs } from '../../data/books';
-import { resolveBookFromDocs } from '../../lib/books';
+import { getBookConfigs } from '../../../data/books';
+import { resolveBookFromDocs } from '../../../lib/books';
 
 export async function getStaticPaths() {
   const docs = await getCollection('books', ({ data }) => data.published);
@@ -23,11 +23,12 @@ const firstChapter = resolvedBook.chapters[0];
 <Layout
   title={resolvedBook.config.title}
   description={resolvedBook.config.description}
+  robots="noindex,follow"
   schema={{
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    '@id': `https://anuraagw.me/book/${bookId}#collection`,
-    url: `https://anuraagw.me/book/${bookId}`,
+    '@id': `https://anuraagw.me/ai/book/${bookId}#collection`,
+    url: `https://anuraagw.me/ai/book/${bookId}`,
     name: resolvedBook.config.title,
     description: resolvedBook.config.description,
     mainEntity: {

@@ -9,7 +9,7 @@ interface Props {
 const { id, name, chapterCount, description } = Astro.props as Props;
 ---
 
-<a class="book-card" href={`/book/${id}`}>
+<a class="book-card" href={`/ai/book/${id}`}>
   <div class="book-icon">📘</div>
   <div class="book-content">
     <span class="book-name">{name}</span>

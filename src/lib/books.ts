@@ -63,7 +63,7 @@ export function resolveBookFromDocs(bookId: string, docs: BookChapterEntry[]): R
         doc,
         slug,
         order,
-        href: `/book/${bookId}/${slug}`,
+        href: `/ai/book/${bookId}/${slug}`,
         stageTitle: stage.title,
       };
     }),

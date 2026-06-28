@@ -60,7 +60,7 @@ function getBooksMetadataByPathname() {
       const bookPath = path.join(booksDir, bookId);
       const fileEntries = fs.readdirSync(bookPath, { withFileTypes: true });
 
-      const bookPathname = `/book/${bookId}`;
+      const bookPathname = `/ai/book/${bookId}`;
       byPathname.set(bookPathname, { published: true, pubDate: undefined });
 
       // Add individual chapters
@@ -73,7 +73,7 @@ function getBooksMetadataByPathname() {
         const file = fs.readFileSync(filePath, 'utf8');
 
         const { published, pubDate } = parseBlogFrontmatter(file);
-        const chapterPathname = `/book/${bookId}/${slug}`;
+        const chapterPathname = `/ai/book/${bookId}/${slug}`;
         byPathname.set(chapterPathname, { published, pubDate });
       }
     }
@@ -91,6 +91,12 @@ export default defineConfig({
   site: process.env.SITE_URL ?? 'https://anuraagw.me',
   trailingSlash: 'never',
   build: { format: 'file' },
+  // The book moved under the /ai namespace; keep old /book/* URLs alive.
+  redirects: {
+    '/book': '/ai',
+    '/book/[book]': '/ai/book/[book]',
+    '/book/[book]/[chapter]': '/ai/book/[book]/[chapter]',
+  },
   integrations: [
     // preact powers interactive diagram islands; mdx lets posts import them.
     preact(),
@@ -100,6 +106,8 @@ export default defineConfig({
         const pathname = new URL(page).pathname;
         // Don't include non-canonical or non-content routes in the sitemap.
         if (pathname === '/404' || pathname === '/404.html') return false;
+        // The /ai zone is AI-generated content — noindex, kept out of the sitemap.
+        if (pathname === '/ai' || pathname.startsWith('/ai/')) return false;
 
         const normalizedPathname = pathname.replace(/\/$/, '') || '/';
         const blogMeta = BLOG_METADATA_BY_PATHNAME.get(normalizedPathname);
@@ -131,10 +139,6 @@ export default defineConfig({
 
         if (pathname === '/') {
           return { ...item, changefreq: 'weekly', priority: 1.0 };
-        }
-
-        if (pathname.startsWith('/book/')) {
-          return { ...item, changefreq: 'weekly', priority: 0.6 };
         }
 
         return { ...item, changefreq: 'monthly', priority: 0.5 };

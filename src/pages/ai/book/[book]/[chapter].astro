@@ -1,8 +1,8 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
+import Layout from '../../../../layouts/Layout.astro';
 import { getCollection, render } from 'astro:content';
-import galleryScriptUrl from '../../../scripts/gallery.ts?url';
-import { resolveBookFromDocs } from '../../../lib/books';
+import galleryScriptUrl from '../../../../scripts/gallery.ts?url';
+import { resolveBookFromDocs } from '../../../../lib/books';
 
 export async function getStaticPaths() {
   const docs = await getCollection('books', ({ data }) => data.published);
@@ -384,6 +384,7 @@ const pageTitle = `${doc.data.title} — ${resolvedBook.config.title}`;
   description={description}
   fullBleed={true}
   hideBackLink={true}
+  robots="noindex,follow"
   ogType="article"
   useKatex={doc.data.useKatex}
   ogImage={`/og/book/${bookId}/${chapterSlug}.png`}
@@ -401,8 +402,8 @@ const pageTitle = `${doc.data.title} — ${resolvedBook.config.title}`;
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'home', item: 'https://anuraagw.me' },
-      { '@type': 'ListItem', position: 2, name: 'books', item: 'https://anuraagw.me/book' },
-      { '@type': 'ListItem', position: 3, name: resolvedBook.config.title, item: `https://anuraagw.me/book/${bookId}` },
+      { '@type': 'ListItem', position: 2, name: 'ai', item: 'https://anuraagw.me/ai' },
+      { '@type': 'ListItem', position: 3, name: resolvedBook.config.title, item: `https://anuraagw.me/ai/book/${bookId}` },
       { '@type': 'ListItem', position: 4, name: doc.data.title },
     ],
   }}
@@ -415,7 +416,7 @@ const pageTitle = `${doc.data.title} — ${resolvedBook.config.title}`;
           <span class="site-label">anuraagw.me</span>
         </a>
         <div class="book-sidebar-kicker">book</div>
-        <a class="book-sidebar-title" href={`/book/${bookId}`}>{resolvedBook.config.title}</a>
+        <a class="book-sidebar-title" href={`/ai/book/${bookId}`}>{resolvedBook.config.title}</a>
         {resolvedBook.stages.map((stage) => (
           <section class="book-stage">
             <h2 class="book-stage-title">{stage.title}</h2>
@@ -447,7 +448,7 @@ const pageTitle = `${doc.data.title} — ${resolvedBook.config.title}`;
           <span class="chapter-meta-sep">•</span>
           <span>{readingTimeLabel}</span>
           <span class="chapter-meta-sep">•</span>
-          <a class="chapter-book-link" href={`/book/${bookId}`}>{resolvedBook.config.title}</a>
+          <a class="chapter-book-link" href={`/ai/book/${bookId}`}>{resolvedBook.config.title}</a>
         </div>
 
         <h1 class="chapter-title">{doc.data.title}</h1>
@@ -468,7 +469,7 @@ const pageTitle = `${doc.data.title} — ${resolvedBook.config.title}`;
           </nav>
         ) : (
           <div class="chapter-finish">
-            End of book. <a href={`/book/${bookId}`}>Back to the reading order.</a>
+            End of book. <a href={`/ai/book/${bookId}`}>Back to the reading order.</a>
           </div>
         )}
       </article>
