@@ -1,6 +1,12 @@
 ---
 import '../styles/diagrams.css';
-const isHome = Astro.url.pathname === '/';
+// Normalize the path so it works in both `astro dev` (pathname "/") and the
+// static build, which uses `build.format: 'file'` and yields "/index.html".
+const cleanPath = Astro.url.pathname
+  .replace(/\/index\.html$/, '/')
+  .replace(/\.html$/, '')
+  .replace(/\/$/, '') || '/';
+const isHome = cleanPath === '/';
 const {
   title = 'ml, bio, coding',
   description = 'thoughts on neural nets, chips, and cells',
@@ -21,7 +27,6 @@ const siteName = 'anuraag';
 const siteHandle = '@boopdotpng';
 const authorName = 'Anuraag Warudkar';
 const fullTitle = title;
-const cleanPath = Astro.url.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
 const canonicalUrl = Astro.site ? new URL(cleanPath, Astro.site).toString() : Astro.url.toString();
 const siteUrl = Astro.site ? new URL('/', Astro.site).toString() : canonicalUrl;
 const ogImageUrl = ogImage
