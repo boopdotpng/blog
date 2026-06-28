@@ -363,28 +363,75 @@ if (articleSchema && schemaArticle?.wordCount) {
   .theme-toggle {
     border: none;
     background: none;
-    color: var(--fg-muted);
-    font-size: 0.82rem;
-    line-height: 1;
-    padding: 0.35rem 0.3rem;
+    padding: 0.35rem 0.4rem;
+    line-height: 0;
     cursor: pointer;
-    display: inline-grid;
-    place-items: center;
-    transition: color 0.42s ease;
+    display: inline-flex;
+    align-items: center;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .theme-toggle:hover {
-    color: var(--fg);
+  .theme-toggle-track {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--surface-elev);
+    border: 1px solid var(--border-strong);
+    transition: background-color 0.42s ease, border-color 0.42s ease;
+  }
+
+  .theme-toggle:hover .theme-toggle-track {
+    border-color: var(--fg-subtle);
   }
 
   .theme-toggle:focus-visible {
-    outline: 2px solid rgba(var(--accent-rgb), 0.35);
+    outline: none;
+  }
+
+  .theme-toggle:focus-visible .theme-toggle-track {
+    outline: 2px solid rgba(var(--accent-rgb), 0.5);
     outline-offset: 2px;
   }
 
-  .theme-toggle-icon {
-    width: 16px;
-    height: 16px;
+  .theme-toggle-thumb {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--fg-soft);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.25);
+    transition: transform 0.32s cubic-bezier(0.4, 0.1, 0.2, 1), background-color 0.42s ease, color 0.42s ease;
+  }
+
+  :root[data-theme='dark'] .theme-toggle-thumb {
+    transform: translateX(16px);
+  }
+
+  .theme-icon {
+    position: absolute;
+    transition: opacity 0.24s ease, transform 0.32s cubic-bezier(0.4, 0.1, 0.2, 1);
+  }
+
+  .theme-icon-moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+  }
+
+  :root[data-theme='dark'] .theme-icon-sun {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.5);
+  }
+
+  :root[data-theme='dark'] .theme-icon-moon {
+    opacity: 1;
+    transform: none;
   }
 
   @media (max-width: 600px) {
@@ -399,7 +446,10 @@ if (articleSchema && schemaArticle?.wordCount) {
     html.theme-changing,
     html.theme-changing *,
     .song-title,
-    .theme-toggle {
+    .theme-toggle,
+    .theme-toggle-track,
+    .theme-toggle-thumb,
+    .theme-icon {
       transition: none !important;
     }
   }
@@ -504,13 +554,22 @@ if (articleSchema && schemaArticle?.wordCount) {
             type="button"
             class="theme-toggle"
             data-theme-toggle
+            role="switch"
             aria-label="Switch to dark mode"
-            aria-pressed="false"
+            aria-checked="false"
             title="Toggle theme"
           >
-            <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18V4a8 8 0 1 1 0 16Z"/>
-            </svg>
+            <span class="theme-toggle-track" aria-hidden="true">
+              <span class="theme-toggle-thumb">
+                <svg class="theme-icon theme-icon-sun" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4.2"/>
+                  <path d="M12 2.2v2.4M12 19.4v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"/>
+                </svg>
+                <svg class="theme-icon theme-icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>
+                </svg>
+              </span>
+            </span>
           </button>
         </li>
         <li><a href="/ai">ai</a></li>
@@ -545,13 +604,13 @@ if (articleSchema && schemaArticle?.wordCount) {
         root.dataset.theme = theme;
         const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
         button.setAttribute('aria-label', label);
-        button.setAttribute('aria-pressed', String(theme === 'dark'));
+        button.setAttribute('aria-checked', String(theme === 'dark'));
       };
 
       // Sync ARIA state with theme set by the head script
       const initial = root.dataset.theme === 'dark' ? 'dark' : 'light';
       button.setAttribute('aria-label', initial === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-      button.setAttribute('aria-pressed', String(initial === 'dark'));
+      button.setAttribute('aria-checked', String(initial === 'dark'));
 
       button.addEventListener('click', () => {
         root.classList.add('theme-changing');
