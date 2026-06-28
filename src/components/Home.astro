@@ -78,19 +78,12 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
       })}
     </ol>
   </div>
-
-  <footer class="signoff" aria-hidden="true">
-    <pre class="ascii-cat" set:html={`  /\\_/\\
- ( o.o )
-  &gt; ^ &lt;`} />
-  </footer>
 </section>
 
 <style>
   .home {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 1rem 1rem 4rem;
+    width: 100%;
+    padding: 0.25rem 0 2rem;
     font-family: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
@@ -241,31 +234,11 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
     font-variant-numeric: tabular-nums;
   }
 
-  /* ── signoff ───────────────────────────────────────────── */
-
-  .signoff {
-    text-align: center;
-    padding: 2.5rem 0 0;
-    opacity: 0.4;
-    transition: opacity 0.3s;
-  }
-
-  .signoff:hover {
-    opacity: 0.8;
-  }
-
-  .ascii-cat {
-    font-size: 0.95rem;
-    line-height: 1.2;
-    margin: 0;
-    color: var(--fg);
-  }
-
   /* ── responsive ────────────────────────────────────────── */
 
   @media (max-width: 640px) {
     .home {
-      padding: 1rem 0.85rem 3rem;
+      padding: 0.25rem 0 2rem;
     }
 
     .post-link {

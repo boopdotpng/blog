@@ -8,6 +8,8 @@ const {
   schemaArticle,
   schema,
   favoriteSong,
+  categories = [],
+  now,
   robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
   useKatex = false,
   ogImage,
@@ -245,6 +247,12 @@ if (articleSchema && schemaArticle?.wordCount) {
     transition: background-color 0.42s ease, color 0.42s ease;
   }
 
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
   html.theme-changing,
   html.theme-changing * {
     transition-property: color, background-color, border-color, box-shadow, text-shadow, fill, stroke;
@@ -434,12 +442,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     transform: none;
   }
 
-  @media (max-width: 600px) {
-    .home-song {
-      display: none;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     html,
     body,
@@ -519,6 +521,243 @@ if (articleSchema && schemaArticle?.wordCount) {
     color: var(--border-strong);
   }
 
+  /* ── home: sidebar card + index ─────────────────────────── */
+
+  .home-shell {
+    display: flex;
+    flex: 1;
+    min-height: 100vh;
+    align-items: stretch;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
+    box-sizing: border-box;
+  }
+
+  .home-sidebar {
+    flex: 0 0 230px;
+    display: flex;
+  }
+
+  .home-card {
+    position: sticky;
+    top: clamp(1.5rem, 4vw, 3rem);
+    align-self: flex-start;
+    width: 100%;
+    min-height: calc(100vh - 2 * clamp(1.5rem, 4vw, 3rem));
+    max-height: calc(100vh - 2 * clamp(1.5rem, 4vw, 3rem));
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem 1.4rem;
+    box-sizing: border-box;
+    border: 1px solid var(--border-muted);
+    border-radius: 14px;
+    background: var(--surface-soft);
+    font-family: var(--font-mono);
+  }
+
+  .home-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .home-name:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .home-card .home-song {
+    display: block;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .home-card .home-song .song-icon {
+    display: inline-block;
+    vertical-align: -0.15em;
+    margin-right: 0.35rem;
+  }
+
+  .home-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.1rem;
+  }
+
+  .home-controls .theme-toggle {
+    padding: 0;
+  }
+
+  .home-theme-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    color: var(--fg-muted);
+    text-transform: lowercase;
+  }
+
+  .home-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .home-nav a {
+    color: var(--fg-muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    padding: 0.2rem 0;
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+  }
+
+  .home-nav a:hover {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .home-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .home-block-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: lowercase;
+    color: var(--fg-subtle);
+  }
+
+  .home-tags {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .home-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.8rem;
+    color: var(--fg-soft);
+  }
+
+  .home-tag-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    flex: none;
+  }
+
+  .home-tag-name {
+    text-transform: lowercase;
+  }
+
+  .home-tag-count {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: var(--fg-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .home-now {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--fg-soft);
+  }
+
+  .home-ascii {
+    margin: auto 0 0;
+    padding-top: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.2;
+    color: var(--fg);
+    opacity: 0.4;
+    transition: opacity 0.3s;
+  }
+
+  .home-card:hover .home-ascii {
+    opacity: 0.75;
+  }
+
+  .home-content {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  @media (max-width: 760px) {
+    .home-shell {
+      flex-direction: column;
+      min-height: 0;
+      gap: 1.25rem;
+      padding: 1.25rem 1rem 2.5rem;
+    }
+
+    .home-sidebar {
+      flex: none;
+      width: auto;
+    }
+
+    .home-card {
+      position: static;
+      min-height: 0;
+      max-height: none;
+      overflow: visible;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1.25rem;
+    }
+
+    .home-name {
+      flex-basis: 100%;
+    }
+
+    .home-card .home-song {
+      flex-basis: 100%;
+    }
+
+    .home-nav {
+      flex-direction: row;
+      gap: 0.9rem;
+    }
+
+    .home-block {
+      flex-basis: 100%;
+    }
+
+    .home-tags {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.4rem 1.1rem;
+    }
+
+    .home-tag-count {
+      margin-left: 0.35rem;
+    }
+
+    .home-ascii {
+      display: none;
+    }
+  }
+
 </style>
 
   <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
@@ -531,72 +770,137 @@ if (articleSchema && schemaArticle?.wordCount) {
 
 </head>
 <body>
-  <header class:list={['site-header', { 'full-bleed': fullBleed }]}>
-    {isHome && favoriteSong && (
-      <a class="home-song" href={favoriteSong.url} target="_blank" aria-label="Favorite song right now">
-        <span class="song-icon" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M13 2.5a.5.5 0 0 0-.62-.48l-6 1.5A.5.5 0 0 0 6 4v6.05A2.5 2.5 0 1 0 7 12V6.39l5-1.25v3.91A2.5 2.5 0 1 0 13 11V2.5Z"/>
-          </svg>
-        </span>
-        <span class="song-title">{favoriteSong.title}</span>
-      </a>
-    )}
-    {!isHome && !hideBackLink && (
-      <div class="site-title">
-        <a href="/">
-          <span class="arrow">&#8592;</span>
-          <span class="site-label">anuraagw.me</span>
-        </a>
-      </div>
-    )}
-    {!isHome && hideBackLink && <div class="site-title-spacer" aria-hidden="true"></div>}
-    <nav>
-      <ul>
-        <li>
-          <button
-            type="button"
-            class="theme-toggle"
-            data-theme-toggle
-            role="switch"
-            aria-label="Switch to dark mode"
-            aria-checked="false"
-            title="Toggle theme"
-          >
-            <span class="theme-toggle-track" aria-hidden="true">
-              <span class="theme-toggle-thumb">
-                <svg class="theme-icon theme-icon-sun" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="4.2"/>
-                  <path d="M12 2.2v2.4M12 19.4v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"/>
-                </svg>
-                <svg class="theme-icon theme-icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>
+  {isHome ? (
+    <div class="home-shell">
+      <aside class="home-sidebar">
+        <div class="home-card">
+          <a class="home-name" href="/">anuraag</a>
+          {favoriteSong && (
+            <a class="home-song" href={favoriteSong.url} target="_blank" aria-label="Favorite song right now">
+              <span class="song-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13 2.5a.5.5 0 0 0-.62-.48l-6 1.5A.5.5 0 0 0 6 4v6.05A2.5 2.5 0 1 0 7 12V6.39l5-1.25v3.91A2.5 2.5 0 1 0 13 11V2.5Z"/>
                 </svg>
               </span>
-            </span>
-          </button>
-        </li>
-        <li><a href="/ai">ai</a></li>
-        <li><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a></li>
-        <li><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a></li>
-      </ul>
-    </nav>
-  </header>
-  <main class:list={['page-main', { 'full-bleed': fullBleed }]}>
-    <slot />
-  </main>
-  {!isHome && (
-    <footer class:list={['site-footer', { 'full-bleed': fullBleed }]}>
-      <nav class="footer-nav" aria-label="Footer">
-        <a href="/">home</a>
-        <span class="footer-sep" aria-hidden="true">·</span>
-        <a href="/ai">ai</a>
-        <span class="footer-sep" aria-hidden="true">·</span>
-        <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
-        <span class="footer-sep" aria-hidden="true">·</span>
-        <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
-      </nav>
-    </footer>
+              <span class="song-title">{favoriteSong.title}</span>
+            </a>
+          )}
+          <div class="home-controls">
+            <button
+              type="button"
+              class="theme-toggle"
+              data-theme-toggle
+              role="switch"
+              aria-label="Switch to dark mode"
+              aria-checked="false"
+              title="Toggle theme"
+            >
+              <span class="theme-toggle-track" aria-hidden="true">
+                <span class="theme-toggle-thumb">
+                  <svg class="theme-icon theme-icon-sun" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4.2"/>
+                    <path d="M12 2.2v2.4M12 19.4v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"/>
+                  </svg>
+                  <svg class="theme-icon theme-icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>
+                  </svg>
+                </span>
+              </span>
+            </button>
+            <span class="home-theme-label">theme</span>
+          </div>
+          <nav class="home-nav" aria-label="Primary">
+            <a href="/ai">ai</a>
+            <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
+            <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
+          </nav>
+          {categories.length > 0 && (
+            <div class="home-block">
+              <span class="home-block-title">// tags</span>
+              <ul class="home-tags">
+                {categories.map((c) => (
+                  <li class="home-tag">
+                    <span class="home-tag-dot" style={`background: var(--cat-${c.name})`} aria-hidden="true"></span>
+                    <span class="home-tag-name">{c.name}</span>
+                    <span class="home-tag-count">{c.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {now && (
+            <div class="home-block">
+              <span class="home-block-title">now</span>
+              <p class="home-now">{now}</p>
+            </div>
+          )}
+          <pre class="home-ascii" aria-hidden="true">{`  /\\_/\\
+ ( o.o )
+  > ^ <`}</pre>
+        </div>
+      </aside>
+      <main class="home-content">
+        <slot />
+      </main>
+    </div>
+  ) : (
+    <Fragment>
+      <header class:list={['site-header', { 'full-bleed': fullBleed }]}>
+        {!hideBackLink && (
+          <div class="site-title">
+            <a href="/">
+              <span class="arrow">&#8592;</span>
+              <span class="site-label">anuraagw.me</span>
+            </a>
+          </div>
+        )}
+        {hideBackLink && <div class="site-title-spacer" aria-hidden="true"></div>}
+        <nav>
+          <ul>
+            <li>
+              <button
+                type="button"
+                class="theme-toggle"
+                data-theme-toggle
+                role="switch"
+                aria-label="Switch to dark mode"
+                aria-checked="false"
+                title="Toggle theme"
+              >
+                <span class="theme-toggle-track" aria-hidden="true">
+                  <span class="theme-toggle-thumb">
+                    <svg class="theme-icon theme-icon-sun" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="4.2"/>
+                      <path d="M12 2.2v2.4M12 19.4v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"/>
+                    </svg>
+                    <svg class="theme-icon theme-icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>
+                    </svg>
+                  </span>
+                </span>
+              </button>
+            </li>
+            <li><a href="/ai">ai</a></li>
+            <li><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a></li>
+            <li><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a></li>
+          </ul>
+        </nav>
+      </header>
+      <main class:list={['page-main', { 'full-bleed': fullBleed }]}>
+        <slot />
+      </main>
+      <footer class:list={['site-footer', { 'full-bleed': fullBleed }]}>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="/">home</a>
+          <span class="footer-sep" aria-hidden="true">·</span>
+          <a href="/ai">ai</a>
+          <span class="footer-sep" aria-hidden="true">·</span>
+          <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
+          <span class="footer-sep" aria-hidden="true">·</span>
+          <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
+        </nav>
+      </footer>
+    </Fragment>
   )}
   <script is:inline>
     (() => {
