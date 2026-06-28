@@ -197,6 +197,11 @@ if (articleSchema && schemaArticle?.wordCount) {
     --font-size: 16px;
     --font-sans: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
     --font-mono: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    /* theme cross-fade + toggle animation timing */
+    --theme-dur: 0.7s;
+    --theme-ease: cubic-bezier(0.45, 0, 0.2, 1);
+    --toggle-dur: 0.55s;
+    --toggle-ease: cubic-bezier(0.34, 1.2, 0.64, 1);
     color-scheme: light;
   }
 
@@ -244,7 +249,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     font-family: var(--font-sans);
     line-height: 1.5;
     font-size: var(--font-size);
-    transition: background-color 0.42s ease, color 0.42s ease;
+    transition: background-color var(--theme-dur) var(--theme-ease), color var(--theme-dur) var(--theme-ease);
   }
 
   body {
@@ -256,8 +261,8 @@ if (articleSchema && schemaArticle?.wordCount) {
   html.theme-changing,
   html.theme-changing * {
     transition-property: color, background-color, border-color, box-shadow, text-shadow, fill, stroke;
-    transition-duration: 0.42s;
-    transition-timing-function: ease;
+    transition-duration: var(--theme-dur);
+    transition-timing-function: var(--theme-ease);
   }
 
   code, pre, kbd, samp {
@@ -306,7 +311,7 @@ if (articleSchema && schemaArticle?.wordCount) {
   .song-title {
     color: var(--fg-soft);
     letter-spacing: 0.02em;
-    transition: color 0.42s ease;
+    transition: color var(--theme-dur) var(--theme-ease);
   }
 
   .site-title {
@@ -387,7 +392,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     border-radius: 999px;
     background: var(--surface-elev);
     border: 1px solid var(--border-strong);
-    transition: background-color 0.42s ease, border-color 0.42s ease;
+    transition: background-color var(--theme-dur) var(--theme-ease), border-color var(--theme-dur) var(--theme-ease);
   }
 
   .theme-toggle:hover .theme-toggle-track {
@@ -415,7 +420,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     display: grid;
     place-items: center;
     box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.25);
-    transition: transform 0.32s cubic-bezier(0.4, 0.1, 0.2, 1), background-color 0.42s ease, color 0.42s ease;
+    transition: transform var(--toggle-dur) var(--toggle-ease), background-color var(--theme-dur) var(--theme-ease), color var(--theme-dur) var(--theme-ease);
   }
 
   :root[data-theme='dark'] .theme-toggle-thumb {
@@ -424,7 +429,7 @@ if (articleSchema && schemaArticle?.wordCount) {
 
   .theme-icon {
     position: absolute;
-    transition: opacity 0.24s ease, transform 0.32s cubic-bezier(0.4, 0.1, 0.2, 1);
+    transition: opacity calc(var(--toggle-dur) * 0.7) ease, transform var(--toggle-dur) var(--toggle-ease);
   }
 
   .theme-icon-moon {
@@ -925,7 +930,7 @@ if (articleSchema && schemaArticle?.wordCount) {
         const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
         setTheme(nextTheme);
         localStorage.setItem('theme', nextTheme);
-        window.setTimeout(() => root.classList.remove('theme-changing'), 460);
+        window.setTimeout(() => root.classList.remove('theme-changing'), 760);
       });
     })();
   </script>
