@@ -692,22 +692,35 @@ if (articleSchema && schemaArticle?.wordCount) {
     color: var(--fg-soft);
   }
 
-  .home-ascii {
-    margin: auto 0 0;
-    padding-top: 1.5rem;
+  .home-layout {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .home-cat {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    width: 100%;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: clamp(0.4rem, 1vw, 0.78rem);
     line-height: 1.2;
     color: var(--fg);
     opacity: 0.4;
-    transition: opacity 0.3s;
-  }
-
-  .home-card:hover .home-ascii {
-    opacity: 0.75;
+    white-space: pre;
+    overflow: hidden;
+    text-align: center;
+    pointer-events: none;
   }
 
   .home-content {
+    position: relative;
     flex: 1 1 auto;
     min-width: 0;
   }
@@ -763,8 +776,14 @@ if (articleSchema && schemaArticle?.wordCount) {
       margin-left: 0.35rem;
     }
 
-    .home-ascii {
-      display: none;
+    .home-layout {
+      overflow: visible;
+    }
+
+    .home-cat {
+      position: static;
+      bottom: auto;
+      padding: 0 1rem 1.5rem;
     }
   }
 
@@ -781,6 +800,7 @@ if (articleSchema && schemaArticle?.wordCount) {
 </head>
 <body>
   {isHome ? (
+    <div class="home-layout">
     <div class="home-shell">
       <aside class="home-sidebar">
         <div class="home-card">
@@ -844,14 +864,15 @@ if (articleSchema && schemaArticle?.wordCount) {
               <p class="home-now">{now}</p>
             </div>
           )}
-          <pre class="home-ascii" aria-hidden="true">{`  /\\_/\\
- ( o.o )
-  > ^ <`}</pre>
         </div>
       </aside>
       <main class="home-content">
         <slot />
+        <pre class="home-cat" aria-hidden="true">{`  /\\_/\\                                                                    /\\_/\\
+ ( o.o )___________________________________________________________________( o.o )
+  > ^ <                                                                      > ^ <`}</pre>
       </main>
+    </div>
     </div>
   ) : (
     <Fragment>
