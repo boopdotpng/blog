@@ -53,7 +53,7 @@ Both networks can be used concurrently. In typical usage, **noc0** is used to re
 
 It wraps around; if you wanted to send a message from T121 to T0, it would wrap around the right edge and end up at the top left. 
 
-<NocGrid client:visible cols={14} rows={12} src={[11, 9]} dst={[2, 1]} />
+<NocGrid client:visible src={[16, 11]} dst={[1, 2]} />
 
 Tiles can be accessed by their coordinate (x,y). On the p150b (the full card) there are 17 columns and 12 rows. On p100a, there are 14 columns. 
 

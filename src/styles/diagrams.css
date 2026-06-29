@@ -12,6 +12,8 @@
   --dgm-cell-stroke: var(--border-muted);
   --dgm-label: var(--fg-muted);
   --dgm-line: var(--border-strong);
+  --dgm-dram: #3a8a6e; /* DRAM ports — green */
+  --dgm-ignore: #b85a5a; /* l2cpu / PCIe / ARC / eth — ignored by multicast */
 
   margin: 2rem auto;
   font-family: var(--font-mono);
@@ -103,6 +105,10 @@
   margin: 0.8rem 0 0;
 }
 
+.dgm-caption p {
+  margin: 0.2rem 0;
+}
+
 .dgm-caption .dgm-swatch {
   display: inline-block;
   width: 0.62em;
@@ -127,6 +133,55 @@
 
 .dgm-noc .dgm-cell:hover {
   stroke: var(--fg-faint);
+}
+
+/* tile kinds — DRAM ports (x=0,9), Tensix workers, and everything else
+   (PCIe / ARC / eth). Mirrors noc-visualization topology so the right
+   columns read as distinct from the worker grid. */
+.dgm-noc .dgm-cell.kind-dram {
+  fill: color-mix(in srgb, var(--dgm-dram) 24%, var(--surface-soft));
+  stroke: color-mix(in srgb, var(--dgm-dram) 45%, var(--border-muted));
+}
+
+.dgm-noc .dgm-cell.kind-tensix {
+  fill: var(--surface-soft);
+  stroke: var(--border-muted);
+}
+
+/* l2cpu / PCIe / ARC / eth — not valid multicast receivers, tinted so it reads
+   as "ignored" rather than a worker tile. */
+.dgm-noc .dgm-cell.kind-other {
+  fill: color-mix(in srgb, var(--dgm-ignore) 16%, transparent);
+  stroke: color-mix(in srgb, var(--dgm-ignore) 35%, var(--border-muted));
+  stroke-opacity: 0.7;
+}
+
+/* only Tensix workers are selectable as src/dst/multicast targets */
+.dgm-noc .dgm-cell.kind-dram,
+.dgm-noc .dgm-cell.kind-other {
+  cursor: default;
+}
+
+/* multicast tree edges — the shared trunk + branches */
+.dgm-noc .dgm-mlink {
+  stroke: var(--noc);
+  stroke-opacity: 0.45;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.dgm-noc .dgm-mlink.is-wrap {
+  stroke-dasharray: 2 3;
+  stroke-opacity: 0.25;
+}
+
+.dgm-caption .dgm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.35rem;
+  margin-top: 0.5rem;
 }
 
 .dgm-noc .dgm-cell.is-preview {

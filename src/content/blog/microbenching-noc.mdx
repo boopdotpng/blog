@@ -1,0 +1,44 @@
+---
+title: microbenching the blackhole noc 
+pubDate: "2026-06-28"
+published: false
+description: "microbenching the tenstorrent blackhole noc"
+cat: tenstorrent
+---
+import NocGrid from '../../components/diagrams/NocGrid.tsx';
+
+### table of contents 
+- what is the noc? what is the hardware representation of it? what hardware exists on each tile to do this? 
+- how do you drive the noc and send packets? go over stream overlay and regular packet forming and submission
+- drisc cores and drisc dma engine (not technically noc but worth putting in, niche). 
+- unicast section, overlapping streams, routing, latency of packets arriving to destination, arrival-at-router ordering / priority. max peak bandwidth for unicast. packet hop cost. 
+- mcast section. mcast bandwidth, overlapping mcast streams, path reserve cost and supposed hardware bug, mcast routing (which cores receive the mcast bytes first? how does the mcast actually work) 
+- lots of tables and visualizations
+
+# what is the noc
+
+# coordinate system and translation 
+The NoC on p100a and p150b are identical, with the exception of harvested columns. 
+
+<NocGrid client:visible src={[16, 11]} dst={[1, 2]} />
+
+Flip the widget to **multicast** and drag a box over the Tensix grid to watch a single write fan out as a tree to every tile in the rectangle.
+
+# how to submit work? 
+
+# how did we measure and track completions? 
+
+# dram / gddr  / drisc
+
+# unicast 
+
+# multicast
+
+
+
+# atomics and semaphores 
+
+
+# command buffers and concurrency 
+
+# 
