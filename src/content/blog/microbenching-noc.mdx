@@ -15,13 +15,63 @@ import NocGrid from '../../components/diagrams/NocGrid.tsx';
 - mcast section. mcast bandwidth, overlapping mcast streams, path reserve cost and supposed hardware bug, mcast routing (which cores receive the mcast bytes first? how does the mcast actually work) 
 - lots of tables and visualizations
 
-# what is the noc
+# noc hardware
+The NoC (network on chip) is the 2d torus that connects every tile on the chip. It's the only way you can move data around the tenstorrent blackhole; it handles communication between tiles, from dram to tiles, and from tiles to dram.
 
+<NocGrid client:visible src={[16, 11]} dst={[1, 2]} />
+
+Every tile on the chip contains two routers and two NIUs, one for NoC 0 and one for NoC1. These are only accessible from the brisc or ncrisc cores–triscs cannot access the NoC MMIO registers. 
+
+## transactions 
+The steps to post a noc transaction (roughly, we will go into more detail later) are: 
+1. Wait until the command buffer is free (poll `CMD_CTRL == 0`)
+2. Fill the descriptor registers (src, dst, length, verb, transaction id (trid)) 
+3. Trigger the transaction (write `CMD_CTRL == CTRL_SEND_REQ`)
+4. Poll one of the status counters for a done notification
+
+Step two varies slightly between the transaction types listed below; otherwise the flow is exactly the same. 
+
+After step 3, the NIU builds the header flit (this chip moves 64B/cycle, a flit) from the registers you poked earlier. You never construct this manually. For writes, the NIU DMA-reads the payload straight out of your L1 starting at `TARG_ADDR_LO` (with the exception of inline writes). It also packetizes if the length of your data is >16KiB. Every packet includes a header containing all the information written in the registers before your write and the actual data. 
+
+Every packet passes through the router first: 
+
+## Router
+Imagine the router as a box with 5 ports: north, south, east, west, and one to the NIU, each 512-bit wide. 
+
+
+
+## NIU 
+
+| register | meaning |
+| --- | --- |
+| `CTRL` | the verb + flags + VC: read vs write, posted vs nonposted, multicast, which virtual channel. This is the one field that encodes "what kind of transaction." |
+| `TARG_ADDR_{LO,MID,COORDINATE}` | the source of the copy (address + which tile) |
+| `RET_ADDR_{LO,MID,COORDINATE}` | the destination of the copy (address + which tile) |
+| `AT_LEN_BE` | length in bytes (or the atomic opcode for atomics) |
+| `AT_DATA` | the immediate value (inline-write data, or atomic operand) |
+| `PACKET_TAG` | the transaction ID (0–15) so you can track this op's completion |
+
+The coordinate is the (x,y) location of the tile in the physical NoC grid; there are some 
+
+### write (unicast)
+
+
+### read (unicast)
+
+### inline write
+
+### atomic / semaphore increment
+
+### multicast write
+
+## noc router 
+
+
+## niu
 
 # coordinate system and translation 
 The NoC on p100a and p150b are identical, with the exception of harvested columns. 
 
-<NocGrid client:visible src={[16, 11]} dst={[1, 2]} />
 
 Flip the widget to **multicast** and drag a box over the Tensix grid to watch a single write fan out as a tree to every tile in the rectangle.
 
