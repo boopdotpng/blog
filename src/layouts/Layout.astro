@@ -137,12 +137,12 @@ if (articleSchema && schemaArticle?.wordCount) {
 
   <script is:inline>
     (() => {
-      const storedTheme = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const theme = storedTheme === 'light' || storedTheme === 'dark'
-        ? storedTheme
-        : (prefersDark ? 'dark' : 'light');
-      document.documentElement.dataset.theme = theme;
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = () => {
+        document.documentElement.dataset.theme = prefersDark.matches ? 'dark' : 'light';
+      };
+      apply();
+      prefersDark.addEventListener('change', apply);
     })();
   </script>
 
@@ -202,11 +202,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     --font-size: 16px;
     --font-sans: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
     --font-mono: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    /* theme cross-fade + toggle animation timing */
-    --theme-dur: 0.7s;
-    --theme-ease: cubic-bezier(0.45, 0, 0.2, 1);
-    --toggle-dur: 0.55s;
-    --toggle-ease: cubic-bezier(0.34, 1.2, 0.64, 1);
     color-scheme: light;
   }
 
@@ -254,20 +249,12 @@ if (articleSchema && schemaArticle?.wordCount) {
     font-family: var(--font-sans);
     line-height: 1.5;
     font-size: var(--font-size);
-    transition: background-color var(--theme-dur) var(--theme-ease), color var(--theme-dur) var(--theme-ease);
   }
 
   body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-  }
-
-  html.theme-changing,
-  html.theme-changing * {
-    transition-property: color, background-color, border-color, box-shadow, text-shadow, fill, stroke;
-    transition-duration: var(--theme-dur);
-    transition-timing-function: var(--theme-ease);
   }
 
   code, pre, kbd, samp {
@@ -316,7 +303,6 @@ if (articleSchema && schemaArticle?.wordCount) {
   .song-title {
     color: var(--fg-soft);
     letter-spacing: 0.02em;
-    transition: color var(--theme-dur) var(--theme-ease);
   }
 
   .site-title {
@@ -376,94 +362,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     color: var(--fg);
     text-decoration: underline;
     text-underline-offset: 3px;
-  }
-
-  .theme-toggle {
-    border: none;
-    background: none;
-    padding: 0.35rem 0.4rem;
-    line-height: 0;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .theme-toggle-track {
-    position: relative;
-    display: inline-block;
-    width: 34px;
-    height: 18px;
-    border-radius: 999px;
-    background: var(--surface-elev);
-    border: 1px solid var(--border-strong);
-    transition: background-color var(--theme-dur) var(--theme-ease), border-color var(--theme-dur) var(--theme-ease);
-  }
-
-  .theme-toggle:hover .theme-toggle-track {
-    border-color: var(--fg-subtle);
-  }
-
-  .theme-toggle:focus-visible {
-    outline: none;
-  }
-
-  .theme-toggle:focus-visible .theme-toggle-track {
-    outline: 2px solid rgba(var(--accent-rgb), 0.5);
-    outline-offset: 2px;
-  }
-
-  .theme-toggle-thumb {
-    position: absolute;
-    top: 1px;
-    left: 1px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--bg);
-    color: var(--fg-soft);
-    display: grid;
-    place-items: center;
-    box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.25);
-    transition: transform var(--toggle-dur) var(--toggle-ease), background-color var(--theme-dur) var(--theme-ease), color var(--theme-dur) var(--theme-ease);
-  }
-
-  :root[data-theme='dark'] .theme-toggle-thumb {
-    transform: translateX(16px);
-  }
-
-  .theme-icon {
-    position: absolute;
-    transition: opacity calc(var(--toggle-dur) * 0.7) ease, transform var(--toggle-dur) var(--toggle-ease);
-  }
-
-  .theme-icon-moon {
-    opacity: 0;
-    transform: rotate(-90deg) scale(0.5);
-  }
-
-  :root[data-theme='dark'] .theme-icon-sun {
-    opacity: 0;
-    transform: rotate(90deg) scale(0.5);
-  }
-
-  :root[data-theme='dark'] .theme-icon-moon {
-    opacity: 1;
-    transform: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    html,
-    body,
-    html.theme-changing,
-    html.theme-changing *,
-    .song-title,
-    .theme-toggle,
-    .theme-toggle-track,
-    .theme-toggle-thumb,
-    .theme-icon {
-      transition: none !important;
-    }
   }
 
   .page-main {
@@ -594,24 +492,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     display: inline-block;
     vertical-align: -0.15em;
     margin-right: 0.35rem;
-  }
-
-  .home-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding-top: 0.1rem;
-  }
-
-  .home-controls .theme-toggle {
-    padding: 0;
-  }
-
-  .home-theme-label {
-    font-size: 0.78rem;
-    letter-spacing: 0.05em;
-    color: var(--fg-muted);
-    text-transform: lowercase;
   }
 
   .home-nav {
@@ -822,30 +702,6 @@ if (articleSchema && schemaArticle?.wordCount) {
               <span class="song-title">{favoriteSong.title}</span>
             </a>
           )}
-          <div class="home-controls">
-            <button
-              type="button"
-              class="theme-toggle"
-              data-theme-toggle
-              role="switch"
-              aria-label="Switch to dark mode"
-              aria-checked="false"
-              title="Toggle theme"
-            >
-              <span class="theme-toggle-track" aria-hidden="true">
-                <span class="theme-toggle-thumb">
-                  <svg class="theme-icon theme-icon-sun" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="4.2"/>
-                    <path d="M12 2.2v2.4M12 19.4v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"/>
-                  </svg>
-                  <svg class="theme-icon theme-icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>
-                  </svg>
-                </span>
-              </span>
-            </button>
-            <span class="home-theme-label">theme</span>
-          </div>
           <nav class="home-nav" aria-label="Primary">
             <a href="/ai">ai</a>
             <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
@@ -895,29 +751,6 @@ if (articleSchema && schemaArticle?.wordCount) {
         {hideBackLink && <div class="site-title-spacer" aria-hidden="true"></div>}
         <nav>
           <ul>
-            <li>
-              <button
-                type="button"
-                class="theme-toggle"
-                data-theme-toggle
-                role="switch"
-                aria-label="Switch to dark mode"
-                aria-checked="false"
-                title="Toggle theme"
-              >
-                <span class="theme-toggle-track" aria-hidden="true">
-                  <span class="theme-toggle-thumb">
-                    <svg class="theme-icon theme-icon-sun" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="4.2"/>
-                      <path d="M12 2.2v2.4M12 19.4v2.4M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"/>
-                    </svg>
-                    <svg class="theme-icon theme-icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>
-                    </svg>
-                  </span>
-                </span>
-              </button>
-            </li>
             <li><a href="/ai">ai</a></li>
             <li><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a></li>
             <li><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a></li>
@@ -1028,33 +861,6 @@ if (articleSchema && schemaArticle?.wordCount) {
           });
         });
         tag.addEventListener('mouseleave', clear);
-      });
-    })();
-  </script>
-  <script is:inline>
-    (() => {
-      const root = document.documentElement;
-      const button = document.querySelector('[data-theme-toggle]');
-      if (!(button instanceof HTMLButtonElement)) return;
-
-      const setTheme = (theme) => {
-        root.dataset.theme = theme;
-        const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
-        button.setAttribute('aria-label', label);
-        button.setAttribute('aria-checked', String(theme === 'dark'));
-      };
-
-      // Sync ARIA state with theme set by the head script
-      const initial = root.dataset.theme === 'dark' ? 'dark' : 'light';
-      button.setAttribute('aria-label', initial === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-      button.setAttribute('aria-checked', String(initial === 'dark'));
-
-      button.addEventListener('click', () => {
-        root.classList.add('theme-changing');
-        const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-        setTheme(nextTheme);
-        localStorage.setItem('theme', nextTheme);
-        window.setTimeout(() => root.classList.remove('theme-changing'), 760);
       });
     })();
   </script>
