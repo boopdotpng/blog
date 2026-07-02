@@ -40,7 +40,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 ---
 
 <section class="home">
-  <h1 class="sr-only">anuraag notes: systems, machine learning, GPUs, biology, reverse engineering, and side projects</h1>
+  <h1 class="sr-only">boop notes: systems, machine learning, GPUs, biology, reverse engineering, and side projects</h1>
 
   <div class="meta">
     <span>{posts.length} posts</span>
@@ -60,9 +60,19 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
         const cat = post.data.cat ?? '—';
         const date = parseLocalDate(post.data.pubDate);
         const dateLabel = date ? formatShortDate(date) : post.data.pubDate;
+        const year = date?.getFullYear() ?? null;
+        const prevDate = idx > 0 ? parseLocalDate(posts[idx - 1].data.pubDate) : null;
+        const newYear = idx > 0 && year !== null && prevDate !== null && year !== prevDate.getFullYear();
 
         return (
-          <li class="post-row" style={`--row-color: ${getCatColor(cat)}`}>
+          <>
+          {newYear && (
+            <li class="year-row" role="presentation">
+              <span class="year-label">{year}</span>
+              <span class="year-rule" aria-hidden="true"></span>
+            </li>
+          )}
+          <li class="post-row" data-cat={cat} style={`--row-color: ${getCatColor(cat)}`}>
             <a href={`/blog/${post.id}`} class="post-link">
               <span class="post-bar" aria-hidden="true"></span>
               <span class="post-num">{hex}</span>
@@ -74,6 +84,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
               </span>
             </a>
           </li>
+          </>
         );
       })}
     </ol>
@@ -152,10 +163,37 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 
   .post-row {
     border-bottom: 1px dashed var(--border-soft);
+    transition: opacity 0.15s;
   }
 
   .post-row:first-child {
     border-top: 1px dashed var(--border-soft);
+  }
+
+  .post-row.is-dim {
+    opacity: 0.3;
+  }
+
+  .year-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.4rem 0 0.85rem;
+  }
+
+  .year-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--fg-subtle);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  .year-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border-soft);
   }
 
   .post-link {

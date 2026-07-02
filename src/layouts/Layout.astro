@@ -656,7 +656,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.3rem;
   }
 
   .home-tag {
@@ -665,6 +665,13 @@ if (articleSchema && schemaArticle?.wordCount) {
     gap: 0.55rem;
     font-size: 0.8rem;
     color: var(--fg-soft);
+    cursor: default;
+    transition: color 0.15s;
+    padding: 0.25rem 0;
+  }
+
+  .home-tag:hover {
+    color: var(--fg);
   }
 
   .home-tag-dot {
@@ -804,7 +811,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     <div class="home-shell">
       <aside class="home-sidebar">
         <div class="home-card">
-          <a class="home-name" href="/">anuraag</a>
+          <a class="home-name" href="/">boop</a>
           {favoriteSong && (
             <a class="home-song" href={favoriteSong.url} target="_blank" aria-label="Favorite song right now">
               <span class="song-icon" aria-hidden="true">
@@ -849,7 +856,7 @@ if (articleSchema && schemaArticle?.wordCount) {
               <span class="home-block-title">// tags</span>
               <ul class="home-tags">
                 {categories.map((c) => (
-                  <li class="home-tag">
+                  <li class="home-tag" data-cat={c.name}>
                     <span class="home-tag-dot" style={`background: var(--cat-${c.name})`} aria-hidden="true"></span>
                     <span class="home-tag-name">{c.name}</span>
                     <span class="home-tag-count">{c.count}</span>
@@ -933,6 +940,97 @@ if (articleSchema && schemaArticle?.wordCount) {
       </footer>
     </Fragment>
   )}
+  <script is:inline>
+    (() => {
+      // Longcat: body stretches to fill the row, blinks now and then,
+      // and sleeps while the dark theme is on. Static markup is the no-JS fallback.
+      const cat = document.querySelector('.home-cat');
+      if (!cat) return;
+
+      const root = document.documentElement;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let eyes = ['o.o', 'o.o'];
+
+      const measureCharWidth = () => {
+        const probe = document.createElement('span');
+        probe.textContent = '_'.repeat(100);
+        probe.style.cssText = 'visibility:hidden;position:absolute;white-space:pre;';
+        cat.appendChild(probe);
+        const width = probe.getBoundingClientRect().width / 100;
+        probe.remove();
+        return width;
+      };
+
+      const render = () => {
+        const style = getComputedStyle(cat);
+        const inner = cat.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const charWidth = measureCharWidth();
+        if (!charWidth || inner <= 0) return;
+
+        const cols = Math.floor(inner / charWidth);
+        const body = Math.max(2, cols - 14);
+        const sleeping = root.dataset.theme === 'dark';
+        const [left, right] = sleeping ? ['-.-', '-.-'] : eyes;
+
+        const gap = sleeping && body > 8
+          ? ' '.repeat(body - 4) + 'z Z '
+          : ' '.repeat(body);
+        const top = ' /\\_/\\ ' + gap + ' /\\_/\\ ';
+        const mid = `( ${left} )` + '_'.repeat(body) + `( ${right} )`;
+        const bot = ' > ^ < ' + ' '.repeat(body) + ' > ^ < ';
+        cat.textContent = top + '\n' + mid + '\n' + bot;
+      };
+
+      const blink = () => {
+        const roll = Math.random();
+        const targets = roll < 0.3 ? [0, 1] : [roll < 0.65 ? 0 : 1];
+        targets.forEach((i) => { eyes[i] = '-.-'; });
+        render();
+        setTimeout(() => {
+          eyes = ['o.o', 'o.o'];
+          render();
+        }, 160);
+      };
+
+      const scheduleBlink = () => {
+        setTimeout(() => {
+          if (!reducedMotion.matches && root.dataset.theme !== 'dark' && !document.hidden) blink();
+          scheduleBlink();
+        }, 3500 + Math.random() * 4500);
+      };
+
+      let resizeRaf = 0;
+      window.addEventListener('resize', () => {
+        cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(render);
+      });
+      new MutationObserver(render).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+      render();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+      scheduleBlink();
+    })();
+  </script>
+  <script is:inline>
+    (() => {
+      // Sidebar tag hover dims post rows in other categories.
+      const tags = document.querySelectorAll('.home-tag[data-cat]');
+      if (!tags.length) return;
+
+      const clear = () => {
+        document.querySelectorAll('.post-row.is-dim').forEach((row) => row.classList.remove('is-dim'));
+      };
+
+      tags.forEach((tag) => {
+        tag.addEventListener('mouseenter', () => {
+          document.querySelectorAll('.post-row[data-cat]').forEach((row) => {
+            row.classList.toggle('is-dim', row.dataset.cat !== tag.dataset.cat);
+          });
+        });
+        tag.addEventListener('mouseleave', clear);
+      });
+    })();
+  </script>
   <script is:inline>
     (() => {
       const root = document.documentElement;
