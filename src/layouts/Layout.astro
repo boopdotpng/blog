@@ -368,6 +368,13 @@ if (articleSchema && schemaArticle?.wordCount) {
     max-width: 800px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 4vw, 2rem);
+    box-sizing: border-box;
+    /* body is a flex column and the auto side margins cancel flex
+       stretching, so without an explicit width the main column
+       shrink-wraps to its content's min-content width and can lay out
+       wider than the viewport on mobile. */
+    width: 100%;
+    min-width: 0;
   }
 
   .page-main.full-bleed {
@@ -595,6 +602,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     bottom: 0;
     margin: 0;
     width: 100%;
+    box-sizing: border-box;
     font-family: var(--font-mono);
     font-size: clamp(0.4rem, 1vw, 0.78rem);
     line-height: 1.2;
