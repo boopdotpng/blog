@@ -1,7 +1,10 @@
 <section class="cat-home" aria-label="Resident cat">
   <div class="cat-caption">
-    <span><span class="cat-dot" aria-hidden="true"></span>longcat.exe</span>
-    <button class="cat-toss" type="button">toss yarn <span aria-hidden="true">↗</span></button>
+    <span><span class="cat-dot" aria-hidden="true"></span>longcat, the mage</span>
+    <div class="cat-actions">
+      <button class="cat-chest" type="button">inspect chest</button>
+      <button class="cat-toss" type="button">cast mana <span aria-hidden="true">✧</span></button>
+    </div>
   </div>
   <div class="cat-playground">
     <span class="cat-message" aria-hidden="true"></span>
@@ -11,10 +14,10 @@
  > ^ <    )~
   ||----||`}</pre>
     </button>
-    <span class="cat-yarn" aria-hidden="true" hidden>◉</span>
+    <span class="cat-mana" aria-hidden="true" hidden>✧</span>
     <span class="cat-floor" aria-hidden="true"></span>
   </div>
-  <p class="cat-status" role="status" aria-live="polite">a small friend at the end of the internet.</p>
+  <p class="cat-status" role="status" aria-live="polite">collecting little spells along the way.</p>
 </section>
 
 <style>
@@ -22,6 +25,9 @@
   .cat-caption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--fg-muted); font-size: 0.7rem; }
   .cat-caption > span { display: flex; align-items: center; gap: 0.5rem; }
   .cat-dot { width: 5px; height: 5px; background: var(--cat-gpu); border-radius: 50%; }
+  .cat-actions { display: flex; gap: 0.5rem; }
+  .cat-chest { font: inherit; color: var(--fg-muted); border: 0; background: transparent; cursor: pointer; padding: 0.5rem 0; }
+  .cat-chest:hover { color: var(--cat-ml); }
   .cat-toss { font: inherit; color: var(--fg-soft); background: transparent; border: 1px solid var(--border-muted); border-radius: 5px; padding: 0.5rem 0.65rem; cursor: pointer; min-height: 36px; }
   .cat-toss:hover { color: var(--accent); border-color: var(--accent); background: var(--surface-soft); }
   .cat-playground { position: relative; height: 100px; overflow: hidden; }
@@ -31,8 +37,13 @@
   .cat-pet:focus-visible { outline-offset: -2px; }
   .cat-pet pre { margin: 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.25; text-align: left; white-space: pre; }
   .cat-message { position: absolute; bottom: 86px; left: 0; font-size: 0.75rem; color: var(--cat-hardware); white-space: nowrap; }
-  .cat-yarn { position: absolute; bottom: 13px; font-size: 24px; line-height: 1; color: var(--cat-hardware); }
+  .cat-mana { position: absolute; bottom: 13px; font-size: 24px; line-height: 1; color: var(--accent); text-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4); }
   .cat-status { margin: 0.5rem 0 0; color: var(--fg-muted); font-size: 0.68rem; line-height: 1.6; min-height: 1.6em; }
+  .cat-pet :global(.mage-cloak) { color: var(--cat-bio); }
+  .cat-pet :global(.mimic-legs) { display: block; color: var(--cat-bio); animation: mimic-kick 0.4s steps(2, end) infinite; }
+  @keyframes mimic-kick { to { transform: translateX(3px) rotate(5deg); } }
+  @media (prefers-reduced-motion: reduce) { .cat-pet :global(.mimic-legs) { animation: none; } }
+  @media (max-width: 420px) { .cat-caption { flex-wrap: wrap; gap: 0.25rem; } }
   @media (max-width: 760px) { .cat-home { padding-top: 0.5rem; } }
 </style>
 
@@ -42,7 +53,7 @@
     const stage = home.querySelector<HTMLElement>('.cat-playground')!;
     const cat = home.querySelector<HTMLButtonElement>('.cat-pet')!;
     const art = cat.querySelector('pre')!;
-    const yarn = home.querySelector<HTMLElement>('.cat-yarn')!;
+    const mana = home.querySelector<HTMLElement>('.cat-mana')!;
     const bubble = home.querySelector<HTMLElement>('.cat-message')!;
     const status = home.querySelector<HTMLElement>('.cat-status')!;
     const toss = home.querySelector<HTMLButtonElement>('.cat-toss')!;
@@ -59,6 +70,7 @@
     let gaze = 'o.o';
     let facingRight = false;
     let hasRoamed = false;
+    let trapped = false;
     let reactionTimer: ReturnType<typeof setTimeout>;
     const asleep = () => document.documentElement.dataset.theme === 'dark' && Date.now() > awakeUntil && !chasing;
     const limit = () => Math.max(0, stage.clientWidth - cat.offsetWidth - 4);
@@ -67,29 +79,45 @@
       const body = '_'.repeat(4 + stretch);
       const feet = chasing && step ? ' / /' : '  ||';
       const backFeet = chasing && !step ? '\\\\' : '||';
-      art.textContent = ` /\\_/\\\n( ${eyes} )${body}\n > ^ <${' '.repeat(4 + stretch)} )~\n${feet}${'-'.repeat(4 + stretch)}${backFeet}`;
+      if (trapped) {
+        const legs = document.createElement('span');
+        legs.className = 'mimic-legs';
+        legs.textContent = '    / /';
+        art.replaceChildren(legs, document.createTextNode(" / vvvvvv \\\n |  ◆   |\n  '------'"));
+      } else {
+        const cloak = document.createElement('span');
+        cloak.className = 'mage-cloak';
+        cloak.textContent = ` > ◆ <${'═'.repeat(4 + stretch)}╮│\n`;
+        art.replaceChildren(
+          document.createTextNode(` /\\_/\\${' '.repeat(5 + stretch)}◇\n( ${eyes} )${body} │\n`),
+          cloak,
+          document.createTextNode(`${feet}${'-'.repeat(4 + stretch)}${backFeet} │`),
+        );
+      }
+      cat.setAttribute('aria-label', trapped ? 'Rescue the cat from the mimic' : 'Boop the cat');
       // Flip the drawing only, so the button's boop animation stays independent.
-      art.style.transform = facingRight ? 'scaleX(-1)' : 'none';
+      art.style.transform = facingRight && !trapped ? 'scaleX(-1)' : 'none';
       cat.style.left = `${x}px`;
-      bubble.style.left = `${Math.min(x + 20, stage.clientWidth - 70)}px`;
+      bubble.style.left = `${Math.min(x + 20, stage.clientWidth - 140)}px`;
     };
     const idle = () => {
+      if (trapped) { draw(); return; }
       gaze = 'o.o';
       bubble.textContent = asleep() ? 'z z Z' : '';
-      status.textContent = asleep() ? 'sleeping. even cats need a dark mode.' : 'a small friend at the end of the internet.';
+      status.textContent = asleep() ? 'just five more minutes. perhaps fifty years.' : 'collecting little spells along the way.';
       draw();
     };
     const settleLater = () => {
       clearTimeout(reactionTimer);
       reactionTimer = setTimeout(idle, 4500);
     };
-    const catchYarn = () => {
+    const catchMana = () => {
       chasing = false;
       frame = 0;
-      yarn.hidden = true;
+      mana.hidden = true;
       gaze = '^.^';
-      bubble.textContent = 'mine.';
-      status.textContent = 'yarn successfully apprehended.';
+      bubble.textContent = '✧';
+      status.textContent = 'a spell for catching a very small light.';
       draw();
       settleLater();
     };
@@ -97,13 +125,14 @@
       const dt = Math.min((time - lastTime) / 1000 || 0.016, 0.05);
       lastTime = time;
       const delta = target - x;
-      if (Math.abs(delta) < 2) { x = target; catchYarn(); return; }
+      if (Math.abs(delta) < 2) { x = target; catchMana(); return; }
       x += Math.sign(delta) * Math.min(Math.abs(delta), dt * 150);
       draw(Math.min(5, Math.floor(Math.abs(delta) / 35)), Math.floor(time / 150) % 2 === 0);
-      yarn.style.transform = `rotate(${x * 3}deg)`;
+      mana.style.transform = `rotate(${x * 3}deg)`;
       frame = requestAnimationFrame(tick);
     };
     const play = (position?: number) => {
+      trapped = false;
       hasRoamed = true;
       cancelAnimationFrame(frame);
       clearTimeout(reactionTimer);
@@ -111,26 +140,39 @@
       chasing = true;
       gaze = 'o.o';
       bubble.textContent = '!';
-      status.textContent = 'a wild yarn appeared.';
+      status.textContent = 'a little magic, just for the journey.';
       draw();
       ball = position ?? (x < limit() / 2 ? stage.clientWidth - 28 : 16);
       ball = Math.max(12, Math.min(stage.clientWidth - 28, ball));
       target = Math.max(0, Math.min(limit(), ball - cat.offsetWidth / 2));
       facingRight = target > x;
       draw();
-      yarn.style.left = `${ball}px`;
-      yarn.hidden = false;
-      if (reduced.matches) { x = target; catchYarn(); return; }
+      mana.style.left = `${ball}px`;
+      mana.hidden = false;
+      if (reduced.matches) { x = target; catchMana(); return; }
       lastTime = 0;
       frame = requestAnimationFrame(tick);
     };
     toss.addEventListener('click', () => play());
+    home.querySelector('.cat-chest')!.addEventListener('click', () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(reactionTimer);
+      frame = 0;
+      chasing = false;
+      trapped = true;
+      mana.hidden = true;
+      bubble.textContent = '...help.';
+      status.textContent = 'it was, regrettably, a mimic. boop to rescue.';
+      draw();
+      x = Math.min(x, limit());
+      draw();
+    });
     stage.addEventListener('pointerdown', event => {
       if (cat.contains(event.target as Node)) return;
       play(event.clientX - stage.getBoundingClientRect().left);
     });
     stage.addEventListener('pointermove', event => {
-      if (chasing || asleep()) return;
+      if (trapped || chasing || asleep()) return;
       const center = cat.getBoundingClientRect().left + cat.offsetWidth / 2;
       const direction = (event.clientX - center) * (facingRight ? -1 : 1);
       gaze = direction < -20 ? '<.<' : direction > 20 ? '>.>' : 'o.o';
@@ -138,20 +180,28 @@
     });
     stage.addEventListener('pointerleave', () => { if (!chasing) { gaze = 'o.o'; draw(); } });
     cat.addEventListener('click', () => {
+      const rescued = trapped;
+      trapped = false;
       cancelAnimationFrame(frame);
       frame = 0;
       chasing = false;
-      yarn.hidden = true;
+      mana.hidden = true;
       awakeUntil = Date.now() + 4000;
       boops++;
       gaze = '^.^';
       bubble.textContent = boops % 3 === 0 ? '♥ purrr' : '♥';
       status.textContent = `${boops} boop${boops === 1 ? '' : 's'}. ${boops % 3 === 0 ? 'the purr engine is running.' : 'a very good use of your time.'}`;
+      if (rescued) {
+        bubble.textContent = 'a mere setback.';
+        status.textContent = 'rescued. surely the next chest has a grimoire.';
+      }
+      draw();
+      x = Math.min(x, limit());
       draw();
       if (!reduced.matches) cat.animate([{ transform: 'scale(1, 1)' }, { transform: 'scale(1.12, .85)' }, { transform: 'scale(1, 1)' }], { duration: 260 });
       settleLater();
     });
-    const stop = () => { cancelAnimationFrame(frame); frame = 0; if (chasing) { chasing = false; yarn.hidden = true; idle(); } };
+    const stop = () => { cancelAnimationFrame(frame); frame = 0; if (chasing) { chasing = false; mana.hidden = true; idle(); } };
     new IntersectionObserver(entries => { visible = entries[0].isIntersecting; if (!visible) stop(); }).observe(home);
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
     reduced.addEventListener('change', stop);
@@ -164,7 +214,7 @@
     document.fonts.ready.then(positionCat);
     new MutationObserver(idle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     setInterval(() => {
-      if (!visible || document.hidden || chasing || reduced.matches || asleep() || Date.now() < awakeUntil) return;
+      if (trapped || !visible || document.hidden || chasing || reduced.matches || asleep() || Date.now() < awakeUntil) return;
       gaze = '-.-'; draw();
       setTimeout(() => { if (!chasing && Date.now() >= awakeUntil) { gaze = 'o.o'; draw(); } }, 150);
     }, 4800);
