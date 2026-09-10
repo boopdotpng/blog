@@ -1,0 +1,158 @@
+<section class="cat-home" aria-label="Resident cat">
+  <div class="cat-caption">
+    <span><span class="cat-dot" aria-hidden="true"></span>longcat.exe</span>
+    <button class="cat-toss" type="button">toss yarn <span aria-hidden="true">↗</span></button>
+  </div>
+  <div class="cat-playground">
+    <span class="cat-message" aria-hidden="true"></span>
+    <button class="cat-pet" type="button" aria-label="Boop the cat">
+      <pre aria-hidden="true">{` /\_/\
+( o.o )____
+ > ^ <    )~
+  ||----||`}</pre>
+    </button>
+    <span class="cat-yarn" aria-hidden="true" hidden>◉</span>
+    <span class="cat-floor" aria-hidden="true"></span>
+  </div>
+  <p class="cat-status" role="status" aria-live="polite">a small friend at the end of the internet.</p>
+</section>
+
+<style>
+  .cat-home { margin-top: auto; padding-top: 2rem; font-family: var(--font-mono); }
+  .cat-caption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--fg-muted); font-size: 0.7rem; }
+  .cat-caption > span { display: flex; align-items: center; gap: 0.5rem; }
+  .cat-dot { width: 5px; height: 5px; background: var(--cat-gpu); border-radius: 50%; }
+  .cat-toss { font: inherit; color: var(--fg-soft); background: transparent; border: 1px solid var(--border-muted); border-radius: 5px; padding: 0.5rem 0.65rem; cursor: pointer; min-height: 36px; }
+  .cat-toss:hover { color: var(--accent); border-color: var(--accent); background: var(--surface-soft); }
+  .cat-playground { position: relative; height: 110px; overflow: hidden; }
+  .cat-floor { position: absolute; bottom: 9px; inset-inline: 0; border-bottom: 1px dashed var(--border-strong); }
+  .cat-pet { position: absolute; left: 0; bottom: 10px; z-index: 1; border: 0; background: var(--bg); padding: 4px 8px; color: var(--fg-soft); cursor: pointer; transform-origin: bottom center; touch-action: manipulation; border-radius: 4px; }
+  .cat-pet:hover { color: var(--accent); }
+  .cat-pet:focus-visible { outline-offset: -2px; }
+  .cat-pet pre { margin: 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.25; text-align: left; white-space: pre; }
+  .cat-message { position: absolute; bottom: 86px; left: 0; font-size: 0.75rem; color: var(--cat-hardware); white-space: nowrap; }
+  .cat-yarn { position: absolute; bottom: 13px; font-size: 24px; line-height: 1; color: var(--cat-hardware); }
+  .cat-status { margin: 0.5rem 0 0; color: var(--fg-muted); font-size: 0.68rem; line-height: 1.6; min-height: 1.6em; }
+  @media (max-width: 760px) { .cat-home { padding-top: 0.5rem; } }
+</style>
+
+<script>
+  const home = document.querySelector<HTMLElement>('.cat-home');
+  if (home) {
+    const stage = home.querySelector<HTMLElement>('.cat-playground')!;
+    const cat = home.querySelector<HTMLButtonElement>('.cat-pet')!;
+    const art = cat.querySelector('pre')!;
+    const yarn = home.querySelector<HTMLElement>('.cat-yarn')!;
+    const bubble = home.querySelector<HTMLElement>('.cat-message')!;
+    const status = home.querySelector<HTMLElement>('.cat-status')!;
+    const toss = home.querySelector<HTMLButtonElement>('.cat-toss')!;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let x = 0;
+    let target = 0;
+    let ball = 0;
+    let frame = 0;
+    let lastTime = 0;
+    let awakeUntil = 0;
+    let boops = 0;
+    let chasing = false;
+    let visible = false;
+    let gaze = 'o.o';
+    let reactionTimer: ReturnType<typeof setTimeout>;
+    const asleep = () => document.documentElement.dataset.theme === 'dark' && Date.now() > awakeUntil && !chasing;
+    const limit = () => Math.max(0, stage.clientWidth - cat.offsetWidth - 4);
+    const draw = (stretch = 0, step = false) => {
+      const eyes = asleep() ? '-.-' : gaze;
+      const body = '_'.repeat(4 + stretch);
+      const feet = chasing && step ? ' / /' : '  ||';
+      art.textContent = ` /\\_/\\\n( ${eyes} )${body}\n > ^ <${' '.repeat(4 + stretch)} )~\n${feet}${'-'.repeat(4 + stretch)}||`;
+      cat.style.left = `${x}px`;
+      bubble.style.left = `${Math.min(x + 20, stage.clientWidth - 70)}px`;
+    };
+    const idle = () => {
+      gaze = 'o.o';
+      bubble.textContent = asleep() ? 'z z Z' : '';
+      status.textContent = asleep() ? 'sleeping. even cats need a dark mode.' : 'a small friend at the end of the internet.';
+      draw();
+    };
+    const settleLater = () => {
+      clearTimeout(reactionTimer);
+      reactionTimer = setTimeout(idle, 4500);
+    };
+    const catchYarn = () => {
+      chasing = false;
+      frame = 0;
+      yarn.hidden = true;
+      gaze = '^.^';
+      bubble.textContent = 'mine.';
+      status.textContent = 'yarn successfully apprehended.';
+      draw();
+      settleLater();
+    };
+    const tick = (time: number) => {
+      const dt = Math.min((time - lastTime) / 1000 || 0.016, 0.05);
+      lastTime = time;
+      const delta = target - x;
+      if (Math.abs(delta) < 2) { x = target; catchYarn(); return; }
+      x += Math.sign(delta) * Math.min(Math.abs(delta), dt * 150);
+      draw(Math.min(5, Math.floor(Math.abs(delta) / 35)), Math.floor(time / 150) % 2 === 0);
+      yarn.style.transform = `rotate(${x * 3}deg)`;
+      frame = requestAnimationFrame(tick);
+    };
+    const play = (position?: number) => {
+      cancelAnimationFrame(frame);
+      clearTimeout(reactionTimer);
+      awakeUntil = Date.now() + 4000;
+      chasing = true;
+      gaze = 'o.o';
+      bubble.textContent = '!';
+      status.textContent = 'a wild yarn appeared.';
+      draw();
+      ball = position ?? (x < limit() / 2 ? stage.clientWidth - 28 : 16);
+      ball = Math.max(12, Math.min(stage.clientWidth - 28, ball));
+      target = Math.max(0, Math.min(limit(), ball - cat.offsetWidth / 2));
+      yarn.style.left = `${ball}px`;
+      yarn.hidden = false;
+      if (reduced.matches) { x = target; catchYarn(); return; }
+      lastTime = 0;
+      frame = requestAnimationFrame(tick);
+    };
+    toss.addEventListener('click', () => play());
+    stage.addEventListener('pointerdown', event => {
+      if (cat.contains(event.target as Node)) return;
+      play(event.clientX - stage.getBoundingClientRect().left);
+    });
+    stage.addEventListener('pointermove', event => {
+      if (chasing || asleep()) return;
+      const center = cat.getBoundingClientRect().left + cat.offsetWidth / 2;
+      gaze = event.clientX < center - 20 ? '<.<' : event.clientX > center + 20 ? '>.>' : 'o.o';
+      draw();
+    });
+    stage.addEventListener('pointerleave', () => { if (!chasing) { gaze = 'o.o'; draw(); } });
+    cat.addEventListener('click', () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      chasing = false;
+      yarn.hidden = true;
+      awakeUntil = Date.now() + 4000;
+      boops++;
+      gaze = '^.^';
+      bubble.textContent = boops % 3 === 0 ? '♥ purrr' : '♥';
+      status.textContent = `${boops} boop${boops === 1 ? '' : 's'}. ${boops % 3 === 0 ? 'the purr engine is running.' : 'a very good use of your time.'}`;
+      draw();
+      if (!reduced.matches) cat.animate([{ transform: 'scale(1, 1)' }, { transform: 'scale(1.12, .85)' }, { transform: 'scale(1, 1)' }], { duration: 260 });
+      settleLater();
+    });
+    const stop = () => { cancelAnimationFrame(frame); frame = 0; if (chasing) { chasing = false; yarn.hidden = true; idle(); } };
+    new IntersectionObserver(entries => { visible = entries[0].isIntersecting; if (!visible) stop(); }).observe(home);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+    reduced.addEventListener('change', stop);
+    new ResizeObserver(() => { stop(); x = Math.min(x, limit()); draw(); }).observe(stage);
+    new MutationObserver(idle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    setInterval(() => {
+      if (!visible || document.hidden || chasing || reduced.matches || asleep() || Date.now() < awakeUntil) return;
+      gaze = '-.-'; draw();
+      setTimeout(() => { if (!chasing && Date.now() >= awakeUntil) { gaze = 'o.o'; draw(); } }, 150);
+    }, 4800);
+    idle();
+  }
+</script>

@@ -27,16 +27,4 @@ const blog = defineCollection({
   }).superRefine(requireDescriptionWhenPublished('posts')),
 });
 
-const books = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/books', ignore: ['**/CLAUDE.md'] }),
-  schema: z.object({
-    title: z.string(),
-    pubDate: isoDate,
-    updatedDate: isoDate.optional(),
-    published: z.boolean().optional().default(true),
-    description: z.string().min(1).optional(),
-    useKatex: z.boolean().optional().default(false),
-  }).superRefine(requireDescriptionWhenPublished('documents')),
-});
-
-export const collections = { blog, books };
+export const collections = { blog };

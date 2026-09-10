@@ -46,16 +46,8 @@ const readingTimeLabel = readingTimeMinutes < 60
 ---
 <style>
 :root {
-  /* adjust these to taste */
   --content-max-width: 700px;
   --side-gutter: 1rem;
-}
-
-/* prevent any accidental overflow */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
 }
 
 /* code blocks scroll horizontally rather than wrapping (preserves indentation) */
@@ -76,17 +68,19 @@ pre {
 
 /* Post title styling */
 .post-title-main {
-  font-size: 2.1rem;
-  line-height: 1.2;
-  margin: 0 0 0.5rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.65rem, 4vw, 2.2rem);
+  line-height: 1.25;
+  margin: 0 0 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
   font-family: var(--font-mono);
   color: var(--fg-strong);
 }
 
 .post-description {
-  color: var(--fg-muted);
+  color: var(--fg-soft);
   margin: 0;
   font-size: 0.98rem;
   line-height: 1.7;
@@ -94,7 +88,9 @@ pre {
 }
 
 .post-subline {
-  margin-bottom: 2rem;
+  padding-bottom: 1.75rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .post-meta {
@@ -102,10 +98,10 @@ pre {
   align-items: center;
   gap: 0.5rem;
   color: var(--fg-subtle);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
   font-family: var(--font-mono);
-  margin: 0 0 0.6rem;
+  margin: 0 0 1rem;
 }
 
 .post-meta-sep {
@@ -113,7 +109,7 @@ pre {
 }
 
 .post-readtime {
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
 }
 
 @media (max-width: 600px) {
@@ -309,15 +305,10 @@ pre {
   }
 }
 
-/* Perfect centering wrapper */
+/* The layout owns the outside gutter; keep a single reading column. */
 .centered-wrapper {
-  display: grid;
-  grid-template-columns: minmax(var(--side-gutter), 1fr) min(var(--content-max-width), calc(100% - (var(--side-gutter) * 2))) minmax(var(--side-gutter), 1fr);
   width: 100%;
-}
-
-.centered-wrapper > * {
-  grid-column: 2;
+  min-width: 0;
 }
 
 /* main article container */
@@ -329,17 +320,13 @@ article.post-plain {
   /* fluid width up to a max, centered */
   width: 100%;
   max-width: var(--content-max-width);
-  margin: 3rem auto;         /* top/bottom breathing room, centered */
-  padding: 0;                /* remove side padding */
+  margin: 2.5rem auto 3rem;
+  padding: 0;
   box-sizing: border-box;
-  
-  /* Apply equal padding left and right for better centering */
-  padding-left: var(--side-gutter);
-  padding-right: var(--side-gutter);
 }
 
 article.post-plain :global(img) {
-  max-width: 600px;
+  max-width: min(600px, 100%);
   width: 100%;
   height: auto;
   display: block;
@@ -350,18 +337,9 @@ article.post-plain :global(img[width]) {
   max-width: 100%;
 }
 
-/* tweak typography on small screens if you like */
 @media (max-width: 600px) {
-  :root {
-    --side-gutter: 0.1rem;  /* 50% of the original 1rem */
-  }
-  
-  .post-title-main {
-    font-size: 1.8rem;
-    margin-top: 0.5rem;
-  }
-  .post-date-main {
-    font-size: 0.95rem;
+  article.post-plain {
+    margin-top: 1.5rem;
   }
   
   /* Better SVG handling for mobile */

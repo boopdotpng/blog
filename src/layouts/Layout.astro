@@ -1,5 +1,6 @@
 ---
 import '../styles/diagrams.css';
+import ResidentCat from '../components/ResidentCat.astro';
 // Normalize the path so it works in both `astro dev` (pathname "/") and the
 // static build, which uses `build.format: 'file'` and yields "/index.html".
 const cleanPath = Astro.url.pathname
@@ -170,9 +171,9 @@ if (articleSchema && schemaArticle?.wordCount) {
     --fg: #37352f;
     --fg-strong: #1a1a1a;
     --fg-soft: #666055;
-    --fg-muted: #888178;
-    --fg-faint: #999188;
-    --fg-subtle: #aaa39b;
+    --fg-muted: #746d63;
+    --fg-faint: #7b746b;
+    --fg-subtle: #80786f;
     --accent: #4a7c96;
     --accent-hover: #3a6580;
     --accent-rgb: 74, 124, 150;
@@ -210,9 +211,9 @@ if (articleSchema && schemaArticle?.wordCount) {
     --fg: #c8c4be;
     --fg-strong: #e8e5df;
     --fg-soft: #9a9590;
-    --fg-muted: #7a7570;
-    --fg-faint: #6a6560;
-    --fg-subtle: #5a5550;
+    --fg-muted: #a09a92;
+    --fg-faint: #979188;
+    --fg-subtle: #928c84;
     --accent: #8ab4cc;
     --accent-hover: #a0c8dd;
     --accent-rgb: 138, 180, 204;
@@ -257,12 +258,35 @@ if (articleSchema && schemaArticle?.wordCount) {
     min-height: 100vh;
   }
 
+  :global(::selection) {
+    background: rgba(var(--accent-rgb), 0.22);
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 10000;
+    padding: 0.65rem 0.9rem;
+    background: var(--bg);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    transform: translateY(-200%);
+  }
+
+  .skip-link:focus { transform: translateY(0); }
+
   code, pre, kbd, samp {
     font-family: var(--font-mono);
   }
 
   .site-header {
     display: flex;
+    gap: 0.5rem 1rem;
+    flex-wrap: wrap;
+    min-height: 76px;
     justify-content: space-between;
     align-items: center;
     padding: 1rem clamp(1rem, 4vw, 2rem);
@@ -390,9 +414,9 @@ if (articleSchema && schemaArticle?.wordCount) {
 
   /* Global keyboard focus indicator (low specificity so per-element
      focus styles can still override) */
-  :where(a, button, [tabindex]):focus-visible {
-    outline: 2px solid rgba(var(--accent-rgb), 0.5);
-    outline-offset: 2px;
+  :global(:where(a, button, input, [tabindex]):focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
   }
 
   .site-footer {
@@ -461,7 +485,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     top: clamp(1.5rem, 4vw, 3rem);
     align-self: flex-start;
     width: 100%;
-    min-height: calc(100vh - 2 * clamp(1.5rem, 4vw, 3rem));
     max-height: calc(100vh - 2 * clamp(1.5rem, 4vw, 3rem));
     overflow: auto;
     display: flex;
@@ -470,9 +493,10 @@ if (articleSchema && schemaArticle?.wordCount) {
     padding: 1.5rem 1.4rem;
     box-sizing: border-box;
     border: 1px solid var(--border-muted);
-    border-radius: 14px;
+    border-radius: 10px;
     background: var(--surface-soft);
     font-family: var(--font-mono);
+    box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.025);
   }
 
   .home-name {
@@ -527,6 +551,8 @@ if (articleSchema && schemaArticle?.wordCount) {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--border-muted);
   }
 
   .home-block-title {
@@ -582,7 +608,7 @@ if (articleSchema && schemaArticle?.wordCount) {
   .home-now {
     margin: 0;
     font-size: 0.8rem;
-    line-height: 1.5;
+    line-height: 1.7;
     color: var(--fg-soft);
   }
 
@@ -595,27 +621,11 @@ if (articleSchema && schemaArticle?.wordCount) {
     overflow: hidden;
   }
 
-  .home-cat {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    width: 100%;
-    box-sizing: border-box;
-    font-family: var(--font-mono);
-    font-size: clamp(0.4rem, 1vw, 0.78rem);
-    line-height: 1.2;
-    color: var(--fg);
-    opacity: 0.4;
-    white-space: pre;
-    overflow: hidden;
-    text-align: center;
-    pointer-events: none;
-  }
 
   .home-content {
     position: relative;
+    display: flex;
+    flex-direction: column;
     flex: 1 1 auto;
     min-width: 0;
   }
@@ -624,7 +634,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     .home-shell {
       flex-direction: column;
       min-height: 0;
-      gap: 1.25rem;
+      gap: 2rem;
       padding: 1.25rem 1rem 2.5rem;
     }
 
@@ -642,6 +652,7 @@ if (articleSchema && schemaArticle?.wordCount) {
       flex-wrap: wrap;
       align-items: center;
       gap: 0.75rem 1.25rem;
+      padding: 1.25rem;
     }
 
     .home-name {
@@ -654,11 +665,13 @@ if (articleSchema && schemaArticle?.wordCount) {
 
     .home-nav {
       flex-direction: row;
+      flex-wrap: wrap;
       gap: 0.9rem;
     }
 
     .home-block {
       flex-basis: 100%;
+      padding-top: 0.75rem;
     }
 
     .home-tags {
@@ -675,10 +688,13 @@ if (articleSchema && schemaArticle?.wordCount) {
       overflow: visible;
     }
 
-    .home-cat {
-      position: static;
-      bottom: auto;
-      padding: 0 1rem 1.5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(*), :global(*::before), :global(*::after) {
+      scroll-behavior: auto !important;
+      transition: none !important;
+      animation: none !important;
     }
   }
 
@@ -694,6 +710,7 @@ if (articleSchema && schemaArticle?.wordCount) {
 
 </head>
 <body>
+  <a class="skip-link" href="#main-content">skip to content</a>
   {isHome ? (
     <div class="home-layout">
     <div class="home-shell">
@@ -711,7 +728,6 @@ if (articleSchema && schemaArticle?.wordCount) {
             </a>
           )}
           <nav class="home-nav" aria-label="Primary">
-            <a href="/ai">ai</a>
             <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
             <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
           </nav>
@@ -737,11 +753,9 @@ if (articleSchema && schemaArticle?.wordCount) {
           )}
         </div>
       </aside>
-      <main class="home-content">
+      <main class="home-content" id="main-content" tabindex="-1">
         <slot />
-        <pre class="home-cat" aria-hidden="true">{`  /\\_/\\                                                                    /\\_/\\
- ( o.o )___________________________________________________________________( o.o )
-  > ^ <                                                                      > ^ <`}</pre>
+        <ResidentCat />
       </main>
     </div>
     </div>
@@ -757,22 +771,19 @@ if (articleSchema && schemaArticle?.wordCount) {
           </div>
         )}
         {hideBackLink && <div class="site-title-spacer" aria-hidden="true"></div>}
-        <nav>
+        <nav aria-label="Primary">
           <ul>
-            <li><a href="/ai">ai</a></li>
             <li><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a></li>
             <li><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a></li>
           </ul>
         </nav>
       </header>
-      <main class:list={['page-main', { 'full-bleed': fullBleed }]}>
+      <main id="main-content" tabindex="-1" class:list={['page-main', { 'full-bleed': fullBleed }]}>
         <slot />
       </main>
       <footer class:list={['site-footer', { 'full-bleed': fullBleed }]}>
         <nav class="footer-nav" aria-label="Footer">
           <a href="/">home</a>
-          <span class="footer-sep" aria-hidden="true">·</span>
-          <a href="/ai">ai</a>
           <span class="footer-sep" aria-hidden="true">·</span>
           <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
           <span class="footer-sep" aria-hidden="true">·</span>
@@ -781,77 +792,6 @@ if (articleSchema && schemaArticle?.wordCount) {
       </footer>
     </Fragment>
   )}
-  <script is:inline>
-    (() => {
-      // Longcat: body stretches to fill the row, blinks now and then,
-      // and sleeps while the dark theme is on. Static markup is the no-JS fallback.
-      const cat = document.querySelector('.home-cat');
-      if (!cat) return;
-
-      const root = document.documentElement;
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-      let eyes = ['o.o', 'o.o'];
-
-      const measureCharWidth = () => {
-        const probe = document.createElement('span');
-        probe.textContent = '_'.repeat(100);
-        probe.style.cssText = 'visibility:hidden;position:absolute;white-space:pre;';
-        cat.appendChild(probe);
-        const width = probe.getBoundingClientRect().width / 100;
-        probe.remove();
-        return width;
-      };
-
-      const render = () => {
-        const style = getComputedStyle(cat);
-        const inner = cat.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-        const charWidth = measureCharWidth();
-        if (!charWidth || inner <= 0) return;
-
-        const cols = Math.floor(inner / charWidth);
-        const body = Math.max(2, cols - 14);
-        const sleeping = root.dataset.theme === 'dark';
-        const [left, right] = sleeping ? ['-.-', '-.-'] : eyes;
-
-        const gap = sleeping && body > 8
-          ? ' '.repeat(body - 4) + 'z Z '
-          : ' '.repeat(body);
-        const top = ' /\\_/\\ ' + gap + ' /\\_/\\ ';
-        const mid = `( ${left} )` + '_'.repeat(body) + `( ${right} )`;
-        const bot = ' > ^ < ' + ' '.repeat(body) + ' > ^ < ';
-        cat.textContent = top + '\n' + mid + '\n' + bot;
-      };
-
-      const blink = () => {
-        const roll = Math.random();
-        const targets = roll < 0.3 ? [0, 1] : [roll < 0.65 ? 0 : 1];
-        targets.forEach((i) => { eyes[i] = '-.-'; });
-        render();
-        setTimeout(() => {
-          eyes = ['o.o', 'o.o'];
-          render();
-        }, 160);
-      };
-
-      const scheduleBlink = () => {
-        setTimeout(() => {
-          if (!reducedMotion.matches && root.dataset.theme !== 'dark' && !document.hidden) blink();
-          scheduleBlink();
-        }, 3500 + Math.random() * 4500);
-      };
-
-      let resizeRaf = 0;
-      window.addEventListener('resize', () => {
-        cancelAnimationFrame(resizeRaf);
-        resizeRaf = requestAnimationFrame(render);
-      });
-      new MutationObserver(render).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-
-      render();
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
-      scheduleBlink();
-    })();
-  </script>
   <script is:inline>
     (() => {
       // Sidebar tag hover dims post rows in other categories.

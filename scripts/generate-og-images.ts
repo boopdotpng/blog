@@ -1,10 +1,9 @@
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
-import { readFileSync, mkdirSync, writeFileSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, mkdirSync, writeFileSync, readdirSync } from 'fs';
 import path from 'path';
 
 const BLOG_DIR = path.resolve('src/content/blog');
-const BOOKS_DIR = path.resolve('src/content/books');
 const OUT_DIR = path.resolve('public/og');
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -265,35 +264,4 @@ for (const file of files) {
   );
   writeFileSync(path.join(OUT_DIR, `${slug}.png`), png);
   console.log(`  ${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
-}
-
-// Generate OG images for book chapters
-if (existsSync(BOOKS_DIR)) {
-  const bookIds = readdirSync(BOOKS_DIR, { withFileTypes: true })
-    .filter(d => d.isDirectory())
-    .map(d => d.name);
-
-  for (const bookId of bookIds) {
-    const bookDir = path.join(BOOKS_DIR, bookId);
-    const bookOutDir = path.join(OUT_DIR, 'book', bookId);
-    mkdirSync(bookOutDir, { recursive: true });
-    const bookName = bookId.replace(/-/g, ' ');
-
-    const docs = readdirSync(bookDir).filter(f => f.endsWith('.md') || f.endsWith('.mdx'));
-    for (const file of docs) {
-      const slug = file.replace(/\.mdx?$/, '');
-      const content = readFileSync(path.join(bookDir, file), 'utf8');
-      const fm = parseFrontmatter(content);
-
-      if (fm.published === 'false') continue;
-
-      const title = fm.title ?? slug;
-
-      const png = await renderPng(
-        card({ tag: `book · ${bookName}`, tagColor: ACCENT, title, date: fm.pubDate }),
-      );
-      writeFileSync(path.join(bookOutDir, `${slug}.png`), png);
-      console.log(`  book/${bookId}/${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
-    }
-  }
 }
