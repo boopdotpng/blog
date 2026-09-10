@@ -66,7 +66,8 @@
       const eyes = asleep() ? '-.-' : gaze;
       const body = '_'.repeat(4 + stretch);
       const feet = chasing && step ? ' / /' : '  ||';
-      art.textContent = ` /\\_/\\\n( ${eyes} )${body}\n > ^ <${' '.repeat(4 + stretch)} )~\n${feet}${'-'.repeat(4 + stretch)}||`;
+      const backFeet = chasing && !step ? '\\\\' : '||';
+      art.textContent = ` /\\_/\\\n( ${eyes} )${body}\n > ^ <${' '.repeat(4 + stretch)} )~\n${feet}${'-'.repeat(4 + stretch)}${backFeet}`;
       // Flip the drawing only, so the button's boop animation stays independent.
       art.style.transform = facingRight ? 'scaleX(-1)' : 'none';
       cat.style.left = `${x}px`;
