@@ -87,11 +87,11 @@
       } else {
         const cloak = document.createElement('span');
         cloak.className = 'mage-cloak';
-        cloak.textContent = ` > ◆ <${'═'.repeat(4 + stretch)}╮│\n`;
+        cloak.textContent = ` > ◆ <${'═'.repeat(4 + stretch)}╮\n`;
         art.replaceChildren(
-          document.createTextNode(` /\\_/\\${' '.repeat(5 + stretch)}◇\n( ${eyes} )${body} │\n`),
+          document.createTextNode(`◇  /\\_/\\\n│ ( ${eyes} )${body}\n│ `),
           cloak,
-          document.createTextNode(`${feet}${'-'.repeat(4 + stretch)}${backFeet} │`),
+          document.createTextNode(`│ ${feet}${'-'.repeat(4 + stretch)}${backFeet}`),
         );
       }
       cat.setAttribute('aria-label', trapped ? 'Rescue the cat from the mimic' : 'Boop the cat');
