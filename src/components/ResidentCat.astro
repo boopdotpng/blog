@@ -1,10 +1,7 @@
 <section class="cat-home" aria-label="Resident cat">
   <div class="cat-caption">
     <span><span class="cat-dot" aria-hidden="true"></span>longcat, the mage</span>
-    <div class="cat-actions">
-      <button class="cat-chest" type="button">inspect chest</button>
-      <button class="cat-toss" type="button">cast mana <span aria-hidden="true">✧</span></button>
-    </div>
+    <button class="cat-toss" type="button">cast mana <span aria-hidden="true">✧</span></button>
   </div>
   <div class="cat-playground">
     <span class="cat-message" aria-hidden="true"></span>
@@ -25,9 +22,6 @@
   .cat-caption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--fg-muted); font-size: 0.7rem; }
   .cat-caption > span { display: flex; align-items: center; gap: 0.5rem; }
   .cat-dot { width: 5px; height: 5px; background: var(--cat-gpu); border-radius: 50%; }
-  .cat-actions { display: flex; gap: 0.5rem; }
-  .cat-chest { font: inherit; color: var(--fg-muted); border: 0; background: transparent; cursor: pointer; padding: 0.5rem 0; }
-  .cat-chest:hover { color: var(--cat-ml); }
   .cat-toss { font: inherit; color: var(--fg-soft); background: transparent; border: 1px solid var(--border-muted); border-radius: 5px; padding: 0.5rem 0.65rem; cursor: pointer; min-height: 36px; }
   .cat-toss:hover { color: var(--accent); border-color: var(--accent); background: var(--surface-soft); }
   .cat-playground { position: relative; height: 100px; overflow: hidden; }
@@ -40,9 +34,6 @@
   .cat-mana { position: absolute; bottom: 13px; font-size: 24px; line-height: 1; color: var(--accent); text-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4); }
   .cat-status { margin: 0.5rem 0 0; color: var(--fg-muted); font-size: 0.68rem; line-height: 1.6; min-height: 1.6em; }
   .cat-pet :global(.mage-cloak) { color: var(--cat-bio); }
-  .cat-pet :global(.mimic-legs) { display: block; color: var(--cat-bio); animation: mimic-kick 0.4s steps(2, end) infinite; }
-  @keyframes mimic-kick { to { transform: translateX(3px) rotate(5deg); } }
-  @media (prefers-reduced-motion: reduce) { .cat-pet :global(.mimic-legs) { animation: none; } }
   @media (max-width: 420px) { .cat-caption { flex-wrap: wrap; gap: 0.25rem; } }
   @media (max-width: 760px) { .cat-home { padding-top: 0.5rem; } }
 </style>
@@ -79,7 +70,7 @@
       'another memory for the journey.',
       'no thoughts. only purrs.',
       'surely there is a spell to make this last longer.',
-      'the next chest is definitely safe. probably.',
+      'a spell for finding the warmest patch of sunlight.',
       'a brief interruption to a century-long nap.',
       'the guild has no paperwork for this.',
       'a spell for warming cold paws.',
@@ -100,7 +91,6 @@
     let gaze = 'o.o';
     let facingRight = false;
     let hasRoamed = false;
-    let trapped = false;
     let reactionTimer: ReturnType<typeof setTimeout>;
     const asleep = () => document.documentElement.dataset.theme === 'dark' && Date.now() > awakeUntil && !chasing;
     const limit = () => Math.max(0, stage.clientWidth - cat.offsetWidth - 4);
@@ -109,29 +99,20 @@
       const body = '_'.repeat(4 + stretch);
       const feet = chasing && step ? ' / /' : '  ||';
       const backFeet = chasing && !step ? '\\\\' : '||';
-      if (trapped) {
-        const legs = document.createElement('span');
-        legs.className = 'mimic-legs';
-        legs.textContent = '    / /';
-        art.replaceChildren(legs, document.createTextNode(" / vvvvvv \\\n |  ◆   |\n  '------'"));
-      } else {
-        const cloak = document.createElement('span');
-        cloak.className = 'mage-cloak';
-        cloak.textContent = ` > ◆ <${'═'.repeat(4 + stretch)}╮\n`;
-        art.replaceChildren(
-          document.createTextNode(`◇  /\\_/\\\n│ ( ${eyes} )${body}\n│ `),
-          cloak,
-          document.createTextNode(`│ ${feet}${'-'.repeat(4 + stretch)}${backFeet}`),
-        );
-      }
-      cat.setAttribute('aria-label', trapped ? 'Rescue the cat from the mimic' : 'Boop the cat');
+      const cloak = document.createElement('span');
+      cloak.className = 'mage-cloak';
+      cloak.textContent = ` > ◆ <${'═'.repeat(4 + stretch)}╮\n`;
+      art.replaceChildren(
+        document.createTextNode(`◇  /\\_/\\\n│ ( ${eyes} )${body}\n│ `),
+        cloak,
+        document.createTextNode(`│ ${feet}${'-'.repeat(4 + stretch)}${backFeet}`),
+      );
       // Flip the drawing only, so the button's boop animation stays independent.
-      art.style.transform = facingRight && !trapped ? 'scaleX(-1)' : 'none';
+      art.style.transform = facingRight ? 'scaleX(-1)' : 'none';
       cat.style.left = `${x}px`;
       bubble.style.left = `${Math.min(x + 20, stage.clientWidth - 140)}px`;
     };
     const idle = () => {
-      if (trapped) { draw(); return; }
       gaze = 'o.o';
       bubble.textContent = asleep() ? 'z z Z' : '';
       status.textContent = asleep() ? 'just five more minutes. perhaps fifty years.' : 'collecting little spells along the way.';
@@ -162,7 +143,6 @@
       frame = requestAnimationFrame(tick);
     };
     const play = (position?: number) => {
-      trapped = false;
       hasRoamed = true;
       cancelAnimationFrame(frame);
       clearTimeout(reactionTimer);
@@ -184,25 +164,12 @@
       frame = requestAnimationFrame(tick);
     };
     toss.addEventListener('click', () => play());
-    home.querySelector('.cat-chest')!.addEventListener('click', () => {
-      cancelAnimationFrame(frame);
-      clearTimeout(reactionTimer);
-      frame = 0;
-      chasing = false;
-      trapped = true;
-      mana.hidden = true;
-      bubble.textContent = '...help.';
-      status.textContent = 'it was, regrettably, a mimic. boop to rescue.';
-      draw();
-      x = Math.min(x, limit());
-      draw();
-    });
     stage.addEventListener('pointerdown', event => {
       if (cat.contains(event.target as Node)) return;
       play(event.clientX - stage.getBoundingClientRect().left);
     });
     stage.addEventListener('pointermove', event => {
-      if (trapped || chasing || asleep()) return;
+      if (chasing || asleep()) return;
       const center = cat.getBoundingClientRect().left + cat.offsetWidth / 2;
       const direction = (event.clientX - center) * (facingRight ? -1 : 1);
       gaze = direction < -20 ? '<.<' : direction > 20 ? '>.>' : 'o.o';
@@ -210,8 +177,6 @@
     });
     stage.addEventListener('pointerleave', () => { if (!chasing) { gaze = 'o.o'; draw(); } });
     cat.addEventListener('click', () => {
-      const rescued = trapped;
-      trapped = false;
       cancelAnimationFrame(frame);
       frame = 0;
       chasing = false;
@@ -222,10 +187,6 @@
       bubble.textContent = boops % 3 === 0 ? '♥ purrr' : '♥';
       const message = boopMilestones[boops] ?? boopMessages[(boops - 1) % boopMessages.length];
       status.textContent = `${boops} boop${boops === 1 ? '' : 's'}. ${message}`;
-      if (rescued) {
-        bubble.textContent = 'a mere setback.';
-        status.textContent = 'rescued. surely the next chest has a grimoire.';
-      }
       draw();
       x = Math.min(x, limit());
       draw();
@@ -245,7 +206,7 @@
     document.fonts.ready.then(positionCat);
     new MutationObserver(idle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     setInterval(() => {
-      if (trapped || !visible || document.hidden || chasing || reduced.matches || asleep() || Date.now() < awakeUntil) return;
+      if (!visible || document.hidden || chasing || reduced.matches || asleep() || Date.now() < awakeUntil) return;
       gaze = '-.-'; draw();
       setTimeout(() => { if (!chasing && Date.now() >= awakeUntil) { gaze = 'o.o'; draw(); } }, 150);
     }, 4800);
