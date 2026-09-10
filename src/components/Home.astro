@@ -96,7 +96,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 <style>
   .home {
     width: 100%;
-    padding: 0.25rem 0 2rem;
+    padding: 0.25rem 0 0;
     font-family: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
@@ -135,7 +135,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
   /* ── sections ──────────────────────────────────────────── */
 
   .section {
-    margin-bottom: 2.25rem;
+    margin-bottom: 0;
   }
 
   .section-header {
@@ -208,7 +208,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
     grid-template-columns: 3px 2.8rem minmax(0, 1fr) auto;
     gap: 0.7rem;
     align-items: center;
-    padding: 1rem 0.5rem 1rem 0;
+    padding: 0.75rem 0.5rem 0.75rem 0;
     text-decoration: none;
     color: inherit;
     transition: background 0.12s;
@@ -283,6 +283,11 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 
   /* ── responsive ────────────────────────────────────────── */
 
+  @media (min-width: 1101px) and (max-height: 950px) {
+    .index-header { margin-bottom: 1rem; }
+    .post-link { padding-block: 0.6rem; }
+  }
+
   @media (min-width: 761px) and (max-width: 1100px) {
     .post-link {
       grid-template-columns: 3px 2.8rem minmax(0, 1fr);
@@ -296,7 +301,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 
   @media (max-width: 760px) {
     .home {
-      padding: 0.25rem 0 2rem;
+      padding: 0.25rem 0 0;
     }
 
     .post-link {
