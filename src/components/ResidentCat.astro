@@ -18,7 +18,7 @@
 </section>
 
 <style>
-  .cat-home { margin-top: auto; padding-top: 1rem; font-family: var(--font-mono); }
+  .cat-home { margin-top: 1rem; padding-top: 1rem; font-family: var(--font-mono); }
   .cat-caption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--fg-muted); font-size: 0.7rem; }
   .cat-caption > span { display: flex; align-items: center; gap: 0.5rem; }
   .cat-dot { width: 5px; height: 5px; background: var(--cat-gpu); border-radius: 50%; }
@@ -58,6 +58,7 @@
     let visible = false;
     let gaze = 'o.o';
     let facingRight = false;
+    let hasRoamed = false;
     let reactionTimer: ReturnType<typeof setTimeout>;
     const asleep = () => document.documentElement.dataset.theme === 'dark' && Date.now() > awakeUntil && !chasing;
     const limit = () => Math.max(0, stage.clientWidth - cat.offsetWidth - 4);
@@ -102,6 +103,7 @@
       frame = requestAnimationFrame(tick);
     };
     const play = (position?: number) => {
+      hasRoamed = true;
       cancelAnimationFrame(frame);
       clearTimeout(reactionTimer);
       awakeUntil = Date.now() + 4000;
@@ -152,7 +154,13 @@
     new IntersectionObserver(entries => { visible = entries[0].isIntersecting; if (!visible) stop(); }).observe(home);
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
     reduced.addEventListener('change', stop);
-    new ResizeObserver(() => { stop(); x = Math.min(x, limit()); draw(); }).observe(stage);
+    const positionCat = () => {
+      stop();
+      x = hasRoamed ? Math.min(x, limit()) : Math.max(0, (stage.clientWidth - cat.offsetWidth) / 2);
+      draw();
+    };
+    new ResizeObserver(positionCat).observe(stage);
+    document.fonts.ready.then(positionCat);
     new MutationObserver(idle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     setInterval(() => {
       if (!visible || document.hidden || chasing || reduced.matches || asleep() || Date.now() < awakeUntil) return;
@@ -160,5 +168,6 @@
       setTimeout(() => { if (!chasing && Date.now() >= awakeUntil) { gaze = 'o.o'; draw(); } }, 150);
     }, 4800);
     idle();
+    positionCat();
   }
 </script>
