@@ -65,6 +65,36 @@
     let lastTime = 0;
     let awakeUntil = 0;
     let boops = 0;
+    const boopMessages = [
+      'a very good use of your time.',
+      'a tiny spell of affection.',
+      'the purr engine is running.',
+      'mana restored. dignity uncertain.',
+      'this counts as studying magic.',
+      'a thousand years, and still not immune to this.',
+      'the ears have detected kindness.',
+      'a grimoire could never teach this.',
+      'an exceptionally small side quest.',
+      'the staff is mostly for reaching high shelves.',
+      'another memory for the journey.',
+      'no thoughts. only purrs.',
+      'surely there is a spell to make this last longer.',
+      'the next chest is definitely safe. probably.',
+      'a brief interruption to a century-long nap.',
+      'the guild has no paperwork for this.',
+      'a spell for warming cold paws.',
+      'the cloak has acquired more cat hair.',
+      'a little less lonely at the end of the internet.',
+      'the mage has forgotten what the quest was.',
+    ];
+    const boopMilestones: Record<number, string> = {
+      10: 'ten boops. you may be the party healer.',
+      25: 'twenty-five boops. friendship is a slow kind of magic.',
+      50: 'fifty boops. the grimoire can wait.',
+      100: 'one hundred boops. a whole chapter of the journey.',
+      256: '0x100 boops. the familiar has become a feature.',
+      1000: 'a thousand boops. finally, someone with an elven sense of time.',
+    };
     let chasing = false;
     let visible = false;
     let gaze = 'o.o';
@@ -190,7 +220,8 @@
       boops++;
       gaze = '^.^';
       bubble.textContent = boops % 3 === 0 ? '♥ purrr' : '♥';
-      status.textContent = `${boops} boop${boops === 1 ? '' : 's'}. ${boops % 3 === 0 ? 'the purr engine is running.' : 'a very good use of your time.'}`;
+      const message = boopMilestones[boops] ?? boopMessages[(boops - 1) % boopMessages.length];
+      status.textContent = `${boops} boop${boops === 1 ? '' : 's'}. ${message}`;
       if (rescued) {
         bubble.textContent = 'a mere setback.';
         status.textContent = 'rescued. surely the next chest has a grimoire.';
