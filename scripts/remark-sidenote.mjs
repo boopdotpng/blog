@@ -11,32 +11,31 @@ function walk(node, visitor, parent = null) {
     for (const child of node.children) walk(child, visitor, node);
 }
 
-let counter = 0;
-
 export default function remarkSidenote() {
   return (tree) => {
-    counter = 0;
+    let counter = 0;
     walk(tree, (node, parent) => {
       if (node.type !== 'text') return;
       if (!node.value.includes('((')) return;
       if (!parent || !Array.isArray(parent.children)) return;
 
       const parts = splitSidenotes(node.value);
-      if (parts.length <= 1) return;
+      if (!parts.some(part => part.type === 'sidenote')) return;
 
       const idx = parent.children.indexOf(node);
       if (idx === -1) return;
 
-      const newNodes = parts.map(part => {
+      const newNodes = parts.flatMap(part => {
         if (part.type === 'text') return { type: 'text', value: part.value };
         counter++;
         const id = `sn-${counter}`;
-        return {
-          type: 'html',
-          value: `<label for="${id}" class="sidenote-number"></label>`
-            + `<input type="checkbox" id="${id}" class="sidenote-toggle"/>`
-            + `<span class="sidenote">${escapeHtml(part.value)}</span>`,
-        };
+        // Structured elements work in both Markdown and MDX; raw HTML nodes
+        // are discarded by the MDX compiler.
+        return [
+          element('label', { htmlFor: id, className: ['sidenote-number'] }),
+          element('input', { type: 'checkbox', id, className: ['sidenote-toggle'] }),
+          element('span', { className: ['sidenote'] }, [{ type: 'text', value: part.value }]),
+        ];
       });
 
       parent.children.splice(idx, 1, ...newNodes);
@@ -68,6 +67,10 @@ function splitSidenotes(text) {
   return parts;
 }
 
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function element(name, properties, children = []) {
+  return {
+    type: 'sidenoteElement',
+    data: { hName: name, hProperties: properties },
+    children,
+  };
 }
