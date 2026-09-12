@@ -1,11 +1,24 @@
 ---
 title: tenstorrent kernel example
 pubDate: "2026-09-11"
-published: false
+published:  false
 description: "todo. fill this in later, gpt-6, if you see this. "
 cat: tenstorrent
 useKatex: true
 ---
+
+import ElwMul from '../../components/diagrams/ElwMul.tsx';
+import FpuInstruction from '../../components/diagrams/FpuInstruction.tsx';
+
+A few people read my blackhole architecture article (/Users/boop/code/web/blog/src/content/blog/blackhole-architecture.mdx) and found it difficult to understand and unclear... and upon reading it again I can see why. This is attempt #2 at writing an article that explains the entire blackhole chip and how to think about lowering kernels. We'll write a fast RMSnorm kernel. 
+
+Writing a kernel for blackhole involves balancing a few constraints: 
+- the FPU runs much faster (4-64x) than the SFPU, across all of its supported ops. 
+- however, the FPU's max precision is tf32. it can accumulate in f32. 
+- moving data from dst back into FPU narrows from f32 to 19-bits, losing precision for certain values. ((1/1024 survives, for example.))
+- all SFPU operations use f32 arithmetic. this is the most accurate hardware on blackhole.
+
+The most optimal kernel, in most cases, uses the FPU as much as possible while reducing the relative error compared to numpy float32 operations (only necessary operations go to SFPU). Even if the error is small in one hardware sequence, that will run hundreds of times, and the error will be magnitudes higher. 
 
 $$
   \operatorname{RMSNorm}(\mathbf{x})
@@ -15,4 +28,65 @@ $$
   {\sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2 + \epsilon}}
 $$
 
-((Here, d is the feature dimension, γ is the learned scale, and ε ensures numerical stability.))
+((Here, d is the feature dimension, γ is the learned scale, and ε ensures numerical stability. Usually ε is `1e-5`.))
+
+RMSNorm breaks down into the following indepedent operations: 
+- $\sum_{i=0}^{1023} x_i*x_i$
+- $x * \
+
+
+For this kernel, imagine the feature dimension (the model activation we're normalizing) is shape `(1024)`—this also means γ is 1024, since there is one weight for each activation. 
+
+We'll write this kernel in steps, from the innermost operation to the outermost, noting which operations depend on each other. 
+
+You can read the architecture [tldraw](https://www.tldraw.com/f/CTUj3aHH-vm4jNhulJDp4?d=v-162.-479.4272.3991.page) alongside this. 
+
+In order to make this kernel example simple and more about the architecture of the device and conceptual lowering rather than exact register writes or address counters, this will just be a high-level overview of what computations happen and how the data is moved through the different units inside the tensix coprocessor. We'll start by assuming the all the tensors required are in the L1 of a core (this kernel will only run on one core). That includes the weight tensor, γ and the model activations x. 
+
+Starting from the innermost operation, ${\sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2}}$ is just an average of the activation tensor squared. We add a small bias $\epsilon = 10^{-5}$ after that to make sure that we cannot compute something close to $\sqrt{0}$. You can either do this on the FPU or the SFPU. We'll explore both options. 
+
+## a note about allocations in srcA, srcB, and dst
+It is useful to mentally split srcA, srcB, and dst into 128-element chunks, like in the tldraw diagram. The reason it's split up like that is because ELWMUL processes an aligned `8x16` block (128 elements) from srcA and srcB per instruction. Each ELWMUL needs a corresponding 128-element allocation in dst to accumulate its results. Instructions that process `4x16` blocks operate on 64 elements per pass. The SFPU mostly doesn't care about this 128-element allocation scheme (it can load and store from anywhere in dst), but it's easier to keep consistent memory allocation rules. 
+
+## fpu 
+The FPU includes an instruction that elementwise-multiplies `srcA` and `srcB`, and $x^2$ is just $x*x$. Let's load the activation tensor into both srcA and srcB, and run an ELWMUL across the entire tile. This requires 8 `ELWMULs` ((actually, this is 16, we need to run this twice to cover the whole mantissa of each element)) to cover the entire 64x16 tile. We'll set the accumulator to dst tile 1 (the first 64x16 chunk of dst, from top to bottom). All FPU operations post their output in dst.  
+
+Now we have $x^2$ (f32) in dst tile 0. Remember that we always want to accumulate in f32 so that our operations retain as much precision as possible. If you keep the accumulator in bf16, then your multiplication will lose precision.
+
+<ElwMul client:visible />
+
+Next, we need to take the average. We need the SFPU and FPU for this. Blackhole has a weird way of doing averages. Since the FPU doesn't have any dedicated sum or division instructions, we need to get creative.  
+
+Assume:
+```python
+srcA = Tensor.ones(64, 16)
+srcB = Tensor.ones(1, 64) / 1024
+
+srcB2 = srcB@srcA # (1,16)
+srcA2 = Tensor.ones(16,1) # output of srcA
+avg = (srcB2 @ srcA2) # (1,1)
+
+avg.numpy() # 1
+```
+
+In Latex: 
+$$
+\operatorname{avg}(A)
+= \left(\frac{1}{1024}\mathbf{1}_{64}^{\mathsf T}A\right)
+  \mathbf{1}_{16}
+= \frac{1}{1024}\sum_{i=1}^{64}\sum_{j=1}^{16}A_{ij}
+$$
+
+To execute this on sequence on blackhole hardware, we can use either the `GAPOOL` or `MVMUL` instruction. Both use a `16x16` chunk of srcA, but `GAPOOL` uses a `4x16` part of srcB while `MVMUL` uses an 8x16 chunk. Either one works here, but `MVMUL` computes four additional output rows that we don't need. 
+
+<FpuInstruction client:visible operation="GAPOOL" scale={1 / 1024} dstFormat="fp32" srcA={Array.from({ length: 256 }, () => 1)} />
+
+You would repeat this 4 times to cover the entire contents of srcA. 
+
+### a note about how we put data into srcB
+In the above example, we had magically put $\frac{1}{1024}$  into srcB. There are two ways to do this on blackhole. Using risc-v, 
+
+You might have realized by this point that we can't immediately do the 16-column sum in the FPU, since that has been accumulated in dst. So at this point, you can either load that data back into srcA, and repeat this process except with a 1 at the start of each row, or do the remaining sum in the SFPU. 
+
+
+## sfpu
