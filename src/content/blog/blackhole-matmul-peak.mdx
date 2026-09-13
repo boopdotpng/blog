@@ -1,0 +1,349 @@
+---
+title: "how matmul_peak works on blackhole"
+pubDate: "2026-09-13"
+published: true
+description: "From a dot product to 110 cooperating Tensix cores: tiles, multicast, circular buffers, partial sums, and the runtime predicates that could replace matmul_peak’s role variants."
+cat: tenstorrent
+useKatex: true
+---
+
+import MatmulPeak from '../../components/diagrams/MatmulPeak.tsx';
+
+Matrix multiplication on Blackhole starts with the same operation as a three-loop Python program. What makes `matmul_peak` interesting is how it arranges the work around that operation: who reads each input, who shares it, where partial sums live, and when a buffer becomes safe to overwrite.
+
+This is a walkthrough of the local `blackhole-py/examples/matmul_peak.py` implementation and its `matmul_peak_kernel/` recipes, as inspected on September 13, 2026. We'll follow the default BF16 path, then look at a proposed change: selecting loader roles with runtime predicates instead of compiling separate variants. The examples and diagram describe the existing kernel; the final section describes work still to be done.
+
+## Start with one number
+
+If A has shape M×K and B has shape K×N, their product C has shape M×N:
+
+$$
+C_{m,n} = \sum_{k=0}^{K-1} A_{m,k}B_{k,n}.
+$$
+
+Choose a row of A and a column of B. Multiply corresponding elements and add them. For example, the row `[1, 2, 3]` and column `[4, 5, 6]` produce `1×4 + 2×5 + 3×6 = 32`. That is one entry of C. Repeat for every row and column.
+
+```python
+for m in range(M):
+    for n in range(N):
+        total = 0
+        for k in range(K):
+            total += A[m, k] * B[k, n]
+        C[m, n] = total
+```
+
+The K loop is a **reduction**: many products contribute to the same output. The M and N loops produce independent outputs. That distinction tells us how to distribute the kernel. Assign different M/N regions to different cores, and each core can finish its outputs without collecting partial sums from another core.
+
+There is also reuse hiding in those loops. `A[m, k]` contributes to every column in output row m. `B[k, n]` contributes to every row in output column n. Reading either value again from DRAM for every multiplication would waste most of the machine's effort.
+
+## Replace numbers with tiles
+
+The input storage unit here is a 32×32 tile. For BF16, a tile contains 1,024 two-byte elements, or 2,048 bytes. `tile_bytes()` converts an ordinary matrix into tiles, and stores each tile as four consecutive 16×16 faces:
+
+```text
+A logical 32×32 tile:     Its order in memory:
+┌──────────┬──────────┐
+│ face 0   │ face 1   │   face 0, face 1, face 2, face 3
+├──────────┼──────────┤   (each face is row-major)
+│ face 2   │ face 3   │
+└──────────┴──────────┘
+```
+
+The equation still works when its entries are tiles. One output tile is a sum of 32×32 tile products along K. A tile product represents 32×32×32 scalar multiply-adds, conventionally counted as 65,536 floating-point operations.
+
+A storage tile is bigger than one elementary FPU operation. The kernel's `MVMUL` schedule works with 8×16 output regions and 16-wide portions of the reduction. A full tile product covers four groups of eight output rows, two groups of sixteen output columns, and two groups of sixteen K elements: sixteen such regions per fidelity phase. The BF16 HiFi2 path uses two fidelity phases; these are mantissa-processing phases of the same product, not two independent matrix multiplications.
+
+The repeated instruction sequence lives in replay buffers and is driven by MOP, the hardware's instruction-loop machinery. RV32 code sets up and launches this sequence rather than issuing a Python loop's worth of scalar multiplications.
+
+One naming trap: the mathematical matrices A/B do not map to identically named hardware registers. In this recipe, matrix B goes through unpack section 0 into `srcA`, and matrix A through section 1 into `srcB`. The hardware operation has the orientation `dst += srcB @ srcA`. The code's “reuse A” means reuse **matrix A**, which is held in `srcB`.
+
+## Give each core a rectangle of C
+
+Arrange the participating cores as R rows by S columns. Core `(ri, ci)` owns one rectangular output block:
+
+$$
+C^{(ri,ci)} = \sum_q A^{(ri,q)} B^{(q,ci)}.
+$$
+
+Here q indexes a **K block**, containing several tile columns of A and the matching tile rows of B. Each core traverses all K blocks for its output region. There is no split-K reduction between cores.
+
+Look at a small 3×4 core grid:
+
+```text
+                  B column panels
+                B0    B1    B2    B3
+                 ↓     ↓     ↓     ↓
+A row panel A0 → C00   C01   C02   C03
+A row panel A1 → C10   C11   C12   C13
+A row panel A2 → C20   C21   C22   C23
+```
+
+All four cores in row 1 need the same A panel. All three cores in column 2 need the same B panel. So choose one core to fetch each panel and share it:
+
+- The first logical column, `ci == 0`, reads A from DRAM and multicasts across its row on **NoC 0**.
+- The first logical row, `ri == 0`, reads B from DRAM and multicasts down its column on **NoC 1**.
+- Every core, including those senders, multiplies its local copies and eventually writes its own C block.
+
+A sender is also a compute core. The corner `(0, 0)` sends both operands. An interior core receives both. “A receiver” does not mean it has no other responsibilities: it may be a B sender, and it always computes and writes output.
+
+For each K block, independent loads on every core would fetch R×S A panels and R×S B panels. Multicast reduces the DRAM fetches to R A panels and S B panels. It replaces duplicate DRAM reads with L1-to-L1 distribution over the NoC. Receivers still need their own L1 storage, and the fabric still carries the data.
+
+## Watch the full grid
+
+This diagram uses the default dry-run plan for `5000 × 5000 × 5000`: 10 core rows, 11 core columns, and 27 K blocks. Click a core to see its role and output region. Step through one K block, jump to the last one to see the partial-sum reload, or jump directly to output.
+
+<MatmulPeak client:visible />
+
+The diagram separates A distribution, B distribution, and compute so each is visible. Hardware does not impose those global stages. Each core progresses through local buffer and semaphore dependencies, allowing the two input streams and compute to overlap. Arrows express source/destination relationships, not the physical routes taken by packets; in particular, NoC 1's physical direction and wrapping are not drawn as a downward router path.
+
+`plan.rows` and `plan.cols` are lists of usable coordinates, not necessarily consecutive physical coordinates. This plan uses physical x coordinates `1…7, 10…13` and y coordinates `2…11`. The logical column after x=7 is x=10. The planner searches for a Cartesian product of available rows and columns that fits its buffer constraints, prioritizing core count before its other scoring terms. This is a planning heuristic, not an exhaustive performance autotuner.
+
+A's row multicast is split into west and east rectangles around the central non-worker columns. B's column multicast excludes its sender and uses the NoC 1 coordinate ordering prepared by `writer_args()`. A single-row or single-column plan naturally has no receivers for the corresponding operand.
+
+## Inside a core: five small controllers
+
+Each participating Tensix runs five cooperating RISC programs. The first two move data; the remaining three control the compute pipeline.
+
+| Controller | Job in this kernel |
+| --- | --- |
+| BRISC | Read or receive A into local L1; run A's multicast protocol |
+| NCRISC | Read or receive B into local L1, then write final C tiles to DRAM |
+| TRISC0 | Unpack input tiles from L1 into the FPU source registers; reload partials on the final K block |
+| TRISC1 | Issue the matmul instruction schedule and hand completed destination subblocks to the packer |
+| TRISC2 | Pack destination values into L1, accumulating partials when needed |
+
+The scalar controllers issue commands to the data movers, unpackers, FPU, and packers. They do not perform the dense multiplication themselves.
+
+The main path through one core is:
+
+```text
+DRAM or a sender's L1
+          ↓
+     CB0: A   CB1: B        local input rings
+          ↓
+       TRISC0              unpack
+          ↓
+     srcB:A   srcA:B
+          ↓
+       TRISC1 / FPU → dst
+                       ↓
+                    TRISC2  pack
+                       ↓
+                CB24: partials
+                     or
+                CB16: final C → NCRISC → DRAM
+```
+
+“CB” means circular buffer. It is an L1 allocation plus producer/consumer bookkeeping, not a hardware cache that discovers what the program needs. Producers explicitly reserve space and publish pages; consumers explicitly wait for pages and release them.
+
+The input buffers each hold **two K panels**. While TRISC0 consumes one panel, a loader can fill the next available slot. That provides room for overlap, but does not guarantee a loader can always run ahead: buffer capacity and multicast readiness apply backpressure.
+
+## Why multicast needs a handshake
+
+A NoC write into another core's L1 is not enough. That receiver might still be reading the previous contents of the destination slot. The sender needs permission to overwrite it, and the receiver needs to know when the new contents can be consumed.
+
+The A and B streams each use a sender-side readiness counter and a receiver-side data-ready flag. Conceptually, one iteration is:
+
+```text
+receiver                               sender
+--------                               ------
+reserve room in local input CB         reserve local CB; read panel from DRAM
+clear local data-ready flag            wait for DRAM read responses
+increment sender's readiness counter → wait for all receiver credits
+                                       reset readiness counter
+                                       multicast panel data
+                                       flush issued data writes as required
+wait for local data-ready flag       ← multicast data-ready = 1
+publish local CB pages                 publish sender's local CB pages
+```
+
+The signal follows the data using the kernel's ordered NoC command sequence. The receiver's CB becomes visible to TRISC0 only after the ready flag arrives. Clearing that flag **before** advertising readiness prevents a late clear from erasing the sender's new signal.
+
+All participants use the same CB allocation and advance through the same panel sequence. That is why the sender can multicast to the same L1 address on every receiver. Matching addresses alone would not be sufficient without matching ownership of the current ring slot.
+
+The multicast flag and the CB publication are different events. The former synchronizes cores; the latter connects a local loader to its local unpacker. Separately, source-bank handoffs and the `MATH_PACK` semaphore coordinate unpack, math, and pack inside the Tensix.
+
+## Reuse again, inside the FPU
+
+Sharing across cores saves DRAM bandwidth. Blocking inside a core saves source-register loads.
+
+The default output subblock is **2×4 tiles**, or a 64×128 output rectangle. For a single inner tile position, its eight tile products are:
+
+```text
+A0 @ B0   A0 @ B1   A0 @ B2   A0 @ B3
+A1 @ B0   A1 @ B1   A1 @ B2   A1 @ B3
+```
+
+The schedule retains A0 while visiting four B tiles, then does the same with A1. Each output tile accumulates contributions from all inner tiles in the K block before the subblock is handed to the packer.
+
+The math and pack programs alternate destination halves. Math waits for pack room, produces a subblock, posts `MATH_PACK`, and switches halves. Pack waits for math data, writes the subblock to L1, clears/releases that destination half, and switches too. This lets one half be packed while math works on the other, subject to the hardware dependencies.
+
+This kernel does not keep the entire per-core C block in destination registers. In the default 5000 case that block is 16×16 storage tiles, while the working subblock is only eight tiles. L1 holds the longer-lived result.
+
+## Where the sum over K actually lives
+
+It is tempting to imagine that every core keeps `C += A @ B` in registers for the entire K dimension. Here the outer loop visits **all output subblocks for one K panel pair**, then advances to the next K block. The partial result therefore needs somewhere to live between visits.
+
+For a three-K-block example, the existing compute recipes do this:
+
+| K block | Math | Pack |
+| --- | --- | --- |
+| First | Compute contribution D0 in dst | Write D0 to CB24 with L1 accumulation disabled |
+| Middle | Compute contribution D1 in dst | Enable packer L1 accumulation: add D1 to the stored partial |
+| Final | Reload the stored partial into dst, then add contribution D2 | Disable L1 accumulation and pack final C to CB16 |
+
+With more blocks, the middle step repeats. With one block, the kernel skips the partial path and packs directly to CB16. With two, it stores the first contribution and reloads it for the second.
+
+The key optimization is **packer L1 accumulation** for intermediate blocks. It avoids reloading old partials through the unpacker and math engine on every K block. The final block deliberately uses the reload path instead.
+
+CB24 and CB16 have separate bookkeeping but intentionally share one physical L1 allocation. Partial storage becomes final-output storage. Their lifetimes and traversal order make that aliasing work; they are not two independent output-sized buffers.
+
+These stores also matter numerically. On the BF16 path, the partials and final output use BF16 storage. This is not equivalent to preserving an unrounded FP32 accumulator across the whole K reduction and rounding only once. The FP8 option uses E4M3 inputs, a different fidelity schedule, and FP16 output/partial storage. Its host conversion saturates finite inputs at 448 and flushes subnormal encodings to signed zero to match the tested hardware behavior.
+
+## Writing the result
+
+NCRISC finishes its B input loop before entering its output writer. It then waits for final CB16 subblocks as TRISC2 produces them and writes every output tile to interleaved DRAM.
+
+By default, output traffic is split by **logical column parity**:
+
+```python
+output_noc = 1 - (ci % 2)
+# ci:          0  1  2  3  4  ...
+# output NoC:  1  0  1  0  1  ...
+```
+
+A NoC 1 output writer has finished its own B traffic. A NoC 0 output writer must also wait for its core's BRISC to publish `A_DONE`: both would otherwise use NoC 0 command resources. That dependency must survive any restructuring of the program.
+
+The writer keeps output writes in flight across subblocks and drains its dedicated transaction ID at the end. It can release CB16 bookkeeping before that final drain because each output page is written once and its contents will not be reused by a producer during this launch. Copying this pattern into a reusable streaming output ring would require a different lifetime argument.
+
+There is an optional `--writer-wave-rows` mode that gates output writers in groups of core rows. The default is zero, so no wave gating is applied. This is separate from the default parity split; `--output-noc 0` or `1` instead forces one output network.
+
+## A concrete plan, including the padding
+
+Running the example without `--run` constructs the plan and lowers its images without executing on a device:
+
+```sh
+python examples/matmul_peak.py 5000 5000 5000
+```
+
+The CLI's positional order is **M, N, K**; internally `plan_matmul()` takes M, K, N. For the square example they coincide. The current fallback P100 worker list produces:
+
+| Quantity | Default BF16 plan |
+| --- | --- |
+| Participating cores | 10×11 = 110 |
+| Per-core output storage | 16×16 tiles = 512×512 elements |
+| Per-core compute extent | 504 rows × 464 columns |
+| K panel width | 6 tiles = 192 elements |
+| K blocks | 27 |
+| A / B panel size per core | 96 tiles each = 192 KiB each |
+| Double-buffered A / B allocations | 384 KiB each |
+| Shared partial / final allocation | 256 tiles = 512 KiB |
+| Total CB storage | 1,280 KiB, before code and other state |
+
+Storage padding and arithmetic padding are different. The input/output tile layout reserves a global M extent of 5,120 and N extent of 5,632; K storage extends to 5,184. The finer edge schedule computes extents of **5,040×5,008×5,104** in M×K×N order.
+
+That is possible because the FPU edge code works in 8-row, 16-column, and 16-K increments even though storage still uses 32×32 tiles. `edges.py` emits the smaller `MVMUL` sequences, and the unpack code skips unnecessary tile work at the matching boundaries. Some zero padding remains, including K elements 5000…5007.
+
+The host places each core row's logical A data into its larger storage slot and does the analogous placement for B columns. For example, logical output row 504 begins core row 1's contribution, but its physical tile storage begins at row 512. After reading C, the host removes these per-core gaps. A single top-left crop would not recover the matrix correctly.
+
+On actual execution, the worker list comes from the device, so another board can choose a different plan.
+
+## What “peak” measures here
+
+With `--run`, the example allocates inputs, uploads the program, and performs an initial warm-up launch. Timed repetitions reset the semaphores and launch the already resident program. Its reported interval runs from the earliest BRISC start timestamp to the latest NCRISC end timestamp across cores, using the code's 1,350-cycles-per-microsecond conversion.
+
+That interval includes the kernel's input reads, multicast, compute, and output writes. It excludes host input conversion, program upload, and output readback. It is not an end-to-end application latency measurement.
+
+The script reports both logical throughput, using `2*M*N*K`, and throughput using its padded compute extents. The latter credits arithmetic on zeros too. No device timing is claimed in this article: the concrete plan above was checked with host-only construction.
+
+Validation compares against the quantized inputs. It checks all outputs for finiteness, then uses the full numerical reference for up to one million outputs, or 1,024 sampled positions for larger matrices. Its acceptance thresholds are PCC ≥ 0.995 and relative L2 error ≤ 0.10. Those checks establish the example's own acceptance criterion, not bitwise agreement or an error bound for arbitrary workloads.
+
+## The proposed cleanup: choose roles inside the program
+
+The dataflow above does not require a different binary for each core role. But the existing `build()` selects code paths in Python.
+
+In default split-output mode it lowers:
+
+```text
+BRISC:    a_sender, a_receiver
+NCRISC:   b_sender_noc0, b_receiver_noc0,
+          b_sender_noc1, b_receiver_noc1
+TRISC:    trisc0, trisc1, trisc2
+```
+
+That is **six data-movement variants plus three shared compute images**, nine resident images total. All are uploaded at distinct L1 addresses. At each fixed worker entry slot, each core receives a one-instruction `jal` trampoline into its selected resident image. The compute targets are shared; the loader/writer targets depend on physical coordinates and logical column parity.
+
+The `ttk/sketches/matmul_peak.py` prototype expresses the role combinations differently: its `Role(a_sender, b_sender, output_noc)` has eight possible templates. Those eight frontend templates are not eight distinct math algorithms, nor are they the same count as the nine resident images in the example. The sketch is explicitly a text-only protocol model with one tile per core; it does not reproduce the optimized compute schedule above.
+
+Much of the example is already runtime-parameterized. `build()` writes a 64-word argument table per core: 32 words reserved for the A reader and 32 for the B reader/output writer. Those arguments carry tile offsets, strides, multicast rectangles, sender coordinates, and addresses. The writer also reads its own coordinates from mailbox state. The remaining role choice is a build-time choice of entry target.
+
+The proposed structure moves that choice into RV32 control flow:
+
+```python
+# Proposed kernel entry logic, not current frontend syntax.
+ri, ci = core_identity()
+
+# One BRISC image:
+if ci == 0:
+    read_and_multicast_A()
+else:
+    receive_A()
+
+# One NCRISC image:
+if ri == 0:
+    read_and_multicast_B()
+else:
+    receive_B()
+
+out_noc = 1 - (ci % 2)
+if out_noc == 0:
+    wait_for_A_DONE()
+write_C(out_noc)
+```
+
+This gives **one BRISC image and one NCRISC image**, alongside the same three TRISC images. “One program” means one common bundle containing those per-controller images, launched across a grid. It does not mean every controller executes the same bytes.
+
+The predicates are two booleans plus a 0/1 NoC selector. Role selection can happen once at entry if the two loader loops remain separate branch arms. Sharing their loop control could instead introduce a branch per K block. Supporting a register-valued NoC choice also requires adapting helpers that currently bake `OUTPUT_NOC` into MMIO addresses and command setup. It is more than replacing a Python `if` with one instruction.
+
+The intended result preserves panel contents, destinations, semaphore dependencies, and the math schedule. It **cannot literally preserve every RV32 instruction stream or guarantee byte identity**: the new branches, address calculations, and layout necessarily change code. Any overhead is expected to be small relative to the kernel's work, but its size and performance need to be measured after implementation. Likewise, the entry trampolines can disappear only when the launcher can place or enter the common images appropriately.
+
+## Identity belongs to the runtime
+
+The compiler lowerer should not be called once per core with a “which core” argument. It should lower a value representing the current work item's identity. Every core runs the same code and receives a different identity at launch.
+
+There are two practical ways to introduce that value here. An incremental version adds `ri, ci` to host-written argument data. A common-grid launch interface can instead have the dispatcher/firmware populate a fixed L1 identity word, which the kernel reads through the lowering of `SPECIAL`. That latter interface is the target for the tinygrad integration discussed here: common buffers and scalar launch values, plus work-item identity.
+
+Logical rank is essential. Because columns are non-contiguous, physical `MY_X` is not generally `ci + constant`. And rank alone does not tell a kernel which physical coordinates make up an arbitrary harvested grid. Moving rectangle and sender-address calculations on-core still needs a shared rank-to-coordinate mapping or a runtime-defined topology mapping, as well as the DRAM endpoint mapping. Those are launch/runtime facts; they should not force compilation of a separate image for each core.
+
+Tile offsets can then be computed from rank and common constants. For example, in the current storage layout:
+
+```python
+A_first_tile = ri * per_core_m * padded_K_tiles
+B_first_tile = ci * per_core_n
+C_first_tile = ri * per_core_m * padded_N_tiles + ci * per_core_n
+```
+
+The frontend also needs a way to express **conditional effects**. A `WHERE` selects a value. It cannot express “this core issues a DRAM read and multicast, while that core reserves a remote receive and waits.” That requires an actual gated region such as `IF/ELSE/ENDIF` in the effect graph.
+
+A grid-aware verifier could instantiate logical ranks, evaluate the predicates, derive the active communication relationships, and apply credit and hazard checks. This is a proposed extension to the existing role verifier. Removing explicit role templates does not remove the obligation to prove that each receive has a matching sender, enough buffer capacity, and correctly ordered signals.
+
+That is why this cleanup is useful before wrapping the example as a custom kernel. Both the handwritten and eventually generated multicast kernels could request the same runtime interface: **one common program bundle, a grid, and per-core identity as a value**. A generated “origin core sends, other cores wait” operation would use the same kind of predicate. Matching the runtime contract makes their protocols and code generation easier to compare; byte-for-byte equality would be a separate, stronger test under matched lowering and layout.
+
+In the proposed integration, the launch would conceptually be `program + global_size = (num_rows, num_cols) + common buffers/vals`. That is the motivation for replacing the per-core-image encoding path discussed as `encode_tt_program_bundle`: wrapping the current role selection would otherwise commit the custom-kernel adapter to a different launch representation. The example itself currently constructs `Program(core_images)`; the common-grid ABI is a target, not an interface already implemented by this refactor.
+
+The multiplication itself stays the same. Each core owns C, receives the A row panel and B column panel it needs, reuses those inputs locally, and writes its result. Runtime predicates simply let that relationship be expressed by one common program.
+
+## Where to read the code
+
+These paths are relative to the local `blackhole-py` checkout. The inspected example and frontend sketch are local, uncommitted files, so there are no pinned public source links for this snapshot.
+
+| File / symbols | What to follow |
+| --- | --- |
+| `examples/matmul_peak.py`: `tile_bytes`, `build`, `run` | Storage conversion, resident variants, per-core launch data, validation and timing |
+| `examples/matmul_peak_kernel/kernel.py`: `plan_matmul`, `reader_args`, `writer_args` | Grid selection, L1 sizing, tile offsets and multicast rectangles |
+| Same file: `matmul_reader_sender/recv`, `matmul_writer_sender/recv` | A/B readiness and multicast protocols |
+| Same file: `matmul_trisc0/1/2`, `emit_pack_reconfig_l1_acc` | Unpack, math, intermediate accumulation, and final reload |
+| `examples/matmul_peak_kernel/edges.py` | Arithmetic fringes smaller than storage tiles |
+| `examples/matmul_peak_kernel/writers.py` | Optional output wave gating |
+| `tests/test_matmul_peak.py` | Host checks for layouts, conversion, padding, and resident roles |
+| `ttk/sketches/matmul_peak.py` | The eight-template protocol sketch to compare with a future predicated frontend |

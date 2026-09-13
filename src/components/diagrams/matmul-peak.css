@@ -1,0 +1,24 @@
+.mp { font-size: .82rem; }
+.mp header, .mp-controls, .mp-legend { display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; }
+.mp header { justify-content: space-between; margin-bottom: .9rem; }
+.mp header span, .mp-phase span, .mp-inspect > span { color: var(--fg-muted); }
+.mp button, .mp select { font: inherit; color: var(--fg); background: var(--surface-soft); border: 1px solid var(--border-muted); border-radius: 4px; padding: .35rem .55rem; }
+.mp button { cursor: pointer; }
+.mp button:disabled { opacity: .45; cursor: default; }
+.mp button:focus-visible, .mp select:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.mp-phase { margin: 1rem 0 .3rem; font-weight: 600; }
+.mp-map-scroll { overflow-x: auto; }
+.mp .mp-map-scroll svg { min-width: 570px; overflow: hidden; }
+.mp-axis { fill: var(--fg-muted); font-size: 10px; }
+.mp-dram-label { fill: var(--fg); font-size: 12px; }
+.mp-cell-text { fill: var(--fg); font-size: 10px; }
+.mp-inactive .mp-cell-text { fill: var(--fg-faint); }
+.mp-core { cursor: pointer; outline: none; }
+.mp-core:hover .mp-core-outline, .mp-core:focus-visible .mp-core-outline { stroke: var(--fg); }
+.mp-legend { color: var(--fg-muted); font-size: .73rem; gap: .8rem; }
+.mp-inspect { border-top: 1px solid var(--border-muted); padding-top: .8rem; margin-top: .8rem; line-height: 1.8; }
+.mp .mp-explanation { font-family: var(--font-sans, sans-serif); font-size: .95rem; line-height: 1.6; min-height: 4.8em; margin: .8rem 0; }
+.mp figcaption { font-family: var(--font-sans, sans-serif); color: var(--fg-muted); font-size: .8rem; line-height: 1.5; }
+.mp-packet { animation: mp-travel .85s ease-in-out both; }
+@keyframes mp-travel { from { transform: translate(var(--x1), var(--y1)); } to { transform: translate(var(--x2), var(--y2)); } }
+@media (prefers-reduced-motion: reduce) { .mp-packet { animation: none; transform: translate(var(--x2), var(--y2)); } }

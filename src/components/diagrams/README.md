@@ -32,3 +32,17 @@ GAPOOL displays only the operands of one instruction: 16×16 srcA, 4×16 srcB, a
 Run animates the mathematical dot products of one conceptual single-fidelity instruction and stops. This is not hardware execution order or timing. Each column has 16 product steps, a sum step, and a dst accumulation step. GAPOOL defaults to 500 ms per product, with longer pauses around the sum/store; its `stepMs` prop sets the per-product delay. A prominent running sum at the bottom shows the previous sum plus the current product. Step advances one explanatory step; Next column finishes the current column. Accumulate again retains dst; Reset restores `initialDst`. Each output in row 0 receives `scale * sum(srcA[:, column])`; the other rows receive zero. SrcA is unchanged. For the squared repeating example the first-pass output repeats 0, 0.015625, 0.0625, 0.140625. With scale 1/1024, these are partial contributions toward the larger 1024-element mean, not the completed full-tensor reduction.
 
 Reference: GAPOOL.md and MVMUL.md in the adjacent ISA documentation repository. Values use ideal arithmetic, omitting fidelity and hardware rounding. The ElwMul import remains compatible.
+
+## Matmul peak: device dataflow
+
+```mdx
+import MatmulPeak from '../../components/diagrams/MatmulPeak.tsx';
+
+<MatmulPeak client:visible />
+```
+
+`MatmulPeak` is a fixed snapshot of the BF16 `plan_matmul(5000, 5000, 5000, P100_WORKER_CORES)` defaults in the adjacent `blackhole-py/examples` implementation: 10×11 cores, physical columns 1–7 and 10–13, rows 2–11, 27 K blocks of six tiles, and 504×464 per-core compute extents. It is not a topology detector or cycle simulator. Keep its constants in sync if changing the example described by the accompanying article.
+
+Play/Back/Step/Reset traverse readiness, DRAM reads, A multicast, B multicast, math, and pack. The K-block selector jumps to a panel; Output shows the final writers. Intermediate packs distinguish first store from L1 accumulation; the final block shows partial reload and CB16 output. Playback stops at output. Reduced-motion disables packet travel. Active cores can be selected with a pointer or Enter/Space to inspect logical/physical coordinates, operand roles, output NoC, and logical C bounds.
+
+The grid uses physical positions, but arrows represent dependencies, not physical packet routes. A/B phases are separated for teaching even though hardware overlaps them. Readiness and DRAM arrows show only the selected core/row/column; multicast and compute highlight the full grid. Input values, CB occupancy, packet counts, and hardware timing are not simulated. Small screens scroll the map horizontally while controls and descriptions wrap.
