@@ -43,7 +43,7 @@ export default function SfpuReduction() {
           const x = 0, y = reg * 156;
           return <g key={reg}>
             <rect class={`sfp-register ${frame.target === reg || frame.kind === 'transpose' ? 'active' : ''}`} x={x + 4} y={y + 4} width={468} height={144} rx={5} />
-            <text class="sfp-reg-name" x={x + 16} y={y + 23}>{`L${reg}`}</text>
+            <text class="sfp-reg-name" x={x + 16} y={y + 23}>{`LReg${reg}`}</text>
             <text class="sfp-reg-note" x={x + 452} y={y + 23} text-anchor="end">{reg === 0 ? (finished ? 's · all 32 lanes' : `${count} ${count === 1 ? 'input' : 'inputs'} / lane`) : reg === 1 && frame.phase === 0 ? 'scratch · rotated copy' : '4 rows × 8 lanes'}</text>
             {Array.from({ length: 32 }, (_, lane) => <rect key={lane} class="sfp-empty-cell" x={x + 16 + lane % 8 * 56} y={y + 36 + Math.floor(lane / 8) * 26} width={52} height={22} rx={2} />)}
             {!frame.registers[reg] && <text class="sfp-unused" x={x + 240} y={y + 93} text-anchor="middle">not used yet</text>}
@@ -59,7 +59,7 @@ export default function SfpuReduction() {
               return <g key={cell.id} class={`sfp-moving-cell ${wrap ? 'sfp-wrap' : ''}`} style={{ transform: `translate(${col * 56}px, 0px)`, '--row-color': mixed ? 'var(--accent)' : colors[originalRow] }}>
                 <rect class="sfp-value-cell" width={52} height={22} rx={2} />
                 <text class="sfp-value" x={26} y={16}>{valueOf(cell)}</text>
-                <title>{`L${reg}, lane ${r * 8 + col}: ${cell.terms.map(term => term + 1).join(' + ')} = ${valueOf(cell)}`}</title>
+                <title>{`LReg${reg}, lane ${r * 8 + col}: ${cell.terms.map(term => term + 1).join(' + ')} = ${valueOf(cell)}`}</title>
               </g>;
             })}
           </g>;
@@ -84,6 +84,6 @@ export default function SfpuReduction() {
       <label class="sfp-speed">Speed <select value={speed} onChange={event => setSpeed(Number(event.currentTarget.value))}><option value={2200}>Slow</option><option value={1400}>Normal</option><option value={850}>Fast</option></select></label>
       <span>{step} / {frames.length - 1}</span>
     </div>
-    <figcaption class="elw-note">Values 1–32 stand in for the accumulated sums in L0. All lanes are active. Hover a value to see its contributions. Movement is slowed down; SFPNOPs and hardware timing are omitted.</figcaption>
+    <figcaption class="elw-note">Values 1–32 stand in for the accumulated sums in LReg0. All lanes are active. Hover a value to see its contributions. Movement is slowed down; SFPNOPs and hardware timing are omitted.</figcaption>
   </figure>;
 }
