@@ -546,6 +546,36 @@
   display: block;
 }
 
+/* A standalone note after display math belongs to the equation. */
+.math-sidenote {
+  position: relative;
+  margin: 1em 0;
+}
+
+.math-sidenote-equation {
+  position: relative;
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  margin-inline: auto;
+}
+
+.markdown-body .math-sidenote-equation .katex-display {
+  margin: 0;
+}
+
+.math-sidenote-equation > .sidenote-number {
+  position: absolute;
+  top: 0.5em;
+  left: 100%;
+  padding-left: 0.25em;
+  line-height: 1;
+}
+
+.math-sidenote-equation > .sidenote-number::after {
+  vertical-align: top;
+  line-height: 1;
+}
+
 /* Wide screens: float into the right margin */
 @media (min-width: 1280px) {
   .sidenote {
@@ -566,6 +596,14 @@
 
   .sidenote-number {
     cursor: default;
+  }
+
+  .math-sidenote > .sidenote {
+    position: absolute;
+    top: 0.5rem;
+    left: calc(100% + 2rem);
+    float: none;
+    margin: 0;
   }
 
   /* Hide checkbox behavior — always visible */

@@ -4,6 +4,7 @@
 //
 // Usage in markdown:
 //   Some text ((This appears as a numbered note in the right margin.)) and more text.
+//   A standalone ((note)) immediately after display math attaches to its top right.
 
 export default function remarkSidenote() {
   return (tree) => {
@@ -53,6 +54,31 @@ export default function remarkSidenote() {
     }
 
     walk(tree);
+
+    function attachMathNotes(node) {
+      if (!Array.isArray(node.children)) return;
+      for (const child of node.children) attachMathNotes(child);
+
+      for (let index = 0; index < node.children.length - 1; index++) {
+        const math = node.children[index];
+        const paragraph = node.children[index + 1];
+        if (math.type !== 'math' || paragraph.type !== 'paragraph') continue;
+        const parts = paragraph.children.filter(child => child.type !== 'text' || child.value.trim());
+        // Only consume a paragraph containing exactly one note, never prose.
+        if (parts.length !== 3 || !['label', 'input', 'span'].every((tag, i) =>
+          parts[i].type === 'sidenoteElement' && parts[i].data.hName === tag
+        )) continue;
+
+        const [label, toggle, note] = parts;
+        node.children.splice(index, 2, element('div', { className: ['math-sidenote'] }, [
+          element('div', { className: ['math-sidenote-equation'] }, [math, label]),
+          toggle,
+          note,
+        ]));
+      }
+    }
+
+    attachMathNotes(tree);
   };
 }
 

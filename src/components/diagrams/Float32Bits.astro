@@ -1,0 +1,31 @@
+---
+const fields = [
+  { start: 0, bits: 1, name: 'Sign', label: 'S', color: 'var(--cat-ml)' },
+  { start: 1, bits: 8, name: 'Exponent', label: 'exponent', color: 'var(--cat-worker)' },
+  { start: 9, bits: 23, name: 'Fraction', label: 'fraction (mantissa)', color: 'var(--cat-green)' },
+];
+---
+<figure class="dgm f32-bits" aria-label="Float32 layout: one sign bit, eight exponent bits, and twenty-three fraction bits">
+  <svg viewBox="0 0 640 52" role="img" aria-label="Bits 31 to 0, from most significant to least significant">
+    {[{ x: 10, bit: 31 }, { x: 30, bit: 30 }, { x: 170, bit: 23 }, { x: 190, bit: 22 }, { x: 630, bit: 0 }].map(({x, bit}) => <text class="f32-index" x={x} y={10} text-anchor="middle">{bit}</text>)}
+    {fields.map(field => <g style={`--field-color:${field.color}`}>
+      <rect class="f32-field" x={field.start * 20 + .5} y={18} width={field.bits * 20 - 1} height={32} />
+      {Array.from({length: field.bits - 1}, (_, bit) => <line class="f32-divider" x1={(field.start + bit + 1) * 20} x2={(field.start + bit + 1) * 20} y1={18} y2={50} />)}
+      <text class="f32-label" x={(field.start + field.bits / 2) * 20} y={39} text-anchor="middle">{field.label}</text>
+      <title>{field.name}: {field.bits} {field.bits === 1 ? 'bit' : 'bits'}</title>
+    </g>)}
+  </svg>
+  <figcaption>{fields.map(field => <span style={`--field-color:${field.color}`} aria-label={`${field.name}: ${field.bits} bits`}>{field.bits} {field.bits === 1 ? 'bit' : 'bits'}</span>)}</figcaption>
+</figure>
+<style>
+  .f32-bits { margin:1rem 0; }
+  .f32-bits svg { overflow:visible; }
+  .f32-index { font:10px var(--font-mono); fill:var(--fg-muted); }
+  .f32-field { fill:color-mix(in srgb,var(--field-color) 22%,var(--surface-soft)); stroke:var(--field-color); stroke-width:1; }
+  .f32-divider { stroke:var(--field-color); stroke-opacity:.25; stroke-width:.7; }
+  .f32-label { font:12px var(--font-mono); fill:var(--fg); paint-order:stroke; stroke:color-mix(in srgb,var(--field-color) 22%,var(--surface-soft)); stroke-width:3px; stroke-linejoin:round; }
+  .f32-bits figcaption { display:grid; grid-template-columns:1fr 8fr 23fr; margin-top:6px; font-size:.65rem; }
+  .f32-bits figcaption span { justify-self:center; color:var(--field-color); white-space:nowrap; }
+  .f32-bits figcaption span:first-child { justify-self:start; }
+  @media(max-width:440px) { .f32-bits figcaption { font-size:.55rem; } }
+</style>

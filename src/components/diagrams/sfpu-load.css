@@ -1,0 +1,32 @@
+.sfp-load .dgm-toolbar { margin:12px 0 16px; gap:10px; }
+.sfp-load .dgm-readout { font-size:.65rem; }
+.sfp-layout { display:grid; grid-template-columns:minmax(0,432fr) 24px minmax(0,320fr); gap:8px; align-items:start; }
+.sfp-layout > div { min-width:0; }
+.sfp-load .elw-label { min-height:28px; margin-bottom:6px; align-content:start; }
+.sfp-load svg text { fill:var(--fg); font-family:var(--font-mono); font-size:12px; }
+.sfp-load svg .sfp-axis { fill:var(--fg-muted); font-size:10px; }
+.sfp-arrows { display:grid; grid-template-rows:repeat(4,1fr); height:calc(100% - 34px); padding-top:16px; box-sizing:border-box; text-align:center; font-size:18px; }
+@media(max-width:560px) {
+ .sfp-load .elw-heading { flex-wrap:wrap; }
+ .sfp-layout { grid-template-columns:minmax(0,1fr); gap:8px; }
+ .sfp-arrows { height:22px; padding:0; display:block; }
+ .sfp-arrows span { display:none; }
+ .sfp-arrows span:first-child { display:inline-block; transform:rotate(90deg); }
+ .sfp-layout > div:last-child { width:75%; justify-self:center; }
+}
+
+.sfp-lanes { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:3px; padding:5px; border:1px solid var(--border-strong); border-radius:4px; }
+.sfp-lanes button { min-width:0; padding:3px 0; border:1px solid var(--border-muted); border-radius:2px; background:var(--surface-soft); color:var(--fg-muted); font-family:inherit; cursor:pointer; }
+.sfp-lanes button[aria-pressed='true'] { border-color:var(--lane-color); background:color-mix(in srgb,var(--lane-color) 22%,var(--surface-soft)); color:var(--fg); }
+.sfp-lanes small,.sfp-lanes b { display:block; line-height:1.25; }
+.sfp-lanes small { font-size:8px; }
+.sfp-lanes b { font-size:10px; font-weight:400; }
+.sfp-load .sfp-mask-controls { margin:10px 0 0; gap:6px; }
+.sfp-load .sfp-mask-controls span { margin:0 auto 0 0; flex:1; }
+.sfp-load .sfp-mask-controls button { padding:3px 8px; }
+.sfp-arrows { height:150px; padding-top:52px; }
+@media(max-width:560px) {
+ .sfp-arrows { height:22px; padding:0; }
+ .sfp-layout > div:last-child { width:100%; }
+ .sfp-lanes button { min-height:38px; }
+}

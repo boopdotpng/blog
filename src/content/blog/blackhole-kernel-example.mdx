@@ -1,5 +1,5 @@
 ---
-title: tenstorrent kernel example
+title: blackhole kernel example
 pubDate: "2026-09-11"
 published:  false
 description: "todo. fill this in later, gpt-6, if you see this. "
@@ -7,86 +7,251 @@ cat: tenstorrent
 useKatex: true
 ---
 
-import ElwMul from '../../components/diagrams/ElwMul.tsx';
-import FpuInstruction from '../../components/diagrams/FpuInstruction.tsx';
+import SfpuLoad from '../../components/diagrams/SfpuLoad.tsx';
+import SfpuReduction from '../../components/diagrams/SfpuReduction.tsx';
+import Float32Bits from '../../components/diagrams/Float32Bits.astro';
 
-A few people read my blackhole architecture article (/Users/boop/code/web/blog/src/content/blog/blackhole-architecture.mdx) and found it difficult to understand and unclear... and upon reading it again I can see why. This is attempt #2 at writing an article that explains the entire blackhole chip and how to think about lowering kernels. We'll write a fast RMSnorm kernel. 
+For my own clarity and as an improvement to the previous blackhole architecture blog—which went over the chip from a more abstract, tt-metal pov—this blog will cover the different ways you can write an RMSNorm kernel on a Tenstorrent blackhole chip. I've learned a lot more about the chip since the last article, and there are a lot of constraints, rules, and oddities that we need to be aware of when deciding how to lower kernels. 
 
-Writing a kernel for blackhole involves balancing a few constraints: 
-- the FPU runs much faster (4-64x) than the SFPU, across all of its supported ops. 
-- however, the FPU's max precision is tf32. it can accumulate in f32. 
-- moving data from dst back into FPU narrows from f32 to 19-bits, losing precision for certain values. ((1/1024 survives, for example.))
-- all SFPU operations use f32 arithmetic. this is the most accurate hardware on blackhole.
+By lowering kernels I mostly mean splitting an operation into a dependency chain, deciding which parts can be executed simultaneously, and whether a part should be run using SFPU or FPU operations. A few reasons to choose each one: 
 
-The most optimal kernel, in most cases, uses the FPU as much as possible while reducing the relative error compared to numpy float32 operations (only necessary operations go to SFPU). Even if the error is small in one hardware sequence, that will run hundreds of times, and the error will be magnitudes higher. 
+- the SFPU can run precise float32 arithmetic. 
+- the FPU is limited to tf32 / bfloat16 operations
+- FPU re-use is limited; you have to run `MOVD2A` in order to transfer FPU accumulations back to srcA/B. 
+- the FPU is four to sixty-four times faster than the FPU, across all operations
 
+The approach I've come up with starts with picking the most precision-maximizing lowering, then moving as many operations to the FPU as possible before the relative-error becomes too high for accurate inference. Usually I try to match what a GPU would produce by default. In some cases you'll have code like
+
+```python
+class RMSNorm:
+  def __init__(self, dim:int=2048, eps=1e-5):
+    self.eps = eps
+    self.weight = Tensor.ones(dim) # not real weights.
+
+  def __call__(self, x:Tensor) -> Tensor:
+    # for simplicity: x.shape=(2048,)
+    dtype = x.dtype # store original tensor dtype
+    xf = x.float()
+    x = (xf * (xf.square().mean(axis=-1, keepdim=True)+self.eps).rsqrt()).cast(dtype)
+    return x * self.weight
+```
+
+which explicitly makes most of the rmsnorm compute in float32. If you omit `xf=x.float()`, you'll end up with inaccurate inference. This is the operation we'll lower to a blackhole kernel.
+
+Formally written:
 $$
   \operatorname{RMSNorm}(\mathbf{x})
   =
   \boldsymbol{\gamma} \odot
   \frac{\mathbf{x}}
   {\sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2 + \epsilon}}
+$$ 
+((where γ is the weight, x is the input activation, d is 2048, and ε is `1e-5`.))
+
+We won't fully respect the `.cast()` and dtypes in the tinygrad example above, but our example will have high enough precision to be viable as part of a model inference stack. 
+
+You can split RMSNorm into a few independent operations (this will matter later when we overlap FPU and SPFU operations):
+$$
+  \begin{aligned}
+    \mathbf{w} &= \mathbf{x} \odot \boldsymbol{\gamma}
+    && \text{(weighted input)} \\[6pt]
+    r &= \frac{1}{\sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2 + \epsilon}}
+    && \text{(inverse RMS)} \\[6pt]
+    \mathbf{y} &= \mathbf{w} \cdot r
+    && \text{(scaled output)}
+  \end{aligned}
+  $$
+
+> Note: Here is a [tldraw](https://www.tldraw.com/f/CTUj3aHH-vm4jNhulJDp4?d=v-162.-479.4272.3991.page) diagram of the entire chip that you can look at while reading this. 
+
+## getting data in and out of the SFPU
+There are two sfpu load/store instructions, `SFPLOAD` and `SFPSTORE`. Both load and store only to `dst`, the big 1024x16 shared sfpu/fpu register. The way it loads and stores is exceptionally weird, take a look: 
+
+<SfpuLoad client:visible />
+
+## getting data into dst
+Every kernel's inputs start in DRAM ((the 8 GDDR6 banks)). For RMSNorm, that's two tensors of 2048 bf16s: the weights γ and the activation x. They take two hops to reach dst.
+
+1. DRAM -> L1: brisc issues the NoC reads that pull both tensors into the core's L1.
+2. L1 -> dst: trisc0 drives the unpacker ((by convention. this is not enforced by hardware; any trisc has full access to the entire coprocessor.))
+
+Once x and γ are in dst, we can start issuing SFPU instructions on trisc1. 
+
+### where things go in dst
+As shown in the [tldraw](https://www.tldraw.com/f/CTUj3aHH-vm4jNhulJDp4?d=v-162.-479.4272.3991.page) diagram, dst is normally 1024x16, but we always keep float32 elements in it, which halves the size to 512x16. You can think of that as 64 allocations of 128 elements (8x16) each. Every FPU op accumulates into one contiguous 8x16 block, so it's the natural unit for planning layouts. 
+
+For this kernel, we can fit x in `dst[0:2048]` (allocations 0-15) and γ in `dst[2048:4096]` (16-31) leaving the bottom half free for intermediates. When the kernel gets larger, we have to start streaming data from DRAM and streaming data out, since the entire computation can't fit inside the FPU's internal registers. We'll revisit that case later. 
+
+## inverse root mean squared (RMS) on sfpu 
+
+### square and average 
+$$
+s = \sum_{i=0}^{2047} x_i^2,
+\qquad
+m = \frac{s}{2048} + \epsilon,
+\qquad
+r = \operatorname{rsqrt}(m).
 $$
 
-((Here, d is the feature dimension, γ is the learned scale, and ε ensures numerical stability. Usually ε is `1e-5`.))
+We can save some instructions and compute time here by squaring and summing at the same time. There are roughly two kinds of SFPU instructions; the first kind takes two source registers and one output register where the computation's output will be stored, and the second one modifies a register in-place. The `SFPMAD` ((multiply **ad*d)) instruction takes three arguments:
 
-RMSNorm breaks down into the following indepedent operations: 
-- $\sum_{i=0}^{1023} x_i*x_i$
-- $x * \
+```py
+TTSFPMAD(Lreg0, Lreg1, Lreg2, Lreg3, instr_mod1=0) 
+``` 
 
+and computes LReg0 * Lreg1 + Lreg2 and **stores into** Lreg3.
 
-For this kernel, imagine the feature dimension (the model activation we're normalizing) is shape `(1024)`—this also means γ is 1024, since there is one weight for each activation. 
+Initialize all 32 lanes of L0 to FP32 zero, then run a loop:
+1. Load 32 elements from dst into L1. 
+2. Issue `TTSFPMAD(L1, L1, L0, L0)`. This is `x*x + prev_sum = new_sum`
 
-We'll write this kernel in steps, from the innermost operation to the outermost, noting which operations depend on each other. 
+The weird load/store addressing of the SPFU doesn't matter here, since the order of the elements doesn't make a difference; the sum will be the same no matter what order you compute it in. We just have to make sure the loads go through the entire 2048-element allocation of x in dst. This takes $\frac{2048}{32}=64$ loads, where alternate between even/odd copies and alternate between loading even vs odd elements. 
 
-You can read the architecture [tldraw](https://www.tldraw.com/f/CTUj3aHH-vm4jNhulJDp4?d=v-162.-479.4272.3991.page) alongside this. 
+After this sequence, you end up with 32 partial sums in L0. The Lregs are summed elementwise; imagine stacking two Lregs on top of each other and adding down, that is what ends up in L0. Now we have to sum all 32 lanes in L0. 
 
-In order to make this kernel example simple and more about the architecture of the device and conceptual lowering rather than exact register writes or address counters, this will just be a high-level overview of what computations happen and how the data is moved through the different units inside the tensix coprocessor. We'll start by assuming the all the tensors required are in the L1 of a core (this kernel will only run on one core). That includes the weight tensor, γ and the model activations x. 
+Up until now, all the SPFU instructions we've run have interpreted a Lreg as a flat list of 32 floats. To do a sum of elements within a register, we need to look at the register like a grid of 4 rows and 8 columns. 
 
-Starting from the innermost operation, ${\sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2}}$ is just an average of the activation tensor squared. We add a small bias $\epsilon = 10^{-5}$ after that to make sure that we cannot compute something close to $\sqrt{0}$. You can either do this on the FPU or the SFPU. We'll explore both options. 
+<SfpuReduction client:visible />
 
-## a note about allocations in srcA, srcB, and dst
-It is useful to mentally split srcA, srcB, and dst into 128-element chunks, like in the tldraw diagram. The reason it's split up like that is because ELWMUL processes an aligned `8x16` block (128 elements) from srcA and srcB per instruction. Each ELWMUL needs a corresponding 128-element allocation in dst to accumulate its results. Instructions that process `4x16` blocks operate on 64 elements per pass. The SFPU mostly doesn't care about this 128-element allocation scheme (it can load and store from anywhere in dst), but it's easier to keep consistent memory allocation rules. 
+First, we reduce every row of 8 into its own sum. Since you can only do sums *between* Lregs, we have to rotate the 2nd lreg and keep summing until every item in lreg sees every other item. 
 
-## fpu 
-The FPU includes an instruction that elementwise-multiplies `srcA` and `srcB`, and $x^2$ is just $x*x$. Let's load the activation tensor into both srcA and srcB, and run an ELWMUL across the entire tile. This requires 8 `ELWMULs` ((actually, this is 16, we need to run this twice to cover the whole mantissa of each element)) to cover the entire 64x16 tile. We'll set the accumulator to dst tile 1 (the first 64x16 chunk of dst, from top to bottom). All FPU operations post their output in dst.  
+After you have the row sums in L0, copy that to 3 other Lregs. Then you run `SFPTRANSP` (no arguments). The 4 0th rows (l0's 0th row, l1's 0th row, etc) move to l0. Same for the 1st, 2nd, and third rows. 
 
-Now we have $x^2$ (f32) in dst tile 0. Remember that we always want to accumulate in f32 so that our operations retain as much precision as possible. If you keep the accumulator in bf16, then your multiplication will lose precision.
+Now, you can just add across all 4 Lregs using `SFPADD`. Oddly, `SFPADD` and `SFPMAD` are the same thing, but the ISA docs recommend that you use SFPADD if you're multiplying by one, i.e, Lreg0 is 1 (this makes our SFPMAD just an ADD). In this case our instruction would look like: 
 
-<ElwMul client:visible />
+`TTSFPADD(Lreg10, L0, L1, L0) # L0 <- L0 + L1`
 
-Next, we need to take the average. We need the SFPU and FPU for this. Blackhole has a weird way of doing averages. Since the FPU doesn't have any dedicated sum or division instructions, we need to get creative.  
+Repeated 3 times to add l1, l2, and l3 to l0. 
 
-Assume:
-```python
-srcA = Tensor.ones(64, 16)
-srcB = Tensor.ones(1, 64) / 1024
+At this point, our sum is repeated in every lane inside L0. Next is just `SFPMUL` by $\frac{1}{2048}$, then another `SFPADD` to add ε `1e-5`. 
 
-srcB2 = srcB@srcA # (1,16)
-srcA2 = Tensor.ones(16,1) # output of srcA
-avg = (srcB2 @ srcA2) # (1,1)
+To multiply by a constant, like in our `SFPMUL` example, we must load the immediate constant value into an Lreg. This is done using `SFPLOADI`: 
 
-avg.numpy() # 1
+`SFPLOADI(destination, mode, immediate_16_bits)`
+
+Every load requires two `SFPLOADI` instructions, because there is only enough room in the 32-bit instruction encoding to supply 16 bits at a time.  `bits & 0xffff` to load the lower bits, and `bits >> 16` to load the upper bits. 
+
+The remaining computations are the x * γ, rsqrt(the above sum), then the 2nd elementwise with the result of the rsqrt. 
+
+> note: the reason we use l0-l3 here is because `SFPTRANSP` only works on l0-l3 or l4-l7. we could have used l4-l7. 
+
+### rsqrt (fast inverse square root)
+Currently, L0 in the SFPU holds 
+
+$$
+x = \frac{\sum_i x_i^2}{2048} + \epsilon
+$$
+
+and we need to calculate 
+
+$$
+\frac{1}{\sqrt{x}}
+$$
+
+A reciprocal square root means
+
+$$
+y=\frac{1}{\sqrt{x}}=x^{-1/2}.
+$$
+
+Using logarithms, powers become multiplication:
+
+$$
+\log_2(y)=\log_2\left(x^{-1/2}\right)
+=-\frac12\log_2(x).
+$$
+
+In log space, computing $1/\sqrt{x}$ is simple:
+
+1. Compute $\log_2(x)$.
+2. Divide it by 2.
+3. Negate it.
+4. Convert back from log space:
+
+However, blackhole does not have a `log2` instruction. Fortunately, it turns out that the bit pattern of a float can be exploited to approximate one. 
+
+For a positive float:
+<Float32Bits />
+
+$$
+x = \left(1 + \frac{M}{2^{23}}\right) \cdot 2^{E-127}
+$$
+
+Shifting the entire float32 right 1 bit is an approximation for the log computation above (you subtract this from the constant `0x5f1110a0` to do the negation). ((this requires some math, have chatgpt explain it to you. there is also [a paper](https://arxiv.org/html/2307.15600v1) on that constant and the algorithm used here))
+
+The SFPU instructions for this are straightforward, you just need:
+
+```
+SFPSHFT(0xfff, ZERO, L1, 1) # shift the entire 32-bit pattern right by one
+# load magic constant into an lreg
+SFPLOADI(L2, 10, 0x10a0)   # lower 16 bits
+SFPLOADI(L2,  8, 0x5f11)   # upper 16 bits
+
+# l1 = L2 - L1
+SFPIADD(0, L2, L1, 6) # integer subtraction; modifier 6 also preserves lane flags
 ```
 
-In Latex: 
+We then measure how far away our approximation is from the correct answer:
+
 $$
-\operatorname{avg}(A)
-= \left(\frac{1}{1024}\mathbf{1}_{64}^{\mathsf T}A\right)
-  \mathbf{1}_{16}
-= \frac{1}{1024}\sum_{i=1}^{64}\sum_{j=1}^{16}A_{ij}
+my^2 = 1
 $$
 
-To execute this on sequence on blackhole hardware, we can use either the `GAPOOL` or `MVMUL` instruction. Both use a `16x16` chunk of srcA, but `GAPOOL` uses a `4x16` part of srcB while `MVMUL` uses an 8x16 chunk. Either one works here, but `MVMUL` computes four additional output rows that we don't need. 
+For example, with $m=4$ and the rough guess from above: 
 
-<FpuInstruction client:visible operation="GAPOOL" scale={1 / 1024} dstFormat="fp32" srcA={Array.from({ length: 256 }, () => 1)} />
+$$
+y_0 = 0.408330
+$$
 
-You would repeat this 4 times to cover the entire contents of srcA. 
+we get
 
-### a note about how we put data into srcB
-In the above example, we had magically put $\frac{1}{1024}$  into srcB. There are two ways to do this on blackhole. Using risc-v, 
+$$ 
+z = my_0^{2} = 4(0.408330)^{2} \approx 0.6669
+$$
 
-You might have realized by this point that we can't immediately do the 16-column sum in the FPU, since that has been accumulated in dst. So at this point, you can either load that data back into srcA, and repeat this process except with a 1 at the start of each row, or do the remaining sum in the SFPU. 
+Since $z < 1$, we must optimize. The first correction is a cheap polynomial correction applied to $y_0$: ((again: read the paper if you're curious, this is not really the point of the article.))
 
+```
+t = -m * y * y
+p = 2.2825186 + t * (2.2533049 + t)
+y = y * p
+``` 
 
-## sfpu
+Which we can evaluate using SFPMUL, SFPADD, and SFPMAD. Now we have $y_1 \approx 0.50000593$.
+
+The next correction is the newton correction, which builds on $y_1$:
+
+```
+error = 1 - m * y * y
+y = y + (0.5 * y) * error
+```
+
+Now we have the final rsqrt approximation: $y_2=0.5$ in Lreg 0.
+
+## elementwise multiplications
+
+The last computation remaining is simply
+
+$$
+x \odot γ \odot y_2
+$$
+
+```
+SFPLOAD  → L1 = next 32 elements of x
+SFPLOAD  → L2 = corresponding 32 weights γ
+SFPMUL   → L1 = L1 × L0 # l0 contains inverse rms
+SFPMUL   → L1 = L1 × L2
+SFPSTORE → write L1 back to dst[4096:6144]
+```
+
+Repeated until we cover all 2048 elements.
+
+For lane i, that computes: 
+
+$$
+L1_i \leftarrow (x_i \cdot r)\cdot\gamma_i
+$$
+
+## packing the final output
+
+Now we can run the packer using trisc2, copy from `dst[4096:6144]` to L1, and then use ncrisc to copy that back to DRAM. 

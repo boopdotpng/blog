@@ -95,18 +95,17 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    // Astro 6.4+: plugins + shiki live on a single unified() processor
-    // (the old markdown.remarkPlugins/rehypePlugins/shikiConfig keys are deprecated).
+    // Plugins belong to the processor; Shiki settings are shared by Markdown and MDX.
     processor: unified({
       remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote, remarkTableWrap],
       rehypePlugins: [rehypeKatex],
-      shikiConfig: {
-        themes: {
-          light: 'github-light',
-          dark: 'github-dark-dimmed',
-        },
-        defaultColor: false,
-      },
     }),
+    shikiConfig: {
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark-dimmed',
+      },
+      defaultColor: false,
+    },
   },
 });

@@ -9,6 +9,7 @@ useKatex: true
 import NocGrid from '../../components/diagrams/NocGrid.tsx';
 import KernelPipeline from '../../components/diagrams/KernelPipeline.tsx';
 import TensixTile from '../../components/diagrams/TensixTile.tsx';
+import SfpuLoad from '../../components/diagrams/SfpuLoad.tsx';
 
 I bought a Tenstorrent blackhole p100a. The idea of a fully open source toolchain, from the kernel mode driver to the software stack that runs the models, is super exciting. Some parts of the card (like the firmware binaries for certain tiny components) aren't open source because of 3rd party IP, but this is pretty much the best it gets. You own every part of the card above the Verilog. 
 
@@ -197,6 +198,10 @@ HiFi4: 4 multiplier steps.
 Each phase just replays the same `MVMUL` instructions again, with a register configured to tell the processor which fidelity phase it's on. LoFi takes 16 `MVMUL` instructions per tile and HiFi4 takes 64, hence the 4x throughput decrease. Generally, for 16-bit inputs, HiFi2 is enough precision. You only need to use HiFi4 if your inputs are tf32. 
 #### sfpu 
  The SFPU handles transcendentals and other misc ops not covered by the matrix engine. It operates on `Lreg[17]` (sfpu local registers) where each `Lreg` is 32 lanes, 32 bits per lane (sort of like an AMD wavefront). The 32 lanes are arranged as a 4x8 grid (4 rows of 8 lanes), which matters for `SFPTRANSP` (4x4 transpose within columns) and `SFPSHFT2` (lane rotation). The SFPU does not read directly from CBs or L1. The data is read from `Dst` into `Lreg`, the operation is done, and then the result is stored back into `Dst`. Typically, the outputs of your computation will already be in `Dst` (imagine an FPU matmul just finished and you want to add on another op), or you can set trisc0 to unpack directly to `Dst` so that you can issue SFPU ops without having to use the matrix engine. The `UNPACK_TO_DEST` semaphore synchronizes trisc0 and trisc1 so SFPLOAD doesn't read Dst before the unpacker finishes writing it.
+
+One `SFPLOAD` gathers alternating columns from four consecutive, aligned `dst` rows into **one** 32-lane `LReg`: eight elements per row. The effective address selects the four-row group and even versus odd columns. `SFPSTORE` uses the same lane-to-element mapping in reverse, so the diagram only shows load. Disabled lanes keep their old register values on load and leave `dst` unchanged on store. This diagram uses standard addressing. ([load](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOAD.md), [store](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTORE.md))
+
+<SfpuLoad client:visible />
 
 **Data movement instructions**
 
