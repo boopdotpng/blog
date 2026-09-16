@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 10
 title: "rdna docs"
 pubDate: "2025-12-30"
 published: true 

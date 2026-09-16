@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 60
 title: "intro to gpu programming: part 1"
 pubDate: "2025-05-10"
 published: true

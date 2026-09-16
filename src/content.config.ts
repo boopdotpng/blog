@@ -23,6 +23,8 @@ const blog = defineCollection({
     published: z.boolean().optional().default(true),
     description: z.string().min(1).optional(),
     cat: z.string().optional(),
+    // Editorial estimate for reading and following the examples, in minutes.
+    readingTimeMinutes: z.number().int().positive(),
     useKatex: z.boolean().optional().default(false),
   }).superRefine(requireDescriptionWhenPublished('posts')),
 });

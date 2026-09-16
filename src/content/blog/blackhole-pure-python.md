@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 15
 title: blackhole in pure python
 pubDate: "2026-05-01"
 published: true

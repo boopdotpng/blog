@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 6
 title: "framework 13 review"
 pubDate: "2025-12-30"
 published: true 

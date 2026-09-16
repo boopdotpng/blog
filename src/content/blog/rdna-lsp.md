@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 3
 title: "amdgpu lsp + vs code extension"
 pubDate: "2025-12-25"
 published: true

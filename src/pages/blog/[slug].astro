@@ -38,8 +38,7 @@ const displayDate = pubDate
 const description = post.data.description ?? 'a short post on something';
 const body = typeof post.body === 'string' ? post.body.trim() : '';
 const wordCount = body ? body.split(/\s+/).length : 0;
-const multiplier = post.data.cat === 'code' ? 1.3 : 1;
-const readingTimeMinutes = Math.max(1, Math.round((wordCount / 200) * multiplier));
+const readingTimeMinutes = post.data.readingTimeMinutes;
 const readingTimeLabel = readingTimeMinutes < 60
   ? `approx ${readingTimeMinutes}m read`
   : `approx ${Math.floor(readingTimeMinutes / 60)}h${readingTimeMinutes % 60 ? ` ${readingTimeMinutes % 60}m` : ''} read`;

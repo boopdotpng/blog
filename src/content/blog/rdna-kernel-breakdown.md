@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 25
 title: "rdna kernel breakdown"
 pubDate: "2025-12-29"
 published: true

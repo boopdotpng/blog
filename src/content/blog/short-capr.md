@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 5
 title: "short $capr"
 pubDate: "2025-07-31"
 published: true

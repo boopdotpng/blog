@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 20
 title: "tinygrad notes"
 pubDate: "2025-12-26"
 published: true

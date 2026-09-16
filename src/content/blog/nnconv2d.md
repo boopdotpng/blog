@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 15
 title: "nn.conv2d in tinygrad"
 pubDate: "2025-04-16"
 published: false

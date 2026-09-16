@@ -1,4 +1,5 @@
 ---
+readingTimeMinutes: 15
 title: "reverse engineering the crane 3s"
 pubDate: "2025-07-21"
 published: true
