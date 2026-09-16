@@ -98,6 +98,7 @@ if (articleSchema && schemaArticle?.wordCount) {
 <html lang="en-US">
 <head>
   <meta charset="UTF-8" />
+  <base target="_blank" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content={description} />
   <meta name="author" content={authorName} />
@@ -714,7 +715,7 @@ if (articleSchema && schemaArticle?.wordCount) {
 
 </head>
 <body>
-  <a class="skip-link" href="#main-content">skip to content</a>
+  <a class="skip-link" href="#main-content" target="_self">skip to content</a>
   {isHome ? (
     <div class="home-layout">
     <div class="home-shell">

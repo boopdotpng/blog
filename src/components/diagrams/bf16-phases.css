@@ -1,0 +1,38 @@
+.bf-phases { padding: 20px; border: 1px solid var(--border-muted); border-radius: 8px; background: var(--surface-soft); font-size: 12px; line-height: 1.5; }
+.bf-phases .bf-phase-example { margin: 0 0 16px; font-size: 12px; }
+.bf-phase-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 20px; }
+.bf-phase-controls button { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--border-muted); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+.bf-phase-controls button:disabled { opacity: .4; cursor: default; }
+.bf-phase-controls span { margin-left: auto; }
+.bf-phase-source { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+.bf-phase-bits { display: flex; gap: 4px; }
+.bf-phase-bits > span { position: relative; width: 27px; padding: 6px 0; text-align: center; color: var(--fg-muted); border: 1px solid var(--border-muted); border-radius: 3px; transition: background-color .35s, border-color .35s, color .35s; }
+.bf-phase-bits > .selected { background: color-mix(in srgb, var(--accent) 18%, var(--bg)); border-color: var(--accent); color: var(--fg-strong); font-weight: 700; }
+.bf-phase-bits > .implicit { border-style: dashed; margin-right: 5px; }
+.bf-phase-bits i { position: absolute; right: -7px; color: var(--fg); font-style: normal; }
+.bf-phase-bits > .boundary { margin-left: 7px; }
+.bf-phase-part { width: 4ch; color: var(--accent); }
+.bf-phases .bf-phase-hint { font-size: 10px; color: var(--fg-muted); margin: 10px 0; }
+.bf-phase-math { padding: 12px 0 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.9; }
+.bf-phase-math strong { color: var(--accent); }
+.bf-phase-math div + div { margin-top: 6px; }
+.bf-phase-math.changed strong { display: inline-block; animation: bf-contribution .5s ease-out; }
+@keyframes bf-contribution { from { transform: translateY(-5px); } to { transform: translateY(0); } }
+.bf-phases table { display: table; width: 100%; margin: 0; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.bf-phases th, .bf-phases td { border: 0; border-bottom: 1px solid var(--border-soft); padding: 7px 5px; text-align: right; background: transparent; }
+.bf-phases th:first-child, .bf-phases td:first-child { text-align: left; }
+.bf-phases tr { background: transparent; border: 0; }
+.bf-phases tr.current { background: color-mix(in srgb, var(--accent) 10%, var(--bg)); color: var(--fg-strong); }
+.bf-phases figcaption { color: var(--fg-muted); font-size: 10px; margin-top: 12px; }
+@media (max-width: 480px) {
+  .bf-phases { padding: 12px; }
+  .bf-phase-source { gap: 6px; font-size: 11px; }
+  .bf-phase-bits { gap: 2px; flex: 1; }
+  .bf-phase-bits > span { width: auto; flex: 1; min-width: 0; }
+  .bf-phase-bits > .boundary { margin-left: 4px; }
+  .bf-phase-controls span { flex-basis: 100%; margin: 4px 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bf-phase-bits > span { transition: none; }
+  .bf-phase-math.changed strong { animation: none; }
+}

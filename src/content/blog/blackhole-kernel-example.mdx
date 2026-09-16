@@ -9,17 +9,19 @@ useKatex: true
 
 import SfpuLoad from '../../components/diagrams/SfpuLoad.tsx';
 import SfpuReduction from '../../components/diagrams/SfpuReduction.tsx';
+import Bf16Bits from '../../components/diagrams/Bf16Bits.astro';
+import Bf16Phases from '../../components/diagrams/Bf16Phases.tsx';
 
 For my own clarity and as an improvement to the previous [blackhole architecture blog](https://anuraagw.me/blog/blackhole-architecture)—which went over the chip from a more abstract, tt-metal pov—this blog will cover lowering an RMSNorm kernel onto a Tenstorrent blackhole chip, first on the SFPU and then moving part of the computation to the FPU. I've learned a lot more about the chip since the last article, and there are a lot of constraints, rules, and oddities that we need to be aware of when deciding how to lower kernels. ((Here is a [tldraw diagram of the entire chip](https://www.tldraw.com/f/CTUj3aHH-vm4jNhulJDp4?d=v-162.-479.4272.3991.page) that you can look at while reading this.))
 
-By lowering kernels I mostly mean splitting an operation into a dependency chain, deciding which parts can be executed simultaneously, and whether a part should be run using SFPU or FPU operations. A few reasons to choose each one:
+By lowering kernels I mean splitting an operation into independent operations, deciding which parts can be executed simultaneously, and whether a part should be run using SFPU or FPU operations. A few reasons to choose each one:
 
 - the SFPU can run precise float32 arithmetic.
 - the FPU uses tf32 / bfloat16 inputs for the operations discussed here, with float32 accumulation
 - FPU re-use is limited; you have to run `MOVD2A` or `MOVD2B` to transfer FPU accumulations back to srcA or srcB.
 - the FPU can process more elements per instruction, but the number of fidelity phases affects how much faster it is
 
-The approach I've come up with starts with picking the most precision-maximizing lowering, then moving as many operations to the FPU as possible before the relative-error becomes too high for accurate inference. Usually I try to match what a GPU would produce by default. We'll start with all the math on the SFPU, then use [rmsnorm_hybrid.py](https://github.com/boopdotpng/blackhole-py/blob/master/examples/rmsnorm_hybrid.py) from blackhole-py to move the weight multiplication to the FPU. Take RMSNorm:
+The approach I've come up with starts with picking the most precision-maximizing lowering, then moving as many operations to the FPU as possible before the relative-error becomes too high for accurate inference. Usually I try to match what a GPU would produce by default. We'll start with all the math on the SFPU, then move the weight multiplication to the FPU. Take RMSNorm:
 
 ```python
 class RMSNorm:
@@ -33,7 +35,7 @@ class RMSNorm:
     xf = x.float()
     x = (xf * (xf.square().mean(axis=-1, keepdim=True)+self.eps).rsqrt()).cast(dtype)
     return x * self.weight
-```
+``` 
 
 which explicitly makes most of the rmsnorm compute in float32. Omitting `xf=x.float()` can change the accuracy of the reduction. This is the operation we'll lower to a blackhole kernel.
 
@@ -69,7 +71,7 @@ There are two sfpu load/store instructions, `SFPLOAD` and `SFPSTORE`. Both load 
 <SfpuLoad client:visible />
 
 ## getting data into dst
-Our inputs start in DRAM ((GDDR6)). For RMSNorm, that's two tensors of 2048 bf16s: the weights γ and the activation x. They take two hops to reach dst.
+Our inputs start in DRAM ((the 8 GDDR6 banks)). For RMSNorm, that's two tensors of 2048 bf16s ((bfloat16)): the weights γ and the activation x. They take two hops to reach dst.
 
 1. DRAM -> L1: brisc issues the NoC reads that pull both tensors into the core's L1.
 2. L1 -> dst: trisc0 drives the unpacker ((by convention. this is not enforced by hardware; any trisc has full access to the entire coprocessor.))
@@ -215,7 +217,7 @@ $$
 Now we can run the packer using trisc2, copy from `dst[256:384, 0:16]` to L1, and then use ncrisc to copy that back to DRAM.
 
 ## moving the weight multiplication to the FPU
-The x * γ doesn't depend on the sum or the rsqrt, so we can move it to the FPU. This is what [rmsnorm_hybrid.py](https://github.com/boopdotpng/blackhole-py/blob/master/examples/rmsnorm_hybrid.py) does. The main change is where we put the inputs.
+x * γ doesn't depend on the sum or the rsqrt, so we can move it to the FPU. This is what [rmsnorm_hybrid.py](https://github.com/boopdotpng/blackhole-py/blob/master/examples/rmsnorm_hybrid.py) does. The main change is where we put the inputs.
 
 We now unpack one 1024-element tile of x into srcA and the corresponding tile of γ into srcB. We still need x in dst for the SFPU square sum, so we use `MOVA2D` to copy srcA into a scratch tile. Our new float32 dst layout is:
 
@@ -239,9 +241,29 @@ TTELWMUL(
 
 This reads rows 0–7 from srcA and srcB and accumulates their elementwise products into dst rows 64–71, i.e. `dst[64:72, 0:16]`. We zero the accumulators beforehand because `ELWMUL` adds to dst. ((The [ELWMUL ISA docs](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/ELWMUL.md) describe the operands and fidelity phases.))
 
-Address-modifier slot 0 is configured to advance both source rows by 8. We issue eight `ELWMUL`s to cover the tile, then repeat across four fidelity phases. This is **HiFi4**: each phase adds a different part of the same products into the same dst locations.
+Address-modifier slot 0 is configured to advance both source rows by 8. We issue eight `ELWMUL`s to cover the tile, then repeat across four fidelity phases.
 
-A normal bf16 value has 7 mantissa bits plus an implicit leading 1. The FPU multiplies only 5 significant bits from srcA by 7 from srcB at a time, so we split each value into high and low parts, $a = a_H + a_L$ and $b = b_H + b_L$:
+### a quick bf16 detour
+
+A normal bf16 value gives us 8 significant bits, but the FPU starts by using only 5 from srcA and 7 from srcB. What happens to the remaining bits? First, let’s look at how bf16 stores a number.
+
+Floating point is scientific notation in base 2: a sign, a number starting with `1.`, and a power of two that scales it. After the binary point, the places are ½, ¼, ⅛, and so on. A `1` adds that place's value; a `0` skips it.
+
+BF16 stores a sign bit, 8 exponent bits, and 7 fraction bits (often called the mantissa). For a normal value, the leading `1` is implied, so those 7 stored fraction bits give us **8 significant bits**. The exponent is stored with 127 added: subtract 127 to get the actual power of two. ((This is the [BF16 format](https://docs.cloud.google.com/tpu/docs/bfloat16); zero, subnormal values, infinities, and NaNs have special encodings that we don't need for this example.))
+
+For a normal bf16 value:
+
+$$
+v = (-1)^s \times 2^{E - 127} \times \left(1 + \frac{F}{128}\right)
+$$
+
+Here $s$ is the sign bit, $E$ is the stored 8-bit exponent (1–254 for normal values), and $F$ is the stored 7-bit fraction interpreted as an integer (0–127). In the example below, $s=0$, $E=127$, and $F=87$.
+
+<Bf16Bits />
+
+### why four fidelity phases?
+
+Each fidelity phase multiplies a different pair of bit groups and adds that contribution to dst. Think of this as doing a rough multiplication first, then adding the small pieces it left out. For srcA, high means the leading 1 and first 4 fraction bits; for srcB, it means the leading 1 and first 6. Low is the leftover fractional value. These parts add back to the original value: $a = a_H + a_L$ and $b = b_H + b_L$. Multiplying them is just expanding two sums:
 
 $$
 a b = \underbrace{a_H b_H}_{\text{phase 0}}
@@ -250,34 +272,12 @@ a b = \underbrace{a_H b_H}_{\text{phase 0}}
     + \underbrace{a_L b_L}_{\text{phase 3}}
 $$
 
-| phase | srcA bits | srcB bits | contribution |
-| --- | --- | --- | --- |
-| 0 | leading 1 + top 4 | leading 1 + top 6 | high × high |
-| 1 | bottom 3 | leading 1 + top 6 | low × high |
-| 2 | leading 1 + top 4 | bottom 1 | high × low |
-| 3 | bottom 3 | bottom 1 | low × low |
+<Bf16Phases client:visible />
 
-Phase 0 alone uses roughly 5-bit × 7-bit input precision. Adding phase 1 gives all 8 significant bits of x, but still omits γ's last bit. Phase 2 adds most of that missing contribution; phase 3 completes it. HiFi4 includes all the bf16 product terms, with float32 accumulation in our dst. ((see the [fidelity phase tables](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md#fidelity-phases-floating-point).))
+Phase 0 does high × high. Phases 1 and 2 add the two cross terms, and phase 3 adds low × low. Together they include all the bf16 product terms, accumulated into our float32 dst. This is what **HiFi4** buys us: more of the input precision, at the cost of more instructions. ((see the [fidelity phase tables](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md#fidelity-phases-floating-point).))
 
 That is 8 blocks × 4 phases = 32 `ELWMUL` instructions per tile. We only zero dst before the first phase; the later phases add to it.
 
 The SFPU reads x from the scratch tile and accumulates its square sum as before. The partial sums stay in the LRegs between tiles; only the copy of x in scratch gets overwritten. Once both units have finished using this tile, we reuse scratch for the second tile of x and put its products at dst row 128 (`dst[128:192, 0:16]`).
 
 After the reduction and rsqrt, the last loop is just `SFPLOAD` from `dst[64:192, 0:16]`, multiply by r, and `SFPSTORE` back to the same locations. The packer reads those two output tiles into L1, ready to copy back to DRAM. We no longer need to load γ into an LReg or do that multiplication on the SFPU.
-
-### rough cycle counts
-The [old blackhole-py timing model](https://github.com/boopdotpng/blackhole-py/blob/3fd78dc7d6c50a147ae0e3652a2e2359f94546d2/emu/timing.py) gives `ELWMUL` a 5-cycle latency and `SFPMUL`/`SFPMAD` a 2-cycle latency. Both can accept one instruction per cycle when dependencies allow it. So we count issue cycles rather than multiplying every instruction by its latency.
-
-For all 2048 elements, using the separate load/math/store instructions shown above:
-
-| work | instructions | ideal issue cycles |
-| --- | --- | --- |
-| SFPU square-and-sum loop | 64 loads + 64 MADs | 128 |
-| original SFPU elementwise loop | 128 loads + 128 multiplies + 64 stores | 320 |
-| hybrid FPU x * γ, HiFi4 | 16 blocks × 4 phases | 64 |
-| hybrid SFPU final scaling | 64 loads + 64 multiplies + 64 stores | 192 |
-| hybrid srcA → dst scratch copies | 16 `MOVA2D`s | 16 |
-
-For x * γ alone, HiFi4 takes the same 64 multiply issue cycles as the SFPU. What we save is 64 SFPU loads and 64 SFPU multiplies, with the FPU multiplication available to overlap the square sum. The original elementwise loop is the larger instruction stream, though the square-and-sum MADs do two arithmetic operations each.
-
-These are issue budgets, excluding setup, reduction/rsqrt, pipeline drain, dependency stalls, unpacking, packing, and DRAM transfers. The real hybrid kernel also uses `SFPLOADMACRO` to combine SFPU work, so these counts compare the basic sequences rather than predict its runtime. Benchmarks are still needed.

@@ -400,14 +400,14 @@ article.post-plain :global(img[width]) {
       <nav id="toc-rail" class="toc-rail" aria-label="Table of contents">
         <ol class="toc-entries">
         <li class="toc-entry toc-entry-title" data-target="top">
-          <a href="#">
+          <a href="#" target="_self">
             <span class="toc-tick"></span>
             <span class="toc-label">{post.data.title}</span>
           </a>
         </li>
         {tocHeadings.map(heading => (
           <li class={`toc-entry toc-d${heading.depth}`} data-target={heading.slug}>
-            <a href={`#${heading.slug}`}>
+            <a href={`#${heading.slug}`} target="_self">
               <span class="toc-tick"></span>
               <span class="toc-label">{heading.text}</span>
             </a>

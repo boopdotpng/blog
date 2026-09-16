@@ -1,0 +1,23 @@
+<figure class="dgm bf16" aria-label="BF16 example: sign, exponent, and fraction">
+  <div class="bit-strip">
+    <div class="sign"><span>sign · 1 bit</span><b>0</b><small>positive</small></div>
+    <div class="exponent"><span>exponent · 8 bits</span><b>01111111</b><small>127 − 127 = 0</small></div>
+    <div class="fraction"><span>fraction · 7 bits</span><b>1010111</b><small>87 / 128</small></div>
+  </div>
+  <p class="value">(1 + 87/128) × 2⁰ = <strong>1.6796875</strong></p>
+  <figcaption>Normal BF16 · 16 stored bits, highest bit first. The leading 1 is implicit.</figcaption>
+</figure>
+
+<style>
+  .bf16 { padding: 20px; border: 1px solid var(--border-muted); border-radius: 8px; background: var(--surface-soft); font-size: 12px; line-height: 1.5; }
+  .bit-strip { display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 8px; text-align: center; }
+  .bit-strip span, .bit-strip small { display: block; font-size: 11px; }
+  .bit-strip b { display: block; margin: 6px 0; padding: 10px 4px; border: 1px solid var(--color); border-radius: 4px; background: color-mix(in srgb, var(--color) 10%, var(--bg)); color: var(--fg-strong); font-size: 18px; font-weight: 500; letter-spacing: 2px; }
+  .sign { --color: var(--cat-ml); }
+  .exponent { --color: var(--cat-host); }
+  .fraction { --color: var(--cat-worker); }
+  .bit-strip small, figcaption { color: var(--fg-muted); }
+  .bf16 .value { text-align: center; margin: 14px 0; font-size: 12px; }
+  figcaption { margin-top: 12px; font-size: 10px; }
+  @media (max-width: 480px) { .bf16 { padding: 12px; } .bit-strip { gap: 5px; } .bit-strip b { font-size: 14px; letter-spacing: 0; } .bit-strip span, .bit-strip small { font-size: 10px; } }
+</style>
