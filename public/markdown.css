@@ -106,7 +106,6 @@
 .markdown-body pre.astro-code,
 .markdown-body pre.astro-code span {
   color: var(--shiki-light) !important;
-  background-color: var(--shiki-light-bg) !important;
   font-style: var(--shiki-light-font-style);
   font-weight: var(--shiki-light-font-weight);
   text-decoration: var(--shiki-light-text-decoration);
@@ -115,10 +114,18 @@
 :root[data-theme='dark'] .markdown-body pre.astro-code,
 :root[data-theme='dark'] .markdown-body pre.astro-code span {
   color: var(--shiki-dark) !important;
-  background-color: var(--shiki-dark-bg) !important;
   font-style: var(--shiki-dark-font-style);
   font-weight: var(--shiki-dark-font-weight);
   text-decoration: var(--shiki-dark-text-decoration);
+}
+
+/* Keep syntax colors, but let code sit quietly against the page in either theme. */
+.markdown-body pre.astro-code {
+  background-color: color-mix(in srgb, var(--bg) 65%, var(--surface-soft)) !important;
+}
+
+.markdown-body pre.astro-code span {
+  background-color: transparent !important;
 }
 
 .markdown-body pre,

@@ -28,13 +28,18 @@ The approach I've come up with starts with picking the most precision-maximizing
 class RMSNorm:
   def __init__(self, dim:int=2048, eps=1e-5):
     self.eps = eps
-    self.weight = Tensor.ones(dim) # learned parameters, initialized to ones here
+    # learned parameters, initialized to ones here
+    self.weight = Tensor.ones(dim)
 
   def __call__(self, x:Tensor) -> Tensor:
     # for simplicity: x.shape=(2048,)
     dtype = x.dtype # store original tensor dtype
     xf = x.float()
-    x = (xf * (xf.square().mean(axis=-1, keepdim=True)+self.eps).rsqrt()).cast(dtype)
+    x = (
+      xf * (
+        xf.square().mean(axis=-1, keepdim=True) + self.eps
+      ).rsqrt()
+    ).cast(dtype)
     return x * self.weight
 ``` 
 
@@ -70,6 +75,10 @@ $$
 There are two sfpu load/store instructions, `SFPLOAD` and `SFPSTORE`. Both load and store only to `dst`, the big 1024x16 shared sfpu/fpu register. The way it loads and stores is exceptionally weird, take a look:
 
 <SfpuLoad client:visible />
+
+There is a set of 8 bits in the instruction that allows you to replace an even index load/store with an odd index (and vice versa), but it applies to the loads in every row. So instead of loading indices 0,2,4,6,8,12,14 from each row, you can load 0,3,4,5,6,8,12,14. If you set all 8 bits to 1, your even load becomes an odd load. 
+
+Keep in mind that the SFPU has lane-predication support; before an instruction, you can disable or enable lanes (0-32) within each LReg. That way, you can only load the first row of dst instead of all 4, for example.
 
 ## getting data into dst
 Our inputs start in DRAM ((the 8 GDDR6 banks)). For RMSNorm, that's two tensors of 2048 bf16s ((bfloat16)): the weights γ and the activation x. They take two hops to reach dst.
