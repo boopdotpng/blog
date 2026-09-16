@@ -17,7 +17,9 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
 const tocHeadings = headings.filter(heading => heading.depth >= 1 && heading.depth <= 3);
-const showTableOfContents = tocHeadings.length >= 3;
+// Keep the contents component available, but default to distraction-free reading.
+const tableOfContentsEnabled = false;
+const showTableOfContents = tableOfContentsEnabled && tocHeadings.length >= 3;
 
 const parseLocalDate = (dateString: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
@@ -131,10 +133,7 @@ pre {
 }
 
 article.post-plain :global(:is(h1, h2, h3)[id]) {
-  scroll-margin-top: 7rem;
-}
-@media (max-width: 767px), (min-width: 1280px) {
-  article.post-plain :global(:is(h1, h2, h3)[id]) { scroll-margin-top: 3rem; }
+  scroll-margin-top: 3rem;
 }
 
 /* main article container */
