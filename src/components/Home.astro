@@ -75,7 +75,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
             </li>
           )}
           <li class="post-row" data-cat={cat} style={`--row-color: ${getCatColor(cat)}`}>
-            <a href={`/blog/${post.id}`} class="post-link">
+            <a href={`/blog/${post.id}`} class="post-link" target="_self">
               <span class="post-bar" aria-hidden="true"></span>
               <span class="post-num">{hex}</span>
               <span class="post-title">{post.data.title}</span>

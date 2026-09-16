@@ -1,0 +1,121 @@
+---
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+const { headings } = Astro.props;
+const baseDepth = Math.min(...headings.map(heading => heading.depth));
+---
+
+<details class="contents" open>
+  <summary>
+    <span class="contents-caption">Contents</span>
+    <span class="contents-current">Overview</span>
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+  </summary>
+  <nav class="contents-panel" aria-label="Table of contents">
+    <ol>
+      <li><a target="_self" href="#article-top" class="contents-top">Overview</a></li>
+      {headings.map(heading => (
+        <li style={`--level: ${heading.depth - baseDepth}`}>
+          <a target="_self" href={`#${heading.slug}`}>{heading.text}</a>
+        </li>
+      ))}
+    </ol>
+    <a target="_self" class="contents-back" href="#article-top">↑ Back to top</a>
+  </nav>
+</details>
+
+<style>
+  .contents { position: sticky; top: 0.75rem; z-index: 40; margin-top: 1.5rem; font-family: var(--font-mono); }
+  summary { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border-soft); border-radius: 10px; cursor: pointer; list-style: none; box-shadow: 0 4px 16px rgba(var(--shadow-rgb), 0.06); }
+  summary::-webkit-details-marker { display: none; }
+  summary, a { -webkit-tap-highlight-color: transparent; }
+  .contents-caption { font-size: 0.75rem; font-weight: 600; color: var(--fg); }
+  .contents-current { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.7rem; color: var(--fg-subtle); }
+  summary svg { flex-shrink: 0; transition: transform 150ms; }
+  .contents[open] summary svg { transform: rotate(180deg); }
+  .contents-panel { position: absolute; top: calc(100% + 0.5rem); left: 0; right: 0; padding: 1rem; background: var(--bg); border: 1px solid var(--border-soft); border-radius: 10px; box-shadow: 0 12px 32px rgba(var(--shadow-rgb), 0.12); max-height: min(65dvh, 36rem); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--border-soft); }
+  li { margin: 0; padding: 0; }
+  li a { display: block; position: relative; padding: 0.45rem 0.65rem 0.45rem calc(0.85rem + var(--level, 0) * 0.85rem); font-size: 0.74rem; line-height: 1.55; color: var(--fg-subtle); text-decoration: none; overflow-wrap: anywhere; border-radius: 0 5px 5px 0; transition: color 150ms, background 150ms; }
+  li a:hover { color: var(--fg); background: rgba(var(--accent-rgb), 0.05); }
+  li a[aria-current="location"] { color: var(--accent); background: rgba(var(--accent-rgb), 0.08); }
+  li a[aria-current="location"]::before { content: ''; position: absolute; left: -1px; top: 0.4rem; bottom: 0.4rem; width: 2px; background: var(--accent); border-radius: 2px; }
+  .contents-back { display: inline-block; margin: 1rem 0 0 0.85rem; padding: 0.25rem 0; font-size: 0.68rem; color: var(--fg-subtle); text-decoration: none; }
+  .contents-back:hover { color: var(--accent); }
+  @media (max-width: 767px) {
+    .contents { display: none; }
+  }
+  @media (min-width: 1280px) {
+    .contents { position: fixed; top: 8rem; left: max(1.5rem, calc(50vw - 650px)); width: 220px; margin: 0; }
+    summary { display: none; }
+    .contents-panel { position: static; padding: 0 0.5rem 0 0; border: 0; border-radius: 0; box-shadow: none; max-height: calc(100dvh - 10rem); background: transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) { summary svg, li a { transition: none; } }
+</style>
+
+<script>
+  const contents = document.querySelector<HTMLDetailsElement>('.contents');
+  if (contents) {
+    const desktop = window.matchMedia('(min-width: 1280px)');
+    const summary = contents.querySelector('summary')!;
+    const currentLabel = contents.querySelector('.contents-current')!;
+    const links = [...contents.querySelectorAll<HTMLAnchorElement>('ol a')];
+    const sections = links.flatMap(link => {
+      const heading = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      if (!heading) return [];
+      heading.tabIndex = -1;
+      return [{ link, heading }];
+    });
+    const setLayout = () => { contents.open = desktop.matches; };
+    setLayout();
+    desktop.addEventListener('change', setLayout);
+    const close = (restoreFocus = false) => {
+      if (desktop.matches) return;
+      contents.open = false;
+      if (restoreFocus) summary.focus();
+    };
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && contents.open && !desktop.matches) close(true);
+    });
+    document.addEventListener('click', event => {
+      if (event.target instanceof Node && !contents.contains(event.target)) close();
+    });
+    contents.querySelectorAll<HTMLAnchorElement>('a').forEach(link => {
+      link.addEventListener('click', event => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        close();
+        // Keep native fragment navigation, history, and modified clicks intact.
+      });
+    });
+    let pending = false;
+    let active: HTMLAnchorElement | undefined;
+    const update = () => {
+      pending = false;
+      let section = sections[0];
+      for (const candidate of sections) {
+        if (candidate.heading.getBoundingClientRect().top <= (desktop.matches ? 48 : 112)) section = candidate;
+        else break;
+      }
+      if (window.scrollY > 0 && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) section = sections.at(-1);
+      if (!section || section.link === active) return;
+      active?.removeAttribute('aria-current');
+      active = section.link;
+      active.setAttribute('aria-current', 'location');
+      currentLabel.textContent = active.textContent;
+      // Keep the current section visible without moving the article itself.
+      const panel = contents.querySelector<HTMLElement>('.contents-panel')!;
+      if (desktop.matches && !contents.matches(':hover, :focus-within')) {
+        const rect = active.getBoundingClientRect();
+        const bounds = panel.getBoundingClientRect();
+        if (rect.top < bounds.top || rect.bottom > bounds.bottom) panel.scrollTop += rect.top - bounds.top - panel.clientHeight / 3;
+      }
+    };
+    const schedule = () => { if (!pending) { pending = true; requestAnimationFrame(update); } };
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('hashchange', schedule);
+    new ResizeObserver(schedule).observe(document.querySelector('article.post-plain')!);
+    schedule();
+  }
+</script>

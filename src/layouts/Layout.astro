@@ -721,7 +721,7 @@ if (articleSchema && schemaArticle?.wordCount) {
     <div class="home-shell">
       <aside class="home-sidebar">
         <div class="home-card">
-          <a class="home-name" href="/">boop</a>
+          <a class="home-name" href="/" target="_self">boop</a>
           {favoriteSong && (
             <a class="home-song" href={favoriteSong.url} target="_blank" aria-label="Favorite song right now">
               <span class="song-icon" aria-hidden="true">
@@ -769,7 +769,7 @@ if (articleSchema && schemaArticle?.wordCount) {
       <header class:list={['site-header', { 'full-bleed': fullBleed }]}>
         {!hideBackLink && (
           <div class="site-title">
-            <a href="/">
+            <a href="/" target="_self">
               <span class="arrow">&#8592;</span>
               <span class="site-label">anuraagw.me</span>
             </a>
@@ -788,7 +788,7 @@ if (articleSchema && schemaArticle?.wordCount) {
       </main>
       <footer class:list={['site-footer', { 'full-bleed': fullBleed }]}>
         <nav class="footer-nav" aria-label="Footer">
-          <a href="/">home</a>
+          <a href="/" target="_self">home</a>
           <span class="footer-sep" aria-hidden="true">·</span>
           <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
           <span class="footer-sep" aria-hidden="true">·</span>
