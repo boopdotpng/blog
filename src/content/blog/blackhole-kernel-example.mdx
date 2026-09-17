@@ -266,4 +266,7 @@ The full-SFPU kernel ran in approximately 1,471 cycles (1.09 µs), and the SFPU/
 
 With more aggressive scheduling and more careful register use, my fastest version of this kernel so far is 1,083 cycles, but getting there involves using several of the hardware features I deliberately skipped in this article. 
 
+> update 9/17/2026: i've gotten it down to 996 cycles.
+
 If you're curious, the main change is using the SFPU's macro system to run a set of repeated SFPU instructions instead of issuing them one-by-one. Issuing a tensix coprocessor instruction (`SFPLOAD, ELWMUL`, etc) takes around 4 cycles, and in most cases the compute will run faster than you can issue instructions, leading to delays. 
+
