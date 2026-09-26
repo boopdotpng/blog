@@ -154,64 +154,65 @@
 .markdown-body .katex-display::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
 
 .markdown-body .md-table-wrap {
-  --table-right-bleed: 0px;
-  --table-base-width: calc(100% - var(--table-right-bleed));
   width: 100%;
-  margin: 0.7em 0;
+  margin: 1em 0 1.4em;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) var(--surface-elev);
-}
-
-@media (min-width: 1024px) {
-  .markdown-body .md-table-wrap {
-    --table-edge-gap: calc(var(--side-gutter, 1rem) * 2);
-    --table-right-bleed: max(0px, calc((100vw - var(--content-max-width, 800px)) / 2 + var(--side-gutter, 1rem) - var(--table-edge-gap)));
-    width: calc(100% + var(--table-right-bleed));
-    max-width: calc(100vw - var(--table-edge-gap));
-  }
+  scrollbar-color: var(--border-strong) transparent;
+  /* Scroll shadows: the "local" covers scroll with the content and hide the
+     "scroll" shadows at whichever edge has nothing more to show. */
+  background:
+    linear-gradient(to right, var(--bg) 40%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--bg) 40%, transparent) right center / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(var(--shadow-rgb), 0.14), transparent) left center / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(var(--shadow-rgb), 0.14), transparent) right center / 12px 100% no-repeat scroll;
 }
 
 .markdown-body .md-table-wrap::-webkit-scrollbar { height: 8px; }
-.markdown-body .md-table-wrap::-webkit-scrollbar-track { background: var(--surface-elev); border-radius: 6px; }
+.markdown-body .md-table-wrap::-webkit-scrollbar-track { background: transparent; }
 .markdown-body .md-table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
 .markdown-body .md-table-wrap::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
 
+/* Tables fit the reading column and wrap their text; only a table whose
+   columns can't all fit (see min-width below) scrolls sideways. */
 .markdown-body .md-table-wrap > table {
   border-collapse: collapse;
   margin: 0;
   background: none;
   color: inherit;
-  width: max-content;
-  min-width: var(--table-base-width);
+  width: 100%;
   table-layout: auto;
+  font-size: 0.92em;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
 }
 
 .markdown-body th, .markdown-body td {
-  padding: 0.4em 0.6em;
+  padding: 0.55em 0.9em 0.55em 0;
   text-align: left;
+  vertical-align: top;
   border: none;
   background: none;
+  min-width: 7ch;
+  overflow-wrap: normal;
+}
+
+/* identifiers and register names read better unbroken */
+.markdown-body td code,
+.markdown-body th code {
   white-space: nowrap;
-  overflow: visible;
-  width: auto;
 }
 
 .markdown-body th {
   font-weight: 600;
-  font-size: 0.95rem;
   border-bottom: 2px solid var(--border-strong);
   color: var(--fg-strong);
+  vertical-align: bottom;
 }
 
 .markdown-body tr:not(:first-child) td {
   border-top: 1px solid var(--border-muted);
-}
-
-.markdown-body td:first-child,
-.markdown-body th:first-child {
-  padding-left: 0;
 }
 
 .markdown-body td:last-child,
@@ -220,25 +221,15 @@
 }
 
 @media (max-width: 768px) {
-  .markdown-body .md-table-wrap {
-    border: 1px solid var(--border-muted);
-    border-radius: 6px;
-  }
-
   .markdown-body .md-table-wrap > table {
-    min-width: 100%;
+    font-size: 0.85rem;
   }
 
   .markdown-body th,
   .markdown-body td {
-    padding: 0.35em 0.5em;
-    font-size: 0.85rem;
+    min-width: 9ch;
+    padding: 0.45em 0.75em 0.45em 0;
   }
-
-  .markdown-body th:first-child,
-  .markdown-body td:first-child { padding-left: 0.5em; }
-  .markdown-body th:last-child,
-  .markdown-body td:last-child { padding-right: 0.5em; }
 }
 
 .markdown-body blockquote {

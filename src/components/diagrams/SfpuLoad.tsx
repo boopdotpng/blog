@@ -1,6 +1,6 @@
 /** @jsxImportSource preact */
 import { useState } from 'preact/hooks';
-import './elwmul.css';
+import './instruction-panel.css';
 import './sfpu-load.css';
 
 const rowColors = ['var(--cat-host)', 'var(--cat-worker)', 'var(--cat-green)', 'var(--cat-ml)'];
@@ -39,9 +39,10 @@ export default function SfpuLoad() {
           </g>)}
         </svg>
       </div>
-      <div class="sfp-arrows" aria-hidden="true">{rowColors.map(color => <span style={{ color }}>→</span>)}</div>
       <div>
         <div class="elw-label"><b>LReg[0]</b><span>one register · 32 lanes</span></div>
+        <div class="sfp-register-body">
+        <div class="sfp-arrows" aria-hidden="true">{rowColors.map(color => <span key={color} style={{ color }}>→</span>)}</div>
         <div class="sfp-lanes" role="group" aria-label="Active SFPU lanes; click to toggle">
           {active.map((enabled, lane) => {
             const row = Math.floor(lane / 8), col = 2 * (lane % 8) + parity;
@@ -52,6 +53,7 @@ export default function SfpuLoad() {
               <small>{lane}</small><b>{enabled ? row * 16 + col : 'old'}</b>
             </button>;
           })}
+        </div>
         </div>
       </div>
     </div>

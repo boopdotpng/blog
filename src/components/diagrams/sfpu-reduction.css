@@ -32,3 +32,7 @@
  .sfp-reduce-motion .sfp-moving-row,.sfp-reduce-motion .sfp-moving-cell { transition:none; animation:none; }
 }
 
+/* A lane's value text remounts when its sum changes; pop it so the add reads as an update. */
+.sfp-reduce-motion .sfp-moving-cell .sfp-value { animation:sfp-pop .5s .35s ease-out backwards; transform-box:fill-box; transform-origin:center; }
+@keyframes sfp-pop { 0% { transform:scale(.6); opacity:0; } 60% { transform:scale(1.18); opacity:1; } 100% { transform:scale(1); } }
+@media(prefers-reduced-motion:reduce) { .sfp-reduce-motion .sfp-moving-cell .sfp-value { animation:none; } }

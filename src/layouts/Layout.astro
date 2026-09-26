@@ -20,8 +20,6 @@ const {
   robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
   useKatex = false,
   ogImage,
-  fullBleed = false,
-  hideBackLink = false,
 } = Astro.props;
 
 const siteName = 'anuraag';
@@ -298,13 +296,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     font-family: var(--font-mono);
   }
 
-  .site-header.full-bleed {
-    max-width: none;
-    margin: 0;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-
   .home-song {
     display: flex;
     align-items: center;
@@ -402,12 +393,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     min-width: 0;
   }
 
-  .page-main.full-bleed {
-    max-width: none;
-    margin: 0;
-    padding: 0;
-  }
-
   /* Blog post pages get slightly different treatment */
   .page-main:has(.post-content) {
     padding-bottom: 4rem;
@@ -428,12 +413,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     width: 100%;
     border-top: 1px solid var(--border-soft);
     font-family: var(--font-mono);
-  }
-
-  .site-footer.full-bleed {
-    max-width: none;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
   }
 
   .footer-nav {
@@ -577,15 +556,21 @@ if (articleSchema && schemaArticle?.wordCount) {
     display: flex;
     align-items: center;
     gap: 0.55rem;
+    width: 100%;
+    font: inherit;
     font-size: 0.8rem;
     color: var(--fg-soft);
-    cursor: default;
+    background: none;
+    border: 0;
+    cursor: pointer;
     transition: color 0.15s;
     padding: 0.25rem 0;
+    text-align: left;
   }
 
-  .home-tag:hover {
-    color: var(--fg);
+  .home-tag:hover,
+  .home-tag[aria-pressed='true'] {
+    color: var(--fg-strong);
   }
 
   .home-tag-dot {
@@ -593,6 +578,17 @@ if (articleSchema && schemaArticle?.wordCount) {
     height: 9px;
     border-radius: 2px;
     flex: none;
+    transition: transform 0.2s ease, border-radius 0.2s ease;
+  }
+
+  .home-tag[aria-pressed='true'] .home-tag-dot {
+    transform: scale(1.25);
+    border-radius: 50%;
+  }
+
+  .home-tag[aria-pressed='true'] .home-tag-name {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .home-tag-name {
@@ -685,6 +681,10 @@ if (articleSchema && schemaArticle?.wordCount) {
       gap: 0.4rem 1.1rem;
     }
 
+    .home-tag {
+      width: auto;
+    }
+
     .home-tag-count {
       margin-left: 0.35rem;
     }
@@ -741,10 +741,12 @@ if (articleSchema && schemaArticle?.wordCount) {
               <span class="home-block-title">// tags</span>
               <ul class="home-tags">
                 {categories.map((c) => (
-                  <li class="home-tag" data-cat={c.name}>
-                    <span class="home-tag-dot" style={`background: var(--cat-${c.name})`} aria-hidden="true"></span>
-                    <span class="home-tag-name">{c.name}</span>
-                    <span class="home-tag-count">{c.count}</span>
+                  <li>
+                    <button class="home-tag" type="button" data-cat={c.name} aria-pressed="false">
+                      <span class="home-tag-dot" style={`background: var(--cat-${c.name})`} aria-hidden="true"></span>
+                      <span class="home-tag-name">{c.name}</span>
+                      <span class="home-tag-count">{c.count}</span>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -766,16 +768,13 @@ if (articleSchema && schemaArticle?.wordCount) {
     </div>
   ) : (
     <Fragment>
-      <header class:list={['site-header', { 'full-bleed': fullBleed }]}>
-        {!hideBackLink && (
-          <div class="site-title">
-            <a href="/" target="_self">
-              <span class="arrow">&#8592;</span>
-              <span class="site-label">anuraagw.me</span>
-            </a>
-          </div>
-        )}
-        {hideBackLink && <div class="site-title-spacer" aria-hidden="true"></div>}
+      <header class="site-header">
+        <div class="site-title">
+          <a href="/" target="_self">
+            <span class="arrow">&#8592;</span>
+            <span class="site-label">anuraagw.me</span>
+          </a>
+        </div>
         {ogType !== 'article' && <nav aria-label="Primary">
           <ul>
             <li><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a></li>
@@ -783,10 +782,10 @@ if (articleSchema && schemaArticle?.wordCount) {
           </ul>
         </nav>}
       </header>
-      <main id="main-content" tabindex="-1" class:list={['page-main', { 'full-bleed': fullBleed }]}>
+      <main id="main-content" tabindex="-1" class="page-main">
         <slot />
       </main>
-      <footer class:list={['site-footer', { 'full-bleed': fullBleed }]}>
+      <footer class="site-footer">
         <nav class="footer-nav" aria-label="Footer">
           <a href="/" target="_self">home</a>
           <span class="footer-sep" aria-hidden="true">·</span>
@@ -799,21 +798,25 @@ if (articleSchema && schemaArticle?.wordCount) {
   )}
   <script is:inline>
     (() => {
-      // Sidebar tag hover dims post rows in other categories.
-      const tags = document.querySelectorAll('.home-tag[data-cat]');
+      // Sidebar tags: hovering previews a category, clicking pins it (click again to clear).
+      const tags = [...document.querySelectorAll('.home-tag[data-cat]')];
       if (!tags.length) return;
+      const rows = document.querySelectorAll('.post-row[data-cat]');
+      let pinned = null;
 
-      const clear = () => {
-        document.querySelectorAll('.post-row.is-dim').forEach((row) => row.classList.remove('is-dim'));
+      const show = (cat) => {
+        rows.forEach((row) => row.classList.toggle('is-dim', cat !== null && row.dataset.cat !== cat));
       };
 
       tags.forEach((tag) => {
-        tag.addEventListener('mouseenter', () => {
-          document.querySelectorAll('.post-row[data-cat]').forEach((row) => {
-            row.classList.toggle('is-dim', row.dataset.cat !== tag.dataset.cat);
-          });
+        const cat = tag.dataset.cat;
+        tag.addEventListener('mouseenter', () => show(cat));
+        tag.addEventListener('mouseleave', () => show(pinned));
+        tag.addEventListener('click', () => {
+          pinned = pinned === cat ? null : cat;
+          tags.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.cat === pinned)));
+          show(pinned);
         });
-        tag.addEventListener('mouseleave', clear);
       });
     })();
   </script>

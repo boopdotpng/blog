@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { useEffect, useState } from 'preact/hooks';
 import { frames, valueOf } from './sfpu-reduction-model';
-import './elwmul.css';
+import './instruction-panel.css';
 import './sfpu-reduction.css';
 
 const colors = ['var(--cat-host)', 'var(--cat-worker)', 'var(--cat-green)', 'var(--cat-ml)'];
@@ -58,7 +58,7 @@ export default function SfpuReduction() {
               const wrap = motion && frame.kind === 'rotate' && reg === 1 && col === 0;
               return <g key={cell.id} class={`sfp-moving-cell ${wrap ? 'sfp-wrap' : ''}`} style={{ transform: `translate(${col * 56}px, 0px)`, '--row-color': mixed ? 'var(--accent)' : colors[originalRow] }}>
                 <rect class="sfp-value-cell" width={52} height={22} rx={2} />
-                <text class="sfp-value" x={26} y={16}>{valueOf(cell)}</text>
+                <text key={valueOf(cell)} class="sfp-value" x={26} y={16}>{valueOf(cell)}</text>
                 <title>{`LReg${reg}, lane ${r * 8 + col}: ${cell.terms.map(term => term + 1).join(' + ')} = ${valueOf(cell)}`}</title>
               </g>;
             })}

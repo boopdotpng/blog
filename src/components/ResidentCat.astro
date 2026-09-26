@@ -3,6 +3,23 @@
     <span><span class="cat-dot" aria-hidden="true"></span>longcat, the mage</span>
   </div>
   <div class="cat-playground">
+    <div class="cat-sky" aria-hidden="true">
+      <svg class="cat-sun" viewBox="-20 -20 40 40">
+        <g class="cat-sun-rays">
+          {Array.from({ length: 8 }, (_, i) => (
+            <line x1="0" y1="-11" x2="0" y2="-16" transform={`rotate(${i * 45})`} />
+          ))}
+        </g>
+        <circle r="7.5" />
+      </svg>
+      <svg class="cat-moon" viewBox="-12 -12 24 24">
+        <mask id="cat-moon-cut">
+          <rect x="-12" y="-12" width="24" height="24" fill="white" />
+          <circle cx="4" cy="-3.5" r="7.5" fill="black" />
+        </mask>
+        <circle r="8" mask="url(#cat-moon-cut)" />
+      </svg>
+    </div>
     <span class="cat-message" aria-hidden="true"></span>
     <button class="cat-pet" type="button" aria-label="Boop the cat">
       <pre aria-hidden="true">{` /\_/\
@@ -22,6 +39,22 @@
   .cat-caption > span { display: flex; align-items: center; gap: 0.5rem; }
   .cat-dot { width: 5px; height: 5px; background: var(--cat-gpu); border-radius: 50%; }
   .cat-playground { position: relative; height: 132px; overflow: hidden; cursor: crosshair; }
+  /* Sky: a sun by day; by night it sets and a moon and stars come out. */
+  .cat-sky { position: absolute; inset: 0 0 12px; pointer-events: none; }
+  .cat-sun, .cat-moon { position: absolute; top: 8px; right: 14px; width: 34px; height: 34px; overflow: visible; transition: opacity 1.2s ease, translate 1.4s cubic-bezier(.4, 0, .2, 1); }
+  .cat-sun { color: color-mix(in srgb, var(--cat-ml) 55%, #f2c14e); filter: drop-shadow(0 0 6px color-mix(in srgb, #f2c14e 45%, transparent)); }
+  .cat-sun circle { fill: currentColor; }
+  .cat-sun-rays { stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; opacity: 0.75; animation: cat-sun-turn 60s linear infinite; }
+  @keyframes cat-sun-turn { to { rotate: 360deg; } }
+  .cat-moon { width: 26px; height: 26px; top: 10px; right: 18px; opacity: 0; translate: 0 30px; }
+  .cat-moon circle { fill: var(--fg-strong); }
+  .cat-sky :global(.cat-star) { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: var(--fg-soft); opacity: 0; transition: opacity 1.5s ease var(--rise, 0s); }
+  .cat-sky :global(.cat-star.is-bright) { width: 3px; height: 3px; background: var(--fg-strong); box-shadow: 0 0 4px var(--fg-soft); }
+  .cat-sky :global(.cat-shooting) { position: absolute; height: 1px; width: 46px; background: linear-gradient(90deg, var(--fg-strong), transparent); border-radius: 1px; rotate: -24deg; transform-origin: left center; }
+  :global(:root[data-theme='dark']) .cat-sun { opacity: 0; translate: 0 34px; }
+  :global(:root[data-theme='dark']) .cat-moon { opacity: 0.9; translate: 0 0; }
+  :global(:root[data-theme='dark']) .cat-sky :global(.cat-star) { opacity: var(--glow, 0.6); animation: cat-twinkle var(--twinkle, 4s) ease-in-out var(--delay, 0s) infinite; }
+  @keyframes cat-twinkle { 0%, 100% { opacity: var(--glow, 0.6); } 50% { opacity: 0.15; } }
   .cat-floor { position: absolute; bottom: 9px; inset-inline: 0; border-bottom: 1px dashed var(--border-strong); }
   .cat-pet { position: absolute; left: 0; bottom: 10px; z-index: 1; border: 0; background: var(--bg); padding: 4px 8px; color: var(--fg-soft); cursor: pointer; transform-origin: bottom center; touch-action: manipulation; border-radius: 4px; }
   .cat-pet:hover { color: var(--accent); }
@@ -31,6 +64,11 @@
   .cat-mana { position: absolute; bottom: 13px; font-size: 24px; line-height: 1; color: var(--accent); text-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4); }
   .cat-status { margin: 0.5rem 0 0; color: var(--fg-muted); font-size: 0.68rem; line-height: 1.6; min-height: 1.6em; }
   .cat-pet :global(.mage-cloak) { color: var(--cat-bio); }
+  .cat-message.is-sleeping { animation: cat-doze 2.8s ease-in-out infinite; }
+  @keyframes cat-doze { 0%, 100% { transform: translateY(0); opacity: 0.55; } 50% { transform: translateY(-5px); opacity: 1; } }
+  /* Particles are created and animated from the script with the Web Animations API. */
+  .cat-playground :global(.cat-particle) { position: absolute; pointer-events: none; line-height: 1; will-change: transform, opacity; }
+  .cat-playground :global(.cat-flower) { bottom: 8px; transform-origin: 50% 100%; }
   @media (max-width: 420px) { .cat-caption { flex-wrap: wrap; gap: 0.25rem; } }
   @media (max-width: 760px) { .cat-home { padding-top: 0.5rem; } }
 </style>
@@ -115,6 +153,7 @@
     const idle = () => {
       gaze = 'o.o';
       bubble.textContent = asleep() ? 'z z Z' : '';
+      bubble.classList.toggle('is-sleeping', asleep());
       status.textContent = asleep() ? 'just five more minutes. perhaps fifty years.' : 'collecting little spells along the way.';
       draw();
     };
@@ -122,12 +161,110 @@
       clearTimeout(reactionTimer);
       reactionTimer = setTimeout(idle, 4500);
     };
+    // ── spell effects: short-lived spans animated with the Web Animations API ──
+    const pick = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)];
+    const particle = (text: string, left: number, bottom: number, className = '') => {
+      const el = document.createElement('span');
+      el.className = `cat-particle ${className}`;
+      el.textContent = text;
+      el.setAttribute('aria-hidden', 'true');
+      el.style.left = `${left}px`;
+      el.style.bottom = `${bottom}px`;
+      stage.append(el);
+      return el;
+    };
+    const play = (el: HTMLElement, keyframes: Keyframe[], options: KeyframeAnimationOptions) =>
+      el.animate(keyframes, { fill: 'both', ...options }).finished.then(() => el.remove(), () => el.remove());
+    const sparkle = (left: number, bottom: number) => {
+      if (reduced.matches) return;
+      for (let i = 0; i < 9; i++) {
+        const angle = (i / 9) * Math.PI * 2 + Math.random() * 0.4;
+        const reach = 18 + Math.random() * 16;
+        const el = particle(pick(['✦', '✧', '·']), left, bottom);
+        el.style.color = 'var(--accent)';
+        el.style.fontSize = `${8 + Math.random() * 6}px`;
+        play(el, [
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${Math.cos(angle) * reach}px, ${-Math.sin(angle) * reach}px) scale(0.4)`, opacity: 0 },
+        ], { duration: 520 + Math.random() * 200, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      }
+    };
+    const heart = () => {
+      if (reduced.matches) return;
+      const el = particle('♥', x + cat.offsetWidth * (0.3 + Math.random() * 0.4), 70);
+      el.style.color = 'var(--cat-hardware)';
+      el.style.fontSize = `${9 + Math.random() * 5}px`;
+      const drift = (Math.random() - 0.5) * 30;
+      play(el, [
+        { transform: 'translate(0, 0) scale(0.6)', opacity: 0 },
+        { transform: `translate(${drift * 0.3}px, -10px) scale(1)`, opacity: 1, offset: 0.2 },
+        { transform: `translate(${drift}px, -38px) scale(0.8)`, opacity: 0 },
+      ], { duration: 1100, easing: 'ease-out' });
+    };
+    // Frieren's favourite spell: the one that makes a field of flowers bloom.
+    // Flowers sprout outward from the cat, sway for a while, then wilt.
+    const flowerField = () => {
+      if (reduced.matches) return;
+      const width = stage.clientWidth;
+      const count = Math.max(8, Math.round(width / 20));
+      const origin = x + cat.offsetWidth / 2;
+      for (let i = 0; i < count; i++) {
+        const left = (i + Math.random() * 0.7) * (width / count);
+        const el = particle(pick(['✿', '❀', '✾', '❁']), left, 8, 'cat-flower');
+        el.style.color = pick(['var(--cat-hardware)', 'var(--cat-bio)', 'var(--cat-ml)', 'var(--accent)', 'var(--fg-soft)']);
+        el.style.fontSize = `${10 + Math.random() * 8}px`;
+        const sway = 6 + Math.random() * 10;
+        play(el, [
+          { transform: 'scale(0) rotate(0deg)', opacity: 0 },
+          { transform: `scale(1.2) rotate(${sway}deg)`, opacity: 1, offset: 0.1 },
+          { transform: `scale(1) rotate(${-sway / 2}deg)`, opacity: 1, offset: 0.35 },
+          { transform: `scale(1) rotate(${sway / 2}deg)`, opacity: 1, offset: 0.7 },
+          { transform: 'scale(0.4) rotate(0deg) translateY(2px)', opacity: 0 },
+        ], { duration: 4200 + Math.random() * 800, delay: Math.abs(left - origin) * 1.8, easing: 'ease-in-out' });
+      }
+    };
+    // ── night sky: stars are placed once; shooting stars streak by now and then ──
+    const sky = home.querySelector<HTMLElement>('.cat-sky')!;
+    for (let i = 0; i < 26; i++) {
+      const star = document.createElement('span');
+      star.className = `cat-star${Math.random() < 0.2 ? ' is-bright' : ''}`;
+      // Keep the top-right corner clear for the moon.
+      let left = Math.random() * 100;
+      const top = 4 + Math.random() * 62;
+      if (left > 84 && top < 36) left -= 20;
+      star.style.left = `${left}%`;
+      star.style.top = `${top}%`;
+      star.style.setProperty('--glow', String(0.35 + Math.random() * 0.6));
+      star.style.setProperty('--twinkle', `${3 + Math.random() * 4}s`);
+      star.style.setProperty('--delay', `${-Math.random() * 6}s`);
+      star.style.setProperty('--rise', `${Math.random() * 1.2}s`); // stars come out one by one at dusk
+      sky.append(star);
+    }
+    const shootingStar = () => {
+      if (!visible || document.hidden || reduced.matches || document.documentElement.dataset.theme !== 'dark') return;
+      const streak = document.createElement('span');
+      streak.className = 'cat-shooting';
+      streak.style.left = `${20 + Math.random() * 60}%`;
+      streak.style.top = `${4 + Math.random() * 20}px`;
+      sky.append(streak);
+      play(streak, [
+        { transform: 'translateX(0) scaleX(0.2)', opacity: 0 },
+        { transform: 'translateX(-40px) scaleX(1)', opacity: 1, offset: 0.3 },
+        { transform: 'translateX(-130px) scaleX(0.6)', opacity: 0 },
+      ], { duration: 900, easing: 'ease-out' });
+    };
+    setInterval(() => { if (Math.random() < 0.35) shootingStar(); }, 3500);
+    const popMana = () => {
+      if (mana.hidden) return;
+      mana.hidden = true;
+      sparkle(parseFloat(mana.style.left) + 6, parseFloat(mana.style.bottom) + 6);
+    };
     const catchMana = () => {
       chasing = false;
       jumping = false;
       cat.style.translate = '';
       frame = 0;
-      mana.hidden = true;
+      popMana();
       gaze = '^.^';
       bubble.textContent = '✧';
       status.textContent = 'a spell for catching a very small light.';
@@ -144,7 +281,7 @@
         x = jumpFrom + (target - jumpFrom) * Math.min(1, progress * 2);
         cat.style.translate = `0 ${-jumpHeight * Math.sin(Math.PI * progress)}px`;
         if (progress >= 0.5) {
-          mana.hidden = true;
+          popMana();
           gaze = '^.^';
           bubble.textContent = '✧';
         }
@@ -159,7 +296,7 @@
       mana.style.transform = `rotate(${x * 3}deg)`;
       frame = requestAnimationFrame(tick);
     };
-    const play = (position: number, height: number) => {
+    const chase = (position: number, height: number) => {
       hasRoamed = true;
       cancelAnimationFrame(frame);
       clearTimeout(reactionTimer);
@@ -173,6 +310,7 @@
       awakeUntil = Date.now() + 4000;
       chasing = true;
       gaze = 'o.o';
+      bubble.classList.remove('is-sleeping');
       bubble.textContent = '!';
       status.textContent = 'a little magic, just for the journey.';
       draw();
@@ -192,7 +330,7 @@
     stage.addEventListener('pointerdown', event => {
       if (cat.contains(event.target as Node)) return;
       const bounds = stage.getBoundingClientRect();
-      play(event.clientX - bounds.left, bounds.bottom - event.clientY);
+      chase(event.clientX - bounds.left, bounds.bottom - event.clientY);
     });
     stage.addEventListener('pointermove', event => {
       if (chasing || asleep()) return;
@@ -212,9 +350,13 @@
       awakeUntil = Date.now() + 4000;
       boops++;
       gaze = '^.^';
+      bubble.classList.remove('is-sleeping');
       bubble.textContent = boops % 3 === 0 ? '♥ purrr' : '♥';
       const message = boopMilestones[boops] ?? boopMessages[(boops - 1) % boopMessages.length];
-      status.textContent = `${boops} boop${boops === 1 ? '' : 's'}. ${message}`;
+      const spell = boops % 5 === 0;
+      status.textContent = `${boops} boop${boops === 1 ? '' : 's'}. ${spell && !boopMilestones[boops] ? 'the spell to make a field of flowers. her favourite.' : message}`;
+      heart();
+      if (spell) flowerField();
       draw();
       x = Math.min(x, limit());
       draw();

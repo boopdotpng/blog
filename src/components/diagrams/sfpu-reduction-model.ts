@@ -11,7 +11,6 @@ export type Frame = {
   description: string;
   target: number;
   kind: 'start' | 'copy' | 'rotate' | 'add' | 'transpose';
-  equation?: string;
   source?: number;
 };
 export const valueOf = (cell: Cell) => cell.terms.reduce((sum, term) => sum + term + 1, 0);
@@ -25,10 +24,8 @@ export function reductionFrames(): Frame[] {
   const emit = (frame: Omit<Frame, 'registers'>) => frames.push({ ...frame, registers: structuredClone(registers) });
   const copy = (source: Row[]) => source.map(row => ({ id: identity++, cells: row.cells.map(cell => ({ id: identity++, terms: [...cell.terms] })) }));
   const add = (other: number, phase: number, description: string) => {
-    const left = valueOf(registers[0]![0].cells[0]);
-    const right = valueOf(registers[other]![0].cells[0]);
     registers[0] = registers[0]!.map((row, r) => ({ ...row, cells: row.cells.map((cell, c) => ({ ...cell, terms: [...cell.terms, ...registers[other]![r].cells[c].terms].sort((a, b) => a - b) })) }));
-    emit({ phase, kind: 'add', target: 0, source: other, instruction: `SFPADD: LReg0 ← LReg0 + LReg${other}`, description, equation: `Lane 0: ${left} + ${right} = ${left + right}` });
+    emit({ phase, kind: 'add', target: 0, source: other, instruction: `SFPADD: LReg0 ← LReg0 + LReg${other}`, description });
   };
   emit({ phase: 0, kind: 'start', target: 0, instruction: 'LReg0: 32 partial sums', description: 'Use 1–32 as example partial sums. Each colored row contains eight lanes of one register.' });
   for (const distance of [4, 2, 1]) {

@@ -97,7 +97,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
   .home {
     width: 100%;
     padding: 0.25rem 0 0;
-    font-family: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-mono);
   }
 
   .index-header {
@@ -322,12 +322,6 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
       grid-column: 2;
       grid-row: 2;
       font-size: 0.7rem;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      transition: none !important;
     }
   }
 </style>

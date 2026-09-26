@@ -1,5 +1,6 @@
 /** @jsxImportSource preact */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useFrameLoop } from './frame-loop';
 
 /**
  * Interactive Tenstorrent NoC routing grid.
@@ -12,10 +13,9 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
  * source. Routing is dimension-ordered (X first, then Y) on a torus.
  *
  * Multicast mode: drag a rectangle to set the multicast box (the start/end
- * NoC coordinates you'd hand to configure_tlb). The packet routes from the
- * source to the box's entry corner — top-left for noc0, bottom-right for
- * noc1 — then fans out across every tile in the box following the NoC
- * direction, which is how one write reaches many tiles at once.
+ * NoC coordinates you'd hand to configure_tlb). Every receiver's packet
+ * follows its own dimension-ordered route from the source; the union of those
+ * routes is the multicast tree, which shares a trunk and branches at routers.
  */
 
 type Coord = [number, number];
@@ -35,11 +35,15 @@ interface Props {
 const U = 12; // cell edge, svg units
 const G = 4; // gap between cells
 const HOP_MS = 260;
-const END_PAUSE_MS = 850;
+const END_PAUSE_MS = 1100;
+const RIPPLE_MS = 650;
+const TRAIL = 6; // comet-tail dots behind the packet
+const TRAIL_GAP = 0.2; // hops between tail dots
+const GLOW_DECAY_MS = 380; // how fast a router's flash settles after the packet passes
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-
 const key = (x: number, y: number) => `${x},${y}`;
+const isWrap = (a: Coord, b: Coord) => Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]) > 1;
 
 // ── Blackhole NoC topology (mirrors noc-visualization/topology.js, which in
 // turn matches ttk/blackhole_coords.py). The physical NoC is a 17×12 torus.
@@ -47,15 +51,11 @@ const key = (x: number, y: number) => `${x},${y}`;
 //   - Tensix worker cores: rows y = 2..11, columns x = 1..7 and 10..16.
 //   - Column x = 8 and rows y = 0..1 are non-Tensix tiles (PCIe / ARC / eth).
 type Kind = 'dram' | 'tensix' | 'other';
-const TENSIX_ROWS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-const TENSIX_COLS = new Set([1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16]);
 
 function cellKind(x: number, y: number): Kind {
   if (x === 0 || x === 9) return 'dram';
-  if (y < 2) return 'other';
-  if (x === 8) return 'other';
-  if (TENSIX_COLS.has(x) && TENSIX_ROWS.has(y)) return 'tensix';
-  return 'other';
+  if (y < 2 || y > 11 || x === 8 || x > 16) return 'other';
+  return 'tensix';
 }
 
 function topLeft(x: number, y: number): Coord {
@@ -84,15 +84,44 @@ function buildPath(src: Coord, dst: Coord, cols: number, rows: number, noc: Noc)
   return cells;
 }
 
-function countWraps(cells: Coord[]): number {
-  let wraps = 0;
-  for (let i = 0; i < cells.length - 1; i++) {
-    const dx = Math.abs(cells[i + 1][0] - cells[i][0]);
-    const dy = Math.abs(cells[i + 1][1] - cells[i][1]);
-    if (dx + dy > 1) wraps++;
+/**
+ * Position of a packet `phase` hops along `cells`. A torus wrap exits one edge
+ * and re-enters the opposite one, fading out and back in rather than
+ * streaking across the whole grid.
+ */
+function positionAt(cells: Coord[], phase: number, dir: number): [x: number, y: number, opacity: number] {
+  const nseg = cells.length - 1;
+  if (nseg < 1 || phase <= 0) return [...center(...cells[0]), 1];
+  if (phase >= nseg) return [...center(...cells[nseg]), 1];
+  const i = Math.floor(phase);
+  const f = phase - i;
+  const from = cells[i];
+  const to = cells[i + 1];
+  const [fx, fy] = center(...from);
+  const [tx, ty] = center(...to);
+  if (!isWrap(from, to)) return [fx + (tx - fx) * f, fy + (ty - fy) * f, 1];
+  const off = (U + G) * 0.85;
+  const alongX = from[1] === to[1];
+  if (f < 0.5) {
+    const k = f * 2;
+    return [alongX ? fx + dir * off * k : fx, alongX ? fy : fy + dir * off * k, 1 - k];
   }
-  return wraps;
+  const k = (f - 0.5) * 2;
+  return [alongX ? tx - dir * off * (1 - k) : tx, alongX ? ty : ty - dir * off * (1 - k), k];
 }
+
+/** SVG path for one link. A torus wrap is drawn as an exit stub and an entry stub at opposite edges. */
+function linkPath(a: Coord, b: Coord, dir: number): string {
+  const [ax, ay] = center(...a);
+  const [bx, by] = center(...b);
+  if (!isWrap(a, b)) return `M${ax},${ay}L${bx},${by}`;
+  const off = (U + G) * 0.85;
+  const [dx, dy] = a[1] === b[1] ? [dir * off, 0] : [0, dir * off];
+  return `M${ax},${ay}l${dx},${dy}M${bx - dx},${by - dy}L${bx},${by}`;
+}
+
+/** Brightness of a router `since` ms after the packet reached it: a flash that settles to a steady glow. */
+const glow = (since: number) => (since < 0 ? 0 : 0.28 + 0.6 * Math.exp(-since / GLOW_DECAY_MS));
 
 /** Inclusive min/max corners of the rectangle spanned by two coords. */
 function rect(a: Coord, b: Coord) {
@@ -104,10 +133,13 @@ function rect(a: Coord, b: Coord) {
   };
 }
 
-/** The corner a packet enters the box from, given the NoC's travel direction. */
-function entryCorner(noc: Noc, r: ReturnType<typeof rect>): Coord {
-  return noc === 'noc1' ? [r.x1, r.y1] : [r.x0, r.y0];
-}
+const setCircle = (el: SVGCircleElement | null, x: number, y: number, opacity: number, r?: number) => {
+  if (!el) return;
+  el.setAttribute('cx', String(x));
+  el.setAttribute('cy', String(y));
+  if (r !== undefined) el.setAttribute('r', String(r));
+  el.style.opacity = String(opacity);
+};
 
 export default function NocGrid({
   cols = 17,
@@ -127,6 +159,8 @@ export default function NocGrid({
   const [mode, setMode] = useState<Mode>(modeProp);
   const [noc, setNoc] = useState<Noc>(nocProp);
   const [hover, setHover] = useState<Coord | null>(null);
+  // Touch screens have no shift key, so they get an explicit toggle instead.
+  const [tapMovesSrc, setTapMovesSrc] = useState(false);
 
   // multicast box corners (a = drag anchor, b = drag end)
   const defBox: [Coord, Coord] = boxProp ?? [[1, 2], [5, 5]];
@@ -135,11 +169,10 @@ export default function NocGrid({
   const [dragging, setDragging] = useState(false);
 
   const box = useMemo(() => rect(boxA, boxB), [boxA, boxB]);
-  const entry = useMemo(() => entryCorner(noc, box), [noc, box]);
+  const dir = noc === 'noc1' ? -1 : 1;
+  const boxKey = `${box.x0},${box.y0},${box.x1},${box.y1}`;
 
-  // The animated route: src → dst (unicast) or src → box entry corner (multicast)
-  const target = mode === 'multicast' ? entry : dst;
-  const path = useMemo(() => buildPath(src, target, C, R, noc), [src, target, C, R, noc]);
+  const path = useMemo(() => buildPath(src, dst, C, R, noc), [src, dst, C, R, noc]);
   const pathSet = useMemo(() => new Set(path.map(([x, y]) => key(x, y))), [path]);
 
   const previewSet = useMemo(() => {
@@ -147,216 +180,117 @@ export default function NocGrid({
     return new Set(buildPath(src, hover, C, R, noc).map(([x, y]) => key(x, y)));
   }, [mode, hover, src, C, R, noc]);
 
-  // tiles covered by the multicast box, tagged with flood distance from entry.
-  // Only valid receivers (Tensix + DRAM) take part — the l2cpu / PCIe / ARC /
-  // eth ("other") tiles inside the rectangle are skipped, even though the
-  // packet still physically routes through their routers.
-  const boxCells = useMemo(() => {
-    if (mode !== 'multicast') return null;
-    const m = new Map<string, number>();
-    for (let y = box.y0; y <= box.y1; y++)
-      for (let x = box.x0; x <= box.x1; x++) {
-        if (cellKind(x, y) === 'other') continue;
-        m.set(key(x, y), Math.abs(x - entry[0]) + Math.abs(y - entry[1]));
-      }
-    return m;
-  }, [mode, box, entry]);
-
   // Faithful multicast tree (mirrors noc-visualization's mcastTree): the UNION
-  // of every valid receiver's dimension-ordered path from the SOURCE. The trunk
-  // is shared and the tree branches at routers, exactly how a hardware multicast
-  // write fans out. "other" tiles (l2cpu / PCIe / ARC / eth) are skipped as
-  // receivers — DRAM ports stay valid.
+  // of every valid receiver's dimension-ordered path from the source. "other"
+  // tiles (l2cpu / PCIe / ARC / eth) inside the box are skipped as receivers,
+  // even though packets still route through their routers; DRAM ports stay valid.
   const mcast = useMemo(() => {
-    type MPath = { cells: Coord[]; pts: Coord[]; dist: number };
-    type MLink = { a: Coord; b: Coord; wrap: boolean };
-    if (mode !== 'multicast') return { paths: [] as MPath[], links: [] as MLink[], maxDist: 0 };
-    const paths: MPath[] = [];
-    const linkMap = new Map<string, MLink>();
+    type Receiver = { cells: Coord[]; dist: number };
+    type Link = { d: string; depth: number; wrap: boolean };
+    const receivers: Receiver[] = [];
+    const links = new Map<string, Link>();
     let maxDist = 0;
+    if (mode !== 'multicast') return { receivers, links: [] as Link[], maxDist };
     for (let y = box.y0; y <= box.y1; y++) {
       for (let x = box.x0; x <= box.x1; x++) {
-        if (cellKind(x, y) === 'other') continue;
-        if (x === src[0] && y === src[1]) continue;
+        if (cellKind(x, y) === 'other' || (x === src[0] && y === src[1])) continue;
         const cells = buildPath(src, [x, y], C, R, noc);
-        const dist = cells.length - 1;
-        maxDist = Math.max(maxDist, dist);
-        paths.push({ cells, pts: cells.map(([cx, cy]) => center(cx, cy)), dist });
-        for (let i = 0; i < cells.length - 1; i++) {
+        maxDist = Math.max(maxDist, cells.length - 1);
+        receivers.push({ cells, dist: cells.length - 1 });
+        // Routes are dimension-ordered from one source, so a shared link is
+        // always the same number of hops from the source on every route.
+        cells.slice(1).forEach((b, i) => {
           const a = cells[i];
-          const b = cells[i + 1];
-          const lk = `${a[0]},${a[1]}->${b[0]},${b[1]}`;
-          if (!linkMap.has(lk)) {
-            const wrap = Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]) > 1;
-            linkMap.set(lk, { a: center(a[0], a[1]), b: center(b[0], b[1]), wrap });
-          }
-        }
+          const k = `${key(...a)}>${key(...b)}`;
+          if (!links.has(k)) links.set(k, { d: linkPath(a, b, dir), depth: i, wrap: isWrap(a, b) });
+        });
       }
     }
-    return { paths, links: [...linkMap.values()], maxDist };
-  }, [mode, box, src, C, R, noc]);
+    return { receivers, links: [...links.values()], maxDist };
+  }, [mode, box, src, C, R, noc, dir]);
 
-  const boxKey = `${box.x0},${box.y0},${box.x1},${box.y1}`;
   const hops = path.length - 1;
-  const wraps = useMemo(() => countWraps(path), [path]);
+  const wraps = path.slice(1).filter((c, i) => isWrap(path[i], c)).length;
   const boxW = box.x1 - box.x0 + 1;
   const boxH = box.y1 - box.y0 + 1;
-  const boxTiles = boxCells ? boxCells.size : boxW * boxH;
 
   const W = G + C * (U + G);
   const H = G + R * (U + G);
 
-  const reduced = useMemo(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    [],
-  );
-
-  // ── marker animation ─────────────────────────────────────────────────────
-  // The lead marker travels src → target (the box entry corner in multicast).
-  // Once it arrives, a swarm of dots emanates from the entry to every box tile,
-  // each riding its own non-wrapping route, so the multicast visibly fans out.
-  const markerRef = useRef<SVGCircleElement | null>(null);
+  // ── animation ────────────────────────────────────────────────────────────
+  // Everything that moves is written straight to the DOM through refs (via
+  // `style.opacity` / cx / cy, which Preact never touches), so re-renders from
+  // hovering can't interrupt it.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<SVGCircleElement>(null);
+  const haloRef = useRef<SVGCircleElement>(null);
+  const rippleRef = useRef<SVGCircleElement>(null);
+  const trailRefs = useRef<(SVGCircleElement | null)[]>([]);
+  const glowRefs = useRef<(SVGRectElement | null)[]>([]);
+  const linkRefs = useRef<(SVGPathElement | null)[]>([]);
   const fanRefs = useRef<(SVGCircleElement | null)[]>([]);
-  const pathRef = useRef<Coord[]>(path);
-  pathRef.current = path;
-  const mcastRef = useRef(mcast);
-  mcastRef.current = mcast;
 
-  useEffect(() => {
-    const marker = markerRef.current;
-    if (!marker) return;
+  const drawUnicast = (t: number) => {
+    const nseg = path.length - 1;
+    const e = t % (nseg * HOP_MS + END_PAUSE_MS);
+    const raw = e / HOP_MS; // keeps growing through the end pause, so the tail catches up
+    const phase = Math.min(nseg, raw);
 
-    const set = (el: SVGCircleElement, x: number, y: number, op: number) => {
-      el.setAttribute('cx', String(x));
-      el.setAttribute('cy', String(y));
-      el.setAttribute('opacity', String(op));
-    };
+    const [hx, hy, hop] = positionAt(path, phase, dir);
+    setCircle(headRef.current, hx, hy, hop);
+    setCircle(haloRef.current, hx, hy, hop * 0.35, U * (0.55 + 0.08 * Math.sin(t / 90)));
+    trailRefs.current.forEach((el, k) => {
+      const p = Math.min(phase, raw - (k + 1) * TRAIL_GAP);
+      const [x, y, op] = positionAt(path, p, dir);
+      setCircle(el, x, y, p <= 0 ? 0 : op * (1 - (k + 1) / (TRAIL + 1)) * 0.8);
+    });
+    glowRefs.current.forEach((el, i) => {
+      if (el) el.style.opacity = String(glow(e - i * HOP_MS));
+    });
 
-    if (reduced) {
-      if (mode === 'multicast') {
-        marker.setAttribute('opacity', '0');
-        mcastRef.current.paths.forEach((p, i) => {
-          const el = fanRefs.current[i];
-          if (el) set(el, p.pts[p.pts.length - 1][0], p.pts[p.pts.length - 1][1], 1);
-        });
-      } else {
-        const end = pathRef.current[pathRef.current.length - 1];
-        const [ex, ey] = center(end[0], end[1]);
-        set(marker, ex, ey, 1);
-      }
-      return;
-    }
+    const arrived = (e - nseg * HOP_MS) / RIPPLE_MS;
+    const [dx, dy] = center(...path[nseg]);
+    setCircle(rippleRef.current, dx, dy, arrived >= 0 && arrived < 1 ? (1 - arrived) * 0.9 : 0, U * (0.5 + Math.max(0, arrived) * 1.3));
+  };
 
-    const dir = noc === 'noc1' ? -1 : 1;
-    const off = (U + G) * 0.85;
-    let raf = 0;
-    let start = 0;
+  const drawMulticast = (t: number) => {
+    const e = t % (mcast.maxDist * HOP_MS + END_PAUSE_MS);
+    const ph = e / HOP_MS;
+    mcast.links.forEach((l, i) => {
+      const el = linkRefs.current[i];
+      if (el) el.style.opacity = String(ph > l.depth ? (l.wrap ? 0.3 : 0.25 + 0.5 * Math.exp(-(ph - l.depth) * 1.5)) : 0.08);
+    });
+    mcast.receivers.forEach((r, i) => {
+      const [x, y, op] = positionAt(r.cells, Math.min(r.dist, ph), dir);
+      // Parked dots retire once their tile has lit up; the glow carries the story from there.
+      setCircle(fanRefs.current[i], x, y, ph >= r.dist ? Math.max(0, 1 - (ph - r.dist) * 2) : op);
+      const el = glowRefs.current[i];
+      if (el) el.style.opacity = String(glow(e - r.dist * HOP_MS));
+    });
+  };
 
-    const step = (t: number) => {
-      // ── multicast: every receiver's packet rides the shared tree at once ──
-      if (mode === 'multicast') {
-        marker.setAttribute('opacity', '0');
-        const m = mcastRef.current;
-        const cycle = m.maxDist * HOP_MS + END_PAUSE_MS;
-        if (!start) start = t;
-        let e = t - start;
-        if (e >= cycle) {
-          start = t;
-          e = 0;
-        }
-        const ph = e / HOP_MS;
-        m.paths.forEach((p, idx) => {
-          const el = fanRefs.current[idx];
-          if (!el) return;
-          const { pts, cells: pc, dist } = p;
-          if (pts.length < 2) {
-            set(el, pts[0][0], pts[0][1], 1);
-            return;
-          }
-          const local = Math.min(dist, ph);
-          const i = Math.min(pts.length - 2, Math.floor(local));
-          const f = local - i;
-          const a = pc[i];
-          const b = pc[i + 1];
-          // hide the dot while it's crossing a torus wrap (off the edge)
-          if (Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]) > 1 && local < dist) {
-            el.setAttribute('opacity', '0');
-            return;
-          }
-          const [ax, ay] = pts[i];
-          const [bx, by] = pts[i + 1];
-          set(el, ax + (bx - ax) * f, ay + (by - ay) * f, 1);
-        });
-        raf = requestAnimationFrame(step);
-        return;
-      }
-
-      const cells = pathRef.current;
-      const nseg = cells.length - 1;
-      const routeDur = nseg * HOP_MS;
-      const cycle = routeDur + END_PAUSE_MS;
-      if (!start) start = t;
-      let e = t - start;
-      if (e >= cycle) {
-        start = t;
-        e = 0;
-      }
-
-      // ── lead marker: travels the route, then parks at the entry ──
-      const phase = Math.min(nseg, Math.min(e, routeDur) / HOP_MS);
-      if (nseg < 1) {
-        const [cx, cy] = center(cells[0][0], cells[0][1]);
-        set(marker, cx, cy, 1);
-      } else {
-        const i = Math.min(nseg - 1, Math.floor(phase));
-        const f = phase - i;
-        const from = cells[i];
-        const to = cells[i + 1];
-        const [fx, fy] = center(from[0], from[1]);
-        const [tx, ty] = center(to[0], to[1]);
-        const wrap = Math.abs(to[0] - from[0]) + Math.abs(to[1] - from[1]) > 1;
-        if (phase >= nseg) {
-          set(marker, tx, ty, 1);
-        } else if (!wrap) {
-          set(marker, fx + (tx - fx) * f, fy + (ty - fy) * f, 1);
-        } else {
-          const xAxis = from[1] === to[1];
-          const ex = xAxis ? fx + dir * off : fx;
-          const ey = xAxis ? fy : fy + dir * off;
-          const sx = xAxis ? tx - dir * off : tx;
-          const sy = xAxis ? ty : ty - dir * off;
-          if (f < 0.5) {
-            const k = f * 2;
-            set(marker, fx + (ex - fx) * k, fy + (ey - fy) * k, 1 - k);
-          } else {
-            const k = (f - 0.5) * 2;
-            set(marker, sx + (tx - sx) * k, sy + (ty - sy) * k, k);
-          }
-        }
-      }
-
-      raf = requestAnimationFrame(step);
-    };
-
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [src, target, noc, mode, reduced, boxKey]);
+  const routeMs = mode === 'multicast' ? mcast.maxDist * HOP_MS : hops * HOP_MS;
+  useFrameLoop(rootRef, mode === 'multicast' ? drawMulticast : drawUnicast, [src, dst, noc, mode, boxKey], routeMs + RIPPLE_MS);
 
   // ── interaction ──────────────────────────────────────────────────────────
   // unicast: click → dst, shift-click → src
   // multicast: drag → box, shift-click → src
-  const onDown = (x: number, y: number, e: MouseEvent) => {
-    // src/dst (and the multicast box) only make sense on Tensix worker cores —
-    // ignore DRAM ports and non-Tensix (PCIe/ARC/eth) tiles.
+  // Pointer events + elementFromPoint keep dragging working for touch too.
+  const cellAt = (e: PointerEvent): Coord | null => {
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-cell]');
+    const [x, y] = el?.getAttribute('data-cell')?.split(',').map(Number) ?? [];
+    return el ? [x, y] : null;
+  };
+
+  const onDown = (x: number, y: number, e: PointerEvent) => {
+    // src/dst (and the multicast box) only make sense on Tensix worker cores.
     if (cellKind(x, y) !== 'tensix') return;
-    if (e.shiftKey) {
+    if (e.shiftKey || (tapMovesSrc && e.pointerType !== 'mouse')) {
       setSrc([x, y]);
       return;
     }
     if (mode === 'multicast') {
+      e.preventDefault();
       setBoxA([x, y]);
       setBoxB([x, y]);
       setDragging(true);
@@ -365,44 +299,50 @@ export default function NocGrid({
     }
   };
 
-  const onEnter = (x: number, y: number) => {
-    setHover([x, y]);
-    if (dragging && cellKind(x, y) === 'tensix') setBoxB([x, y]);
+  const onMove = (e: PointerEvent) => {
+    const c = cellAt(e);
+    if (e.pointerType === 'mouse' && (c?.[0] !== hover?.[0] || c?.[1] !== hover?.[1])) setHover(c);
+    if (dragging && c && cellKind(...c) === 'tensix' && (c[0] !== boxB[0] || c[1] !== boxB[1])) setBoxB(c);
   };
 
   useEffect(() => {
     if (!dragging) return;
     const up = () => setDragging(false);
-    window.addEventListener('mouseup', up);
-    return () => window.removeEventListener('mouseup', up);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
   }, [dragging]);
+
+  const receiverSet = useMemo(
+    () => new Set(mcast.receivers.map((r) => key(...r.cells[r.cells.length - 1]))),
+    [mcast],
+  );
 
   const cells = [];
   for (let y = 0; y < R; y++) {
     for (let x = 0; x < C; x++) {
       const [tx, ty] = topLeft(x, y);
       const k = key(x, y);
-      const isSrc = src[0] === x && src[1] === y;
-      const isDst = mode === 'unicast' && dst[0] === x && dst[1] === y;
-      const dist = boxCells?.get(k);
       let cls = `dgm-cell kind-${cellKind(x, y)}`;
       if (previewSet?.has(k)) cls += ' is-preview';
-      if (pathSet.has(k)) cls += ' is-path';
-      if (dist !== undefined) cls += ' is-mcast';
-      if (isSrc) cls += ' is-src';
-      if (isDst) cls += ' is-dst';
+      if (mode === 'unicast' && pathSet.has(k)) cls += ' is-path';
+      if (receiverSet.has(k)) cls += ' is-mcast';
+      if (src[0] === x && src[1] === y) cls += ' is-src';
+      if (mode === 'unicast' && dst[0] === x && dst[1] === y) cls += ' is-dst';
       cells.push(
         <rect
           key={k}
+          data-cell={k}
           class={cls}
           x={tx}
           y={ty}
           width={U}
           height={U}
           rx={2}
-          style={dist !== undefined ? `--d:${dist}` : undefined}
-          onMouseDown={(e: MouseEvent) => onDown(x, y, e)}
-          onMouseEnter={() => onEnter(x, y)}
+          onPointerDown={(e: PointerEvent) => onDown(x, y, e)}
         >
           <title>{`tile (${x}, ${y})`}</title>
         </rect>,
@@ -410,11 +350,14 @@ export default function NocGrid({
     }
   }
 
-  const [scx, scy] = center(src[0], src[1]);
-  const [dcx, dcy] = center(target[0], target[1]);
+  // Glow overlays: one per router on the unicast route, or one per multicast receiver.
+  const glowCells = mode === 'multicast' ? mcast.receivers.map((r) => r.cells[r.cells.length - 1]) : path;
+
+  const [scx, scy] = center(...src);
+  const [dcx, dcy] = center(...dst);
 
   return (
-    <div class="dgm dgm-noc" data-active={noc}>
+    <div class="dgm dgm-noc" data-active={noc} data-mode={mode} ref={rootRef}>
       <div class="dgm-toolbar">
         <div class="dgm-seg" role="group" aria-label="Select network">
           <button type="button" aria-pressed={noc === 'noc0'} onClick={() => setNoc('noc0')}>
@@ -425,27 +368,27 @@ export default function NocGrid({
           </button>
         </div>
         <div class="dgm-seg" role="group" aria-label="Select write mode">
-          <button
-            type="button"
-            aria-pressed={mode === 'unicast'}
-            onClick={() => setMode('unicast')}
-          >
+          <button type="button" aria-pressed={mode === 'unicast'} onClick={() => setMode('unicast')}>
             unicast
           </button>
-          <button
-            type="button"
-            aria-pressed={mode === 'multicast'}
-            onClick={() => setMode('multicast')}
-          >
+          <button type="button" aria-pressed={mode === 'multicast'} onClick={() => setMode('multicast')}>
             multicast
+          </button>
+        </div>
+        <div class="dgm-seg dgm-touch-only" role="group" aria-label="What a tap moves">
+          <button type="button" aria-pressed={!tapMovesSrc} onClick={() => setTapMovesSrc(false)}>
+            tap: {mode === 'multicast' ? 'box' : 'dst'}
+          </button>
+          <button type="button" aria-pressed={tapMovesSrc} onClick={() => setTapMovesSrc(true)}>
+            src
           </button>
         </div>
         <div class="dgm-readout" aria-live="polite">
           <b>{noc}</b> ·{' '}
           {mode === 'multicast' ? (
             <>
-              ({src[0]},{src[1]}) → box ({box.x0},{box.y0})–({box.x1},{box.y1}) · {boxW}×{boxH} ={' '}
-              {boxTiles} tiles · {hops} hops to entry
+              ({src[0]},{src[1]}) → box ({box.x0},{box.y0})–({box.x1},{box.y1}) · {boxW}×{boxH} ·{' '}
+              {mcast.receivers.length} receivers · farthest {mcast.maxDist} hops
             </>
           ) : (
             <>
@@ -465,19 +408,36 @@ export default function NocGrid({
             ? `NoC ${noc} multicast from tile ${src[0]},${src[1]} to box ${box.x0},${box.y0} through ${box.x1},${box.y1}`
             : `NoC ${noc} route from tile ${src[0]},${src[1]} to ${dst[0]},${dst[1]}`
         }
-        onMouseLeave={() => setHover(null)}
+        onPointerMove={onMove}
+        onPointerLeave={() => setHover(null)}
       >
         {cells}
-        {/* multicast tree: the shared trunk + branches every receiver rides */}
+        <g class="dgm-glows" key={`${mode}|${noc}|${key(...src)}|${key(...dst)}|${boxKey}`}>
+          {glowCells.map(([x, y], i) => {
+            const [gx, gy] = topLeft(x, y);
+            return (
+              <rect
+                key={i}
+                ref={(el: SVGRectElement | null) => { glowRefs.current[i] = el; }}
+                class="dgm-glow"
+                x={gx}
+                y={gy}
+                width={U}
+                height={U}
+                rx={2}
+                style="opacity:0"
+              />
+            );
+          })}
+        </g>
         {mode === 'multicast' &&
           mcast.links.map((l, i) => (
-            <line
-              key={`ml${i}`}
+            <path
+              key={i}
+              ref={(el: SVGPathElement | null) => { linkRefs.current[i] = el; }}
               class={`dgm-mlink${l.wrap ? ' is-wrap' : ''}`}
-              x1={l.a[0]}
-              y1={l.a[1]}
-              x2={l.b[0]}
-              y2={l.b[1]}
+              d={l.d}
+              style="opacity:0"
             />
           ))}
         <text class="dgm-endcap" x={scx} y={scy}>
@@ -488,19 +448,36 @@ export default function NocGrid({
             D
           </text>
         )}
-        {mode === 'multicast' &&
-          mcast.paths.map((_, i) => (
+        {mode === 'multicast' ? (
+          mcast.receivers.map((_, i) => (
             <circle
               key={i}
-              ref={(el: SVGCircleElement | null) => (fanRefs.current[i] = el)}
+              ref={(el: SVGCircleElement | null) => { fanRefs.current[i] = el; }}
               class="dgm-fan"
               r={U * 0.18}
               cx={scx}
               cy={scy}
-              opacity={0}
+              style="opacity:0"
             />
-          ))}
-        <circle ref={markerRef} class="dgm-marker" r={U * 0.3} cx={scx} cy={scy} />
+          ))
+        ) : (
+          <>
+            <circle ref={rippleRef} class="dgm-ripple" r={U / 2} cx={dcx} cy={dcy} style="opacity:0" />
+            <circle ref={haloRef} class="dgm-halo" r={U * 0.55} cx={scx} cy={scy} style="opacity:0" />
+            {Array.from({ length: TRAIL }, (_, k) => (
+              <circle
+                key={k}
+                ref={(el: SVGCircleElement | null) => { trailRefs.current[k] = el; }}
+                class="dgm-trail"
+                r={U * 0.26 * (1 - (k + 1) / (TRAIL + 2))}
+                cx={scx}
+                cy={scy}
+                style="opacity:0"
+              />
+            ))}
+            <circle ref={headRef} class="dgm-marker" r={U * 0.3} cx={scx} cy={scy} />
+          </>
+        )}
       </svg>
 
       <div class="dgm-caption">
@@ -520,11 +497,18 @@ export default function NocGrid({
           ignored by multicast
         </p>
       </div>
-      <p class="dgm-hint">
+      <p class="dgm-hint dgm-pointer-only">
         {mode === 'multicast' ? 'drag a box to set the multicast region' : 'click a tile to move the destination'}
         <span class="dgm-swatch" style="background:var(--cat-gpu)" /> · shift-click to move the
         source
         <span class="dgm-swatch" style="background:var(--accent)" />
+      </p>
+      <p class="dgm-hint dgm-touch-only">
+        {tapMovesSrc
+          ? 'tap a tile to move the source'
+          : mode === 'multicast'
+            ? 'drag a box to set the multicast region'
+            : 'tap a tile to move the destination'}
       </p>
     </div>
   );

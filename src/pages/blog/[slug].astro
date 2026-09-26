@@ -17,9 +17,8 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
 const tocHeadings = headings.filter(heading => heading.depth >= 1 && heading.depth <= 3);
-// Keep the contents component available, but default to distraction-free reading.
-const tableOfContentsEnabled = false;
-const showTableOfContents = tableOfContentsEnabled && tocHeadings.length >= 3;
+// Desktop-only margin rail; short posts don't need one.
+const showTableOfContents = tocHeadings.length >= 3;
 
 const parseLocalDate = (dateString: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);

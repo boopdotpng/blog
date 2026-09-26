@@ -1,0 +1,18 @@
+/* Shared chrome for the instruction-level panels (SfpuLoad, SfpuReduction). */
+.elw { border:1px solid var(--border-muted); border-radius:8px; padding:16px; }
+.elw-heading,.elw-label { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.elw-heading { padding-bottom:14px; border-bottom:1px solid var(--border-muted); font-size:.85rem; }
+.elw-heading code { font-size:.8rem; }
+.elw-label { font-size:.75rem; margin-bottom:8px; flex-wrap:wrap; }
+.elw-label span,.elw small { color:var(--fg-muted); font-size:.65rem; }
+.elw .elw-note { display:block; font-size:.65rem; line-height:1.6; color:var(--fg-muted); margin:10px 0 0; }
+.elw-controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:16px 0 12px; }
+.elw-controls button { font:inherit; font-size:.7rem; border:1px solid var(--border-muted); background:var(--surface-soft); color:var(--fg); border-radius:4px; padding:6px 10px; cursor:pointer; transition:border-color .15s, background-color .15s; }
+.elw-controls button:hover:not(:disabled) { border-color:var(--fg-faint); }
+.elw button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.elw-controls button:disabled { opacity:.45; cursor:default; }
+.elw-controls span { font-size:.65rem; color:var(--fg-muted); margin-left:auto; font-variant-numeric:tabular-nums; }
+@media(max-width:560px) {
+ .elw { padding:12px; }
+ .elw-controls span { width:100%; margin-left:0; }
+}
