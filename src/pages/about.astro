@@ -1,0 +1,354 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const projects = [
+  {
+    name: 'blackhole-py',
+    href: 'https://github.com/boopdotpng/blackhole-py',
+    cat: 'tenstorrent',
+    blurb: "a from-scratch python driver, assembler, and compiler stack for tenstorrent blackhole. no vendor sdk, just the hardware and the docs.",
+  },
+  {
+    name: 'llama3 on one blackhole card',
+    cat: 'tenstorrent',
+    blurb: 'bringing it up end to end on my own stack.',
+  },
+  {
+    name: 'amdgpu lsp + vs code extension',
+    href: 'https://github.com/boopdotpng/amdgpu-lsp',
+    cat: 'gpu',
+    blurb: 'language tooling for writing amd gpu assembly.',
+  },
+  {
+    name: 'teaching',
+    href: 'https://github.com/boopdotpng/blackhole-cair',
+    cat: 'ml',
+    // TODO(boop): link "cair" to the club's own site once you have a url for it.
+    blurb: 'a curriculum for ml frameworks and blackhole hardware with cair (club for ai research) at unc charlotte.',
+  },
+];
+
+const elsewhere = [
+  { label: 'github', text: 'boopdotpng', href: 'https://github.com/boopdotpng' },
+  { label: 'twitter', text: '@boopdotpng', href: 'https://x.com/boopdotpng' },
+  { label: 'email', text: 'hi@anuraagw.me', href: 'mailto:hi@anuraagw.me' },
+];
+---
+
+<Layout title="about" description="anuraag (boop): systems, gpu drivers, compilers, and tenstorrent blackhole, written down as i build them.">
+  <section class="about">
+    <header class="about-header">
+      <div class="about-intro">
+        <h1>about</h1>
+        <p class="about-lede">hi, i'm anuraag, but everyone calls me <span class="boop">boop</span>.</p>
+      </div>
+      <pre class="about-cat" aria-hidden="true">{` /\\_/\\
+( o.o )
+ > ^ <`}</pre>
+    </header>
+
+    <div class="about-prose">
+      <p>
+        i write software for a living and spend the rest of my time underneath it: gpu drivers,
+        pcie and vfio internals, risc-v, compilers, and lately a lot of time on tenstorrent's blackhole.
+        i'm self-taught on the systems side, and i learn best by building the thing from scratch and
+        writing down what i find. <a href="/" target="_self">this site</a> is where those notes end up.
+      </p>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">// what i'm working on</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+      </div>
+      <ol class="project-list">
+        {projects.map((p, idx) => (
+          <li class="project" style={`--row-color: var(--cat-${p.cat})`}>
+            <span class="project-bar" aria-hidden="true"></span>
+            <span class="project-num" aria-hidden="true">{`0x${(idx + 1).toString(16).padStart(2, '0')}`}</span>
+            <div class="project-body">
+              {p.href
+                ? <a class="project-name" href={p.href} target="_blank" rel="noopener noreferrer">{p.name}</a>
+                : <span class="project-name">{p.name}</span>}
+              <p class="project-blurb">{p.blurb}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">// where i'm headed</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+      </div>
+      <div class="about-prose">
+        <p>
+          i want to work on ml compilers and accelerators full time: kernels, codegen, and the layer
+          where models meet hardware. if you're building something in that space, <a href="mailto:hi@anuraagw.me">i'd love to talk</a>.
+        </p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">// day job</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+      </div>
+      <div class="about-prose">
+        <p>software engineer, mostly .net. it's not the interesting part.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">// elsewhere</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+      </div>
+      <dl class="elsewhere">
+        {elsewhere.map((e) => (
+          <div class="elsewhere-row">
+            <dt>{e.label}</dt>
+            <dd><a href={e.href} target="_blank" rel="noopener noreferrer">{e.text}</a></dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .about {
+    max-width: 700px;
+    margin: 2.5rem auto 0;
+    font-family: var(--font-mono);
+  }
+
+  /* ── header ────────────────────────────────────────────── */
+
+  .about-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .about-header h1 {
+    margin: 0 0 0.4rem;
+    color: var(--fg-strong);
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    line-height: 1.15;
+    letter-spacing: -0.06em;
+    font-weight: 600;
+  }
+
+  .about-lede {
+    margin: 0;
+    color: var(--fg-soft);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .boop {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .about-cat {
+    margin: 0;
+    flex: none;
+    color: var(--fg-faint);
+    font-size: 0.8rem;
+    line-height: 1.15;
+    transform-origin: 50% 100%;
+    cursor: default;
+    user-select: none;
+  }
+
+  .about-cat:hover {
+    color: var(--accent);
+    animation: wobble 0.5s ease-in-out;
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-4deg); }
+    75% { transform: rotate(4deg); }
+  }
+
+  /* ── prose ─────────────────────────────────────────────── */
+
+  .about-prose p {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--fg);
+  }
+
+  .about-prose a,
+  .elsewhere a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: rgba(var(--accent-rgb), 0.35);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.15s, color 0.15s;
+  }
+
+  .about-prose a:hover,
+  .elsewhere a:hover {
+    color: var(--accent-hover);
+    text-decoration-color: currentColor;
+  }
+
+  /* ── sections (mirrors the home index) ─────────────────── */
+
+  .section {
+    margin-top: 2.75rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--fg-muted);
+    text-transform: lowercase;
+    flex-shrink: 0;
+  }
+
+  .section-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border-soft);
+  }
+
+  /* ── projects ──────────────────────────────────────────── */
+
+  .project-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .project {
+    display: grid;
+    grid-template-columns: 3px 2.8rem minmax(0, 1fr);
+    gap: 0.7rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px dashed var(--border-soft);
+  }
+
+  .project:first-child {
+    border-top: 1px dashed var(--border-soft);
+  }
+
+  .project-bar {
+    background: var(--row-color);
+    opacity: 0.55;
+    border-radius: 2px;
+    transition: opacity 0.12s;
+  }
+
+  .project:hover .project-bar {
+    opacity: 1;
+  }
+
+  .project-num {
+    padding-top: 0.12rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--fg-faint);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    transition: color 0.12s;
+  }
+
+  .project:hover .project-num {
+    color: var(--row-color);
+  }
+
+  .project-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  a.project-name::after {
+    content: ' ↗';
+    color: var(--fg-faint);
+    font-size: 0.8em;
+  }
+
+  a.project-name:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  a.project-name:hover::after {
+    color: var(--row-color);
+  }
+
+  .project-blurb {
+    margin: 0.3rem 0 0;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--fg-soft);
+  }
+
+  /* ── elsewhere ─────────────────────────────────────────── */
+
+  .elsewhere {
+    margin: 0;
+    display: grid;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+  }
+
+  .elsewhere-row {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 0.7rem;
+  }
+
+  .elsewhere dt {
+    color: var(--fg-faint);
+  }
+
+  .elsewhere dd {
+    margin: 0;
+  }
+
+  @media (max-width: 600px) {
+    .about {
+      margin-top: 1.5rem;
+    }
+
+    .project {
+      grid-template-columns: 4px minmax(0, 1fr);
+    }
+
+    .project-num {
+      display: none;
+    }
+
+    .about-cat {
+      font-size: 0.7rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .about-cat:hover { animation: none; }
+  }
+</style>

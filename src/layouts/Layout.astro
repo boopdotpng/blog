@@ -374,7 +374,8 @@ if (articleSchema && schemaArticle?.wordCount) {
     letter-spacing: 0.05em;
   }
 
-  nav a:hover {
+  nav a:hover,
+  nav a[aria-current='page'] {
     color: var(--fg);
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -733,6 +734,7 @@ if (articleSchema && schemaArticle?.wordCount) {
             </a>
           )}
           <nav class="home-nav" aria-label="Primary">
+            <a href="/about" target="_self">about</a>
             <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
             <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
           </nav>
@@ -777,6 +779,7 @@ if (articleSchema && schemaArticle?.wordCount) {
         </div>
         {ogType !== 'article' && <nav aria-label="Primary">
           <ul>
+            <li><a href="/about" target="_self" aria-current={cleanPath === '/about' ? 'page' : undefined}>about</a></li>
             <li><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a></li>
             <li><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a></li>
           </ul>
@@ -788,6 +791,8 @@ if (articleSchema && schemaArticle?.wordCount) {
       <footer class="site-footer">
         <nav class="footer-nav" aria-label="Footer">
           <a href="/" target="_self">home</a>
+          <span class="footer-sep" aria-hidden="true">·</span>
+          <a href="/about" target="_self">about</a>
           <span class="footer-sep" aria-hidden="true">·</span>
           <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
           <span class="footer-sep" aria-hidden="true">·</span>
