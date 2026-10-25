@@ -17,37 +17,37 @@ The specifics in this guide, including naming and the specific capabilities of e
 This is a high level chart that shows the hierarchy of components in an Nvidia GPU. At the top is a GPC. The 5070 Ti includes 6 GPCs and 35 TPCs, which averages to about 6 TPCs per GPC. The distribution is intentionally uneven to accommodate performance tuning and chip layout constraints.
 
 <svg viewBox="0 0 700 580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
-  <!-- GPU Box -->
+  {/* GPU Box */}
   <rect x="20" y="20" width="660" height="540" fill="#f5f3ef" stroke="#999" stroke-width="1.5"/>
   <text x="30" y="40" fill="#37352f">GPU</text>
 
-  <!-- GPC Box -->
+  {/* GPC Box */}
   <rect x="40" y="60" width="620" height="320" fill="#d8d4f0" stroke="#999"/>
   <text x="50" y="80" fill="#37352f">GPC (Graphics Processing Cluster)</text>
 
-  <!-- TPC 1 -->
+  {/* TPC 1 */}
   <rect x="60" y="100" width="580" height="120" fill="#c8e6c8" stroke="#999"/>
   <text x="70" y="120" fill="#37352f">TPC (Texture Processing Cluster)</text>
-  <!-- SM Boxes in TPC 1 -->
+  {/* SM Boxes in TPC 1 */}
   <rect x="80" y="130" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
   <text x="90" y="150" fill="#37352f">SM (Streaming Multiprocessor)</text>
   <rect x="360" y="130" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
   <text x="370" y="150" fill="#37352f">SM (Streaming Multiprocessor)</text>
 
-  <!-- TPC 2 -->
+  {/* TPC 2 */}
   <rect x="60" y="240" width="580" height="120" fill="#c8e6c8" stroke="#999"/>
   <text x="70" y="260" fill="#37352f">TPC (Texture Processing Cluster)</text>
-  <!-- SM Boxes in TPC 2 -->
+  {/* SM Boxes in TPC 2 */}
   <rect x="80" y="270" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
   <text x="90" y="290" fill="#37352f">SM (Streaming Multiprocessor)</text>
   <rect x="360" y="270" width="260" height="80" fill="#f0d0d0" stroke="#999"/>
   <text x="370" y="290" fill="#37352f">SM (Streaming Multiprocessor)</text>
 
-  <!-- L2 Cache Box -->
+  {/* L2 Cache Box */}
   <rect x="40" y="400" width="620" height="40" fill="#ece6c0" stroke="#999"/>
   <text x="50" y="425" fill="#37352f">L2 Cache — 48 MB, shared across all SMs</text>
 
-  <!-- Global Memory Box -->
+  {/* Global Memory Box */}
   <rect x="40" y="450" width="620" height="60" fill="#c0e0e0" stroke="#999"/>
   <text x="50" y="480" fill="#37352f">Global Memory — 16GB GDDR7, off-chip DRAM</text>
 </svg>
@@ -97,14 +97,14 @@ This is how each part of the execution model maps to CUDA terms. Each parameter 
 | gridDim   | How many total blocks are there?    |
 
 <svg viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
-  <!-- Outer Grid Box -->
+  {/* Outer Grid Box */}
   <rect x="20" y="20" width="660" height="470" fill="#f5f3ef" stroke="#999" stroke-width="1.5"/>
   <text x="30" y="40" fill="#37352f">grid (1d) gridDim = 3</text>
   
-  <!-- Block 0 -->
+  {/* Block 0 */}
   <rect x="60" y="60" width="600" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="70" y="80" fill="#37352f">Block 0 (x=0) blockDim = 3</text>
-  <!-- Threads in Block 0 -->
+  {/* Threads in Block 0 */}
   <rect x="100" y="100" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
   <text x="110" y="130" fill="#37352f">T0</text>
   <rect x="280" y="100" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
@@ -112,10 +112,10 @@ This is how each part of the execution model maps to CUDA terms. Each parameter 
   <rect x="460" y="100" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
   <text x="470" y="130" fill="#37352f">T2(threadIdx = 2)</text>
 
-  <!-- Block 1 -->
+  {/* Block 1 */}
   <rect x="60" y="200" width="600" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="70" y="220" fill="#37352f">Block 1 (x=1) blockIdx = 1 for all threads</text>
-  <!-- Threads in Block 1 -->
+  {/* Threads in Block 1 */}
   <rect x="100" y="240" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
   <text x="110" y="270" fill="#37352f">T0 (gid = 3)</text>
   <rect x="280" y="240" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
@@ -123,10 +123,10 @@ This is how each part of the execution model maps to CUDA terms. Each parameter 
   <rect x="460" y="240" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
   <text x="470" y="270" fill="#37352f">T2</text>
 
-  <!-- Block 2 -->
+  {/* Block 2 */}
   <rect x="60" y="340" width="600" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="70" y="360" fill="#37352f">Block 2</text>
-  <!-- Threads in Block 2 -->
+  {/* Threads in Block 2 */}
   <rect x="100" y="380" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
   <text x="110" y="410" fill="#37352f">T0 (gid = 6)</text>
   <rect x="280" y="380" width="160" height="60" fill="#c8e6c8" stroke="#999"/>
@@ -258,11 +258,11 @@ __global__ void record_thread_coords(int* coords, int width) {
 The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values per cell `(row,col)` across a `6x4` thread grid. We need to launch 24 threads to cover the entire grid. Consider the following arrangement, where `blockDim = (2,2)`, `gridDim = (2,3)`, and `total_threads = 2*2*2*3 = 24`:  
 
 <svg viewBox="0 0 560 580" xmlns="http://www.w3.org/2000/svg" style="font-family: monospace; font-size: 14px; width: 100%">
-  <!-- Outer Grid Box -->
+  {/* Outer Grid Box */}
   <rect x="20" y="20" width="520" height="540" fill="#f5f3ef" stroke="#999" stroke-width="1.5"/>
   <text x="30" y="40" fill="#37352f">grid (2d) gridDim = (2,3)</text>
 
-  <!-- Block (0,0) -->
+  {/* Block (0,0) */}
   <rect x="40" y="60" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="50" y="80" fill="#37352f">Block (0,0)</text>
   <rect x="55" y="95" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
@@ -274,7 +274,7 @@ The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values p
   <rect x="135" y="135" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
   <text x="140" y="155" fill="#37352f">(1,1)</text>
 
-  <!-- Block (1,0) -->
+  {/* Block (1,0) */}
   <rect x="240" y="60" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="250" y="80" fill="#37352f">Block (1,0)</text>
   <rect x="255" y="95" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
@@ -286,7 +286,7 @@ The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values p
   <rect x="335" y="135" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
   <text x="340" y="155" fill="#37352f">(1,3)</text>
 
-  <!-- Block (0,1) -->
+  {/* Block (0,1) */}
   <rect x="40" y="200" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="50" y="220" fill="#37352f">Block (0,1)</text>
   <rect x="55" y="235" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
@@ -298,7 +298,7 @@ The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values p
   <rect x="135" y="275" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
   <text x="140" y="295" fill="#37352f">(3,1)</text>
 
-  <!-- Block (1,1) -->
+  {/* Block (1,1) */}
   <rect x="240" y="200" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="250" y="220" fill="#37352f">Block (1,1)</text>
   <rect x="255" y="235" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
@@ -310,7 +310,7 @@ The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values p
   <rect x="335" y="275" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
   <text x="340" y="295" fill="#37352f">(3,3)</text>
 
-  <!-- Block (0,2) -->
+  {/* Block (0,2) */}
   <rect x="40" y="340" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="50" y="360" fill="#37352f">Block (0,2)</text>
   <rect x="55" y="375" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
@@ -322,7 +322,7 @@ The shape of `coords` is `(2,6,4)` represented as a flat `int[48]`: two values p
   <rect x="135" y="415" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
   <text x="140" y="435" fill="#37352f">(5,1)</text>
 
-  <!-- Block (1,2) -->
+  {/* Block (1,2) */}
   <rect x="240" y="340" width="180" height="120" fill="#d8d4f0" stroke="#999"/>
   <text x="250" y="360" fill="#37352f">Block (1,2)</text>
   <rect x="255" y="375" width="70" height="35" fill="#c8e6c8" stroke="#999"/>
@@ -624,7 +624,7 @@ for (int k = 0; k < TILE; ++k)
 	acc += tile_a[threadIdx.y][k] * tile_b[k][threadIdx.x];
 __syncthreads();
 ```
-> **A quick note on access patterns:** <br>
+> **A quick note on access patterns:** <br />
 > While tile_b[k][threadIdx.x] can lead to minor bank conflicts due to column-wise access, the impact is typically small for float loads at this tile size. Optimizing further would require interleaved layouts or padding, which isn’t worth it here.
 
 At this point, here is what we've added to `acc` for each thread. Keep in mind that `acc` is the final scalar value that every thread writes to C.  
