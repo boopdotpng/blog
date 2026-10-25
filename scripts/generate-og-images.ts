@@ -265,3 +265,10 @@ for (const file of files) {
   writeFileSync(path.join(OUT_DIR, `${slug}.png`), png);
   console.log(`  ${slug}.png (${(png.length / 1024).toFixed(0)}KB)`);
 }
+
+// Site-wide card for the home page and anything without its own image.
+const homePng = await renderPng(
+  card({ tag: 'notes', tagColor: ACCENT, title: 'notes on gpus, ml, chips, and cells' }),
+);
+writeFileSync(path.join(OUT_DIR, 'home.png'), homePng);
+console.log(`  home.png (${(homePng.length / 1024).toFixed(0)}KB)`);

@@ -1,0 +1,10 @@
+---
+// Injected only by `astro dev` (see ./integration.ts).
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="editor" description="local post editor" ogType="article" robots="noindex,nofollow" useKatex>
+  <div id="editor-app"></div>
+  <script>
+    import './client/main';
+  </script>
+</Layout>

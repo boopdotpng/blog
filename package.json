@@ -2,11 +2,12 @@
   "name": "my-blog",
   "version": "0.0.1",
   "dependencies": {
-    "@astrojs/markdown-remark": "^7.3.1",
-    "@astrojs/mdx": "^8.0.1",
-    "@astrojs/preact": "^6.0.5",
+    "@astrojs/markdown-remark": "^7.3.4",
+    "@astrojs/mdx": "^8.1.1",
+    "@astrojs/preact": "^6.1.1",
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.3.2",
+    "astro": "^7.4.2",
     "katex": "^0.16.22",
     "preact": "^10.29.2",
     "rehype-katex": "^7.0.1",
@@ -16,11 +17,31 @@
     "dev": "astro dev",
     "build": "bun scripts/generate-og-images.ts && astro build && bun scripts/postbuild-seo.ts",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:editor": "bun src/editor/test/roundtrip.ts"
   },
   "type": "module",
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "satori": "^0.26.0"
+    "mdast-util-math": "^3.0.0",
+    "prosemirror-commands": "^1.7.2",
+    "prosemirror-dropcursor": "^1.8.4",
+    "prosemirror-gapcursor": "^1.4.1",
+    "prosemirror-history": "^1.5.1",
+    "prosemirror-inputrules": "^1.5.1",
+    "prosemirror-keymap": "^1.2.3",
+    "prosemirror-model": "^1.25.12",
+    "prosemirror-schema-list": "^1.5.1",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-tables": "^1.8.5",
+    "prosemirror-transform": "^1.12.4",
+    "prosemirror-view": "^1.42.8",
+    "remark-gfm": "^4.0.1",
+    "remark-mdx": "^3.1.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "satori": "^0.26.0",
+    "unified": "^11.0.5",
+    "yaml": "^2.9.1"
   }
 }

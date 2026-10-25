@@ -28,10 +28,9 @@ const authorName = 'Anuraag Warudkar';
 const fullTitle = title;
 const canonicalUrl = Astro.site ? new URL(cleanPath, Astro.site).toString() : Astro.url.toString();
 const siteUrl = Astro.site ? new URL('/', Astro.site).toString() : canonicalUrl;
-const ogImageUrl = ogImage
-  ? (Astro.site ? new URL(ogImage, Astro.site).toString() : ogImage)
-  : (Astro.site ? new URL('/favicon.ico', Astro.site).toString() : '/favicon.ico');
-const twitterCard = ogImage ? 'summary_large_image' : 'summary';
+// Every page gets a 1200x630 card; posts pass their own, the rest use the site card.
+const ogImagePath = ogImage ?? '/og/home.png';
+const ogImageUrl = Astro.site ? new URL(ogImagePath, Astro.site).toString() : ogImagePath;
 const extraSchemas = Array.isArray(schema) ? schema : schema ? [schema] : [];
 const personSchema = {
   "@context": "https://schema.org",
@@ -69,6 +68,7 @@ let articleSchema = schemaArticle ? {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
   "headline": schemaArticle.title,
+  "url": canonicalUrl,
   "description": schemaArticle.description,
   "datePublished": schemaArticle.publishedTime,
   "dateModified": schemaArticle.updatedTime ?? schemaArticle.publishedTime,
@@ -109,6 +109,7 @@ if (articleSchema && schemaArticle?.wordCount) {
   {useKatex && <link rel="stylesheet" href="/katex.min.css" />}
   <link rel="stylesheet" href="/markdown.css" />
   <link rel="canonical" href={canonicalUrl} />
+  <link rel="alternate" type="application/rss+xml" title="anuraag" href="/rss.xml" />
 
   <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={description} />
@@ -116,22 +117,24 @@ if (articleSchema && schemaArticle?.wordCount) {
   <meta property="og:url" content={canonicalUrl} />
   <meta property="og:image" content={ogImageUrl} />
   <meta property="og:image:alt" content={fullTitle} />
-  {ogImage && <meta property="og:image:width" content="1200" />}
-  {ogImage && <meta property="og:image:height" content="630" />}
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:locale" content="en_US" />
   <meta property="og:site_name" content="anuraag" />
   {schemaArticle?.publishedTime && <meta property="article:published_time" content={schemaArticle.publishedTime} />}
   {schemaArticle?.updatedTime && <meta property="article:modified_time" content={schemaArticle.updatedTime} />}
   {schemaArticle?.section && <meta property="article:section" content={schemaArticle.section} />}
 
-  <meta name="twitter:card" content={twitterCard} />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content={siteHandle} />
   <meta name="twitter:creator" content={siteHandle} />
   <meta name="twitter:title" content={fullTitle} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={ogImageUrl} />
   <meta name="twitter:image:alt" content={fullTitle} />
-  {ogType === 'article' && <meta property="article:author" content={authorName} />}
+  {ogType === 'article' && <meta property="article:author" content={siteUrl} />}
+  {schemaArticle?.section && <meta property="article:tag" content={schemaArticle.section} />}
   <meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)" />
 
@@ -735,6 +738,7 @@ if (articleSchema && schemaArticle?.wordCount) {
           <nav class="home-nav" aria-label="Primary">
             <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
             <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
+            <a href="/rss.xml" target="_self">rss</a>
           </nav>
           {categories.length > 0 && (
             <div class="home-block">
@@ -760,7 +764,7 @@ if (articleSchema && schemaArticle?.wordCount) {
           )}
         </div>
       </aside>
-      <main class="home-content" id="main-content" tabindex="-1">
+      <main class="home-content" id="main-content">
         <slot />
         <ResidentCat />
       </main>
@@ -782,7 +786,7 @@ if (articleSchema && schemaArticle?.wordCount) {
           </ul>
         </nav>}
       </header>
-      <main id="main-content" tabindex="-1" class="page-main">
+      <main id="main-content" class="page-main">
         <slot />
       </main>
       <footer class="site-footer">
@@ -792,6 +796,8 @@ if (articleSchema && schemaArticle?.wordCount) {
           <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
           <span class="footer-sep" aria-hidden="true">·</span>
           <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
+          <span class="footer-sep" aria-hidden="true">·</span>
+          <a href="/rss.xml" target="_self">rss</a>
         </nav>
       </footer>
     </Fragment>

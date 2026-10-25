@@ -11,13 +11,16 @@ import remarkGallery from './scripts/remark-gallery.mjs';
 import remarkCallout from './scripts/remark-callout.mjs';
 import remarkSidenote from './scripts/remark-sidenote.mjs';
 import remarkTableWrap from './scripts/remark-table-wrap.mjs';
+import rehypeLazyImages from './scripts/rehype-lazy-images.mjs';
+import blogEditor from './src/editor/integration.ts';
 
 function parseBlogFrontmatter(file) {
   const publishedMatch = file.match(/^\s*published:\s*["']?(true|false)["']?\s*$/m);
   const published = publishedMatch ? publishedMatch[1] === 'true' : true;
 
-  const pubDateMatch = file.match(/^\s*pubDate:\s*["']?(\d{4}-\d{2}-\d{2})["']?\s*$/m);
-  const pubDate = pubDateMatch ? pubDateMatch[1] : undefined;
+  const dateField = (key) => file.match(new RegExp(`^\\s*${key}:\\s*["']?(\\d{4}-\\d{2}-\\d{2})["']?\\s*$`, 'm'))?.[1];
+  // lastmod should reflect the latest edit, not the original publish date.
+  const pubDate = dateField('updatedDate') ?? dateField('pubDate');
 
   return { published, pubDate };
 }
@@ -57,6 +60,8 @@ export default defineConfig({
     // preact powers interactive diagram islands; mdx lets posts import them.
     preact(),
     mdx(),
+    // dev-only: /editor for writing posts in the browser.
+    blogEditor(),
     sitemap({
       filter: (page) => {
         const pathname = new URL(page).pathname;
@@ -98,7 +103,7 @@ export default defineConfig({
     // Plugins belong to the processor; Shiki settings are shared by Markdown and MDX.
     processor: unified({
       remarkPlugins: [remarkMath, remarkGallery, remarkCallout, remarkSidenote, remarkTableWrap],
-      rehypePlugins: [rehypeKatex],
+      rehypePlugins: [rehypeKatex, rehypeLazyImages],
     }),
     shikiConfig: {
       themes: {
