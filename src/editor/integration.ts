@@ -112,6 +112,25 @@ function createApi(root: string) {
       return { slug, ext, mtime: (await stat(target)).mtimeMs };
     },
 
+    // Flip `published` in a post's frontmatter (homepage / post page toggles).
+    'POST /publish': async (_req, url) => {
+      const slug = requireSlug(url.searchParams.get('slug'));
+      const published = url.searchParams.get('published') === 'true';
+      const post = await findPost(slug);
+      if (!post) throw new HttpError(404, `no post named ${slug}`);
+      const source = await readFile(post.file, 'utf8');
+      const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      if (!match) throw new HttpError(400, `${slug} has no frontmatter`);
+      const fm = match[1];
+      if (published && !/^description:\s*\S/m.test(fm)) {
+        throw new HttpError(400, 'add a description before publishing (needed for SEO)');
+      }
+      const line = `published: ${published}`;
+      const nextFm = /^published:.*$/m.test(fm) ? fm.replace(/^published:.*$/m, line) : `${fm}\n${line}`;
+      await writeFile(post.file, source.replace(fm, nextFm));
+      return { slug, published };
+    },
+
     // Raw image bytes in, public URL out.
     'POST /upload': async (req, url) => {
       const original = url.searchParams.get('name') ?? 'image.png';

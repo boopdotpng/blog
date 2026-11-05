@@ -2,12 +2,14 @@
 // layout + content loading
 import Layout from '../../layouts/Layout.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
+import DevPublishScript from '../../components/DevPublishScript.astro';
 import { getCollection, render } from 'astro:content';
 import galleryScriptUrl from '../../scripts/gallery.ts?url';
 import diagramZoomScriptUrl from '../../scripts/diagram-zoom.ts?url';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog', ({ data }) => data.published);
+  // Dev also builds unpublished posts so they can be read before publishing.
+  const posts = await getCollection('blog', ({ data }) => import.meta.env.DEV || data.published);
   return posts.map(post => ({
     params: { slug: post.id },
     props: { post },
@@ -113,6 +115,31 @@ pre {
   letter-spacing: 0.01em;
 }
 
+.post-unpublished {
+  color: var(--accent);
+}
+
+/* dev only */
+.post-dev-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.4rem;
+}
+.post-edit {
+  font: inherit;
+  background: none;
+  cursor: pointer;
+  color: var(--fg-muted);
+  text-decoration: none;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+}
+.post-edit:hover {
+  color: var(--fg-strong);
+  border-color: var(--border-strong);
+}
+
 @media (max-width: 600px) {
   .post-subline {
     flex-direction: column;
@@ -205,6 +232,25 @@ article.post-plain :global(img[width]) {
         <time datetime={post.data.pubDate}>{displayDate}</time>
         <span class="post-meta-sep">•</span>
         <span class="post-readtime">{readingTimeLabel}</span>
+        {import.meta.env.DEV && !post.data.published && (
+          <>
+            <span class="post-meta-sep">•</span>
+            <span class="post-unpublished">unpublished</span>
+          </>
+        )}
+        {import.meta.env.DEV && (
+          <span class="post-dev-actions">
+            <button
+              type="button"
+              class="post-edit"
+              data-dev-publish
+              data-slug={post.id}
+              data-publish={String(!post.data.published)}
+            >{post.data.published ? '↓ unpublish' : '↑ publish'}</button>
+            <a class="post-edit" href={`/editor?slug=${post.id}`}>✎ edit</a>
+            <DevPublishScript />
+          </span>
+        )}
       </div>
       <h1 id="article-top" class="post-title-main">{post.data.title}</h1>
       <div class="post-subline">

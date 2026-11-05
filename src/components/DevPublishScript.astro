@@ -1,0 +1,25 @@
+---
+// Dev only: handles [data-dev-publish] buttons (homepage rows, post pages)
+// by flipping `published` through the editor API in src/editor/integration.ts.
+---
+<script>
+  document.addEventListener('click', async (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-dev-publish]');
+    if (!button) return;
+    event.preventDefault();
+    const { slug, publish } = button.dataset;
+    if (publish !== 'true' && !confirm(`unpublish ${slug}?`)) return;
+    button.disabled = true;
+    try {
+      const res = await fetch(`/__editor/publish?slug=${encodeURIComponent(slug!)}&published=${publish}`, {
+        method: 'POST',
+        headers: { 'x-blog-editor': '1' },
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? res.statusText);
+      location.reload();
+    } catch (error) {
+      button.disabled = false;
+      alert(`couldn't update ${slug}: ${(error as Error).message}`);
+    }
+  });
+</script>

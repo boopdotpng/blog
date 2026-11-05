@@ -8,7 +8,7 @@ export async function GET(context: APIContext) {
 
   return rss({
     title: 'anuraag',
-    description: 'thoughts on neural nets, chips, and cells',
+    description: 'thoughts on neural nets, chips, and kernels',
     site: context.site ?? 'https://anuraagw.me',
     trailingSlash: false,
     items: sortedPosts.map((post) => ({

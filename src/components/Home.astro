@@ -1,10 +1,14 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import DevPublishScript from './DevPublishScript.astro';
 
 interface Props {
   posts: CollectionEntry<'blog'>[];
+  /** Dev only: unpublished posts, listed above the index. */
+  unpublished?: CollectionEntry<'blog'>[];
 }
-const { posts } = Astro.props as Props;
+const { posts, unpublished = [] } = Astro.props as Props;
+const isDev = import.meta.env.DEV;
 
 const parseLocalDate = (dateString: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
@@ -12,21 +16,11 @@ const parseLocalDate = (dateString: string) => {
   const [, year, month, day] = match;
   return new Date(Number(year), Number(month) - 1, Number(day));
 };
-const formatMonthYear = (date: Date) => {
-  const month = date.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
-  return `${month} ${date.getFullYear()}`;
-};
 const formatShortDate = (date: Date) => {
   const month = date.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
   const day = String(date.getDate()).padStart(2, '0');
   return `${month} ${day} ${date.getFullYear()}`;
 };
-
-const latestPostDate = posts.reduce((latest, post) => {
-  const date = parseLocalDate(post.data.pubDate);
-  return date && date > latest ? date : latest;
-}, new Date(0));
-const latestPostLabel = latestPostDate.getTime() ? formatMonthYear(latestPostDate) : '—';
 
 const catColors: Record<string, string> = {
   'gpu': 'var(--cat-gpu)',
@@ -40,15 +34,37 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 ---
 
 <section class="home">
-  <header class="index-header">
-    <h1>notes</h1>
-    <p class="index-description">on neural nets, chips, and cells</p>
-    <div class="meta">
-    <span>{posts.length} posts</span>
-    <span class="sep">·</span>
-    <span>updated {latestPostLabel}</span>
+  {isDev && (
+    <div class="section dev-unpublished">
+      <div class="section-header">
+        <span class="section-title">// unpublished</span>
+        <span class="section-rule" aria-hidden="true"></span>
+        <a class="dev-new-post" href="/editor">+ new post</a>
+      </div>
+      <ol class="post-index">
+        {unpublished.map((post) => {
+          const cat = post.data.cat ?? '—';
+          const date = parseLocalDate(post.data.pubDate);
+          return (
+            <li class="post-row has-edit" data-cat={cat} style={`--row-color: ${getCatColor(cat)}`}>
+              <a href={`/blog/${post.id}`} class="post-link" target="_self">
+                <span class="post-bar" aria-hidden="true"></span>
+                <span class="post-num">wip</span>
+                <span class="post-title">{post.data.title}</span>
+                <span class="post-meta">
+                  <span class="post-cat">{cat}</span>
+                  <span class="post-sep" aria-hidden="true">·</span>
+                  <time class="post-date" datetime={post.data.pubDate}>{date ? formatShortDate(date) : post.data.pubDate}</time>
+                </span>
+              </a>
+              <button type="button" class="dev-row-action" data-dev-publish data-slug={post.id} data-publish="true" title="publish" aria-label="publish">↑</button>
+              <a class="dev-row-action" href={`/editor?slug=${post.id}`} title="edit in the post editor" aria-label="edit">✎</a>
+            </li>
+          );
+        })}
+      </ol>
     </div>
-  </header>
+  )}
 
   <div class="section">
     <div class="section-header">
@@ -74,7 +90,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
               <span class="year-rule" aria-hidden="true"></span>
             </li>
           )}
-          <li class="post-row" data-cat={cat} style={`--row-color: ${getCatColor(cat)}`}>
+          <li class={isDev ? 'post-row has-edit' : 'post-row'} data-cat={cat} style={`--row-color: ${getCatColor(cat)}`}>
             <a href={`/blog/${post.id}`} class="post-link" target="_self">
               <span class="post-bar" aria-hidden="true"></span>
               <span class="post-num">{hex}</span>
@@ -85,6 +101,12 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
                 <time class="post-date" datetime={post.data.pubDate}>{dateLabel}</time>
               </span>
             </a>
+            {isDev && (
+              <>
+                <button type="button" class="dev-row-action" data-dev-publish data-slug={post.id} data-publish="false" title="unpublish" aria-label="unpublish">↓</button>
+                <a class="dev-row-action" href={`/editor?slug=${post.id}`} title="edit in the post editor" aria-label="edit">✎</a>
+              </>
+            )}
           </li>
           </>
         );
@@ -92,6 +114,7 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
     </ol>
   </div>
 </section>
+{isDev && <DevPublishScript />}
 
 <style>
   .home {
@@ -100,42 +123,63 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
     font-family: var(--font-mono);
   }
 
-  .index-header {
-    margin-bottom: 2rem;
-  }
 
-  .index-header h1 {
-    margin: 0 0 0.4rem;
-    color: var(--fg-strong);
-    font-size: clamp(1.8rem, 4vw, 2.4rem);
-    line-height: 1.15;
-    letter-spacing: -0.06em;
-    font-weight: 600;
-  }
 
-  .index-description {
-    margin: 0 0 1.1rem;
-    color: var(--fg-soft);
-    font-size: 0.85rem;
-    line-height: 1.6;
-  }
 
-  .meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    font-size: 0.78rem;
+
+
+  /* dev only */
+  .dev-new-post {
+    flex-shrink: 0;
+    font-size: 0.75rem;
     color: var(--fg-muted);
+    text-decoration: none;
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 0 0.45rem;
   }
-
-  .meta .sep {
-    color: var(--border-strong);
+  .dev-new-post:hover {
+    color: var(--fg-strong);
+    border-color: var(--border-strong);
   }
 
   /* ── sections ──────────────────────────────────────────── */
 
   .section {
     margin-bottom: 0;
+  }
+
+  .section + .section {
+    margin-top: 2.25rem;
+  }
+
+  /* dev only: per-row edit link */
+  .post-row.has-edit {
+    display: flex;
+    align-items: center;
+  }
+  .post-row.has-edit .post-link {
+    flex: 1;
+    min-width: 0;
+  }
+  .dev-row-action {
+    flex-shrink: 0;
+    margin-left: 0.15rem;
+    font: inherit;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--fg-faint);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0.2rem 0.3rem;
+  }
+  .post-link + .dev-row-action {
+    margin-left: 0.5rem;
+  }
+  .dev-row-action:hover {
+    color: var(--fg-strong);
   }
 
   .section-header {
@@ -284,7 +328,6 @@ const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
   /* ── responsive ────────────────────────────────────────── */
 
   @media (min-width: 1101px) and (max-height: 950px) {
-    .index-header { margin-bottom: 1rem; }
     .post-link { padding-block: 0.6rem; }
   }
 

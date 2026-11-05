@@ -3,8 +3,14 @@ import Layout from '../layouts/Layout.astro';
 import Home from '../components/Home.astro';
 import { getCollection } from 'astro:content';
 
+const byDateDesc = (a: { data: { pubDate: string } }, b: { data: { pubDate: string } }) =>
+  new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime();
 const posts = await getCollection('blog', ({ data }) => data.published);
-const sortedPosts = [...posts].sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
+const sortedPosts = [...posts].sort(byDateDesc);
+// Dev only: unpublished posts get their own section on the homepage.
+const unpublishedPosts = import.meta.env.DEV
+  ? (await getCollection('blog', ({ data }) => !data.published)).sort(byDateDesc)
+  : [];
 const site = Astro.site ?? new URL('https://anuraagw.me');
 const homeUrl = new URL('/', site).toString();
 const homeSchema = {
@@ -13,7 +19,7 @@ const homeSchema = {
   '@id': `${homeUrl}#collection`,
   url: homeUrl,
   name: 'boop — notes',
-  description: 'Field notes on systems, ML, GPUs, and biology, plus reverse engineering writeups and project updates.',
+  description: 'Field notes on systems, ML, and GPUs, plus reverse engineering writeups and project updates.',
   mainEntity: {
     '@type': 'ItemList',
     itemListOrder: 'https://schema.org/ItemListOrderDescending',
@@ -43,16 +49,16 @@ const categories = Object.entries(catCounts)
   .map(([name, count]) => ({ name, count }));
 
 // Edit this line to change the "now" blurb in the sidebar.
-const now = 'bringing up llama3 end-to-end on a single tenstorrent blackhole card';
+const now = 'writing a tenstorrent backend for tinygrad';
 ---
 
 <Layout
-  title="notes on gpus, ml, chips, and cells"
-  description="Field notes on systems, ML, GPUs, and biology, plus reverse engineering writeups and project updates."
+  title="notes on gpus, ml, and chips"
+  description="Field notes on systems, ML, and GPUs, plus reverse engineering writeups and project updates."
   schema={homeSchema}
   favoriteSong={favoriteSong}
   categories={categories}
   now={now}
 >
-  <Home posts={sortedPosts} />
+  <Home posts={sortedPosts} unpublished={unpublishedPosts} />
 </Layout>
