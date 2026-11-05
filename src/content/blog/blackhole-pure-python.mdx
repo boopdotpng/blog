@@ -20,7 +20,7 @@ So I'm removing the compiler, `tt-kmd`, and `tt-metal-deps`. My goal now is to g
 
 The added benefit of this approach is that it's easier to run on macOS, as you don't need to build their compiler toolchain for macOS (this might not even be fully functional). The result: 99% python. 
 
-## removing tt-kmd (opus wrote 80% of this, i'm lazy)
+## removing tt-kmd (opus wrote 80% of this)
 
 tt-kmd is the linux kernel module that gives userspace a `/dev/tenstorrent/N` char device per card.
 ioctls on that fd are how tt-umd (and through it, tt-metal) talks to the chip: TLB allocation, DMA
