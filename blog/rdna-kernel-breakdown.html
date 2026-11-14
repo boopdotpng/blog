@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="en-US" data-astro-cid-ju4pidww><head><meta charset="UTF-8"><base target="_blank"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="breakdown of a very simple rdna3.5 kernel, with visualizations"><meta name="author" content="Anuraag Warudkar"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><title>rdna kernel breakdown</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><link rel="preload" href="/fonts/GoogleSansCode-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/markdown.css"><link rel="canonical" href="https://anuraagw.me/blog/rdna-kernel-breakdown"><link rel="alternate" type="application/rss+xml" title="anuraag" href="/rss.xml"><meta property="og:title" content="rdna kernel breakdown"><meta property="og:description" content="breakdown of a very simple rdna3.5 kernel, with visualizations"><meta property="og:type" content="article"><meta property="og:url" content="https://anuraagw.me/blog/rdna-kernel-breakdown"><meta property="og:image" content="https://anuraagw.me/og/rdna-kernel-breakdown.png"><meta property="og:image:alt" content="rdna kernel breakdown"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="anuraag"><meta property="article:published_time" content="2025-12-29T00:00:00.000Z"><meta property="article:section" content="gpu"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@boopdotpng"><meta name="twitter:creator" content="@boopdotpng"><meta name="twitter:title" content="rdna kernel breakdown"><meta name="twitter:description" content="breakdown of a very simple rdna3.5 kernel, with visualizations"><meta name="twitter:image" content="https://anuraagw.me/og/rdna-kernel-breakdown.png"><meta name="twitter:image:alt" content="rdna kernel breakdown"><meta property="article:author" content="https://anuraagw.me/"><meta property="article:tag" content="gpu"><meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)"><script>(function(){const isHome = false;
+
+    (() => {
+      // One setting for the whole site: which painting is on the homepage, and with it the theme.
+      // Night is the dark theme; morning, day and sunset are light. Until the visitor picks one,
+      // their system setting decides between night and sunset.
+      const root = document.documentElement;
+      const scenes = ['morning', 'day', 'sunset', 'night'];
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const picked = () => {
+        try { return localStorage.getItem('scene'); } catch (e) { return null; /* private mode */ }
+      };
+      const current = () => {
+        // ?scene=day forces one on the homepage, for linking to it
+        const s = (isHome && new URLSearchParams(location.search).get('scene')) || picked();
+        return scenes.includes(s) ? s : prefersDark.matches ? 'night' : 'sunset';
+      };
+      const apply = (scene) => {
+        root.dataset.scene = scene;
+        root.dataset.theme = scene === 'night' ? 'dark' : 'light';
+        for (const b of document.querySelectorAll('[data-scene-pick]')) b.setAttribute('aria-pressed', String(b.dataset.scenePick === scene));
+      };
+      apply(current());
+      // used by the picker in the footer of every page but the homepage (scene.js runs that one)
+      window.setScene = (scene) => {
+        try { localStorage.setItem('scene', scene); } catch (e) { /* private mode */ }
+        apply(scene);
+      };
+      // the system flips while the page is open and nothing was picked: follow it
+      // (the homepage would have to repaint, so there it waits for the next visit)
+      prefersDark.addEventListener('change', () => { if (!isHome) apply(current()); });
+      // back/forward can restore a page from before the scene was changed on another one
+      window.addEventListener('pageshow', (e) => { if (e.persisted && current() !== root.dataset.scene) location.reload(); });
+      if (isHome) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = `/painting/${root.dataset.scene}.webp`;
+        document.head.append(link);
+      }
+    })();
+  })();</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","@id":"https://anuraagw.me/#person","name":"Anuraag Warudkar","alternateName":["anuraag","anuraagw"],"url":"https://anuraagw.me/","sameAs":["https://github.com/boopdotpng","https://twitter.com/boopdotpng"],"jobTitle":"Software Engineer"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://anuraagw.me/#website","name":"anuraag","url":"https://anuraagw.me/","publisher":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://anuraagw.me/blog/rdna-kernel-breakdown#webpage","url":"https://anuraagw.me/blog/rdna-kernel-breakdown","name":"rdna kernel breakdown","description":"breakdown of a very simple rdna3.5 kernel, with visualizations","inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"about":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"rdna kernel breakdown","url":"https://anuraagw.me/blog/rdna-kernel-breakdown","description":"breakdown of a very simple rdna3.5 kernel, with visualizations","datePublished":"2025-12-29T00:00:00.000Z","dateModified":"2025-12-29T00:00:00.000Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://anuraagw.me/blog/rdna-kernel-breakdown"},"author":{"@id":"https://anuraagw.me/#person"},"publisher":{"@type":"Person","name":"Anuraag Warudkar","url":"https://anuraagw.me/"},"inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"image":["https://anuraagw.me/og/rdna-kernel-breakdown.png"],"articleSection":"gpu","wordCount":1968}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"home","item":"https://anuraagw.me"},{"@type":"ListItem","position":2,"name":"rdna kernel breakdown"}]}</script><link rel="stylesheet" href="/_astro/Layout.D2EGMZn8.css"><link rel="stylesheet" href="/_astro/_slug_.BVDpMPvj.css"></head><body data-astro-cid-ju4pidww><a class="skip-link" href="#main-content" target="_self" data-astro-cid-ju4pidww>skip to content</a><header class="site-header" data-astro-cid-ju4pidww><div class="site-title" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww><span class="arrow" data-astro-cid-ju4pidww>&#8592;</span><span class="site-label" data-astro-cid-ju4pidww>anuraagw.me</span></a></div></header><main id="main-content" class="page-main" data-astro-cid-ju4pidww><nav class="toc" aria-label="Table of contents" data-astro-cid-p33bl5ka><ol data-astro-cid-p33bl5ka><li data-astro-cid-p33bl5ka><a target="_self" href="#our-kernel" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>our kernel</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#launch-kernel" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>launch kernel</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#launching" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>launching</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#architecture-fundamentals" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>architecture fundamentals</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#line-by-line" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>line by line:</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#tinygrads-kernel-llvm-generated" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>tinygrad’s kernel (LLVM-generated)</span></a></li></ol></nav><script type="module">var e=document.querySelector(`.toc`);if(e){let t=[...e.querySelectorAll(`a`)].flatMap(e=>{let t=document.getElementById(decodeURIComponent(e.hash.slice(1)));return t?(t.tabIndex=-1,[{link:e,heading:t}]):[]}),n=document.querySelector(`.post-subline`),r=!1,i,a=()=>{r=!1,e.classList.toggle(`is-ready`,!n||n.getBoundingClientRect().bottom<0);let a=-1;t.forEach((e,t)=>{e.heading.getBoundingClientRect().top<=96&&(a=t)}),window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2&&(a=t.length-1),t.forEach((e,t)=>e.link.parentElement.classList.toggle(`is-read`,t<a));let o=t[a]?.link;o!==i&&(i?.removeAttribute(`aria-current`),i=o,i?.setAttribute(`aria-current`,`location`),i&&!e.matches(`:hover, :focus-within`)&&i.scrollIntoView({block:`nearest`}))},o=()=>{r||(r=!0,requestAnimationFrame(a))};window.addEventListener(`scroll`,o,{passive:!0}),window.addEventListener(`resize`,o,{passive:!0}),window.addEventListener(`hashchange`,o),o()}</script><div class="centered-wrapper" data-astro-cid-zg7dkzxc><article class="post-plain markdown-body" data-astro-cid-zg7dkzxc><div class="post-meta" data-astro-cid-zg7dkzxc><time datetime="2025-12-29" data-astro-cid-zg7dkzxc>december 29, 2025</time><span class="post-meta-sep" data-astro-cid-zg7dkzxc>•</span><span class="post-readtime" data-astro-cid-zg7dkzxc>approx 25m read</span></div><h1 id="article-top" class="post-title-main" data-astro-cid-zg7dkzxc>rdna kernel breakdown</h1><div class="post-subline" data-astro-cid-zg7dkzxc><p class="post-description" data-astro-cid-zg7dkzxc>breakdown of a very simple rdna3.5 kernel, with visualizations</p></div><h2 id="our-kernel">our kernel</h2>
+<p>Consider</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="asm"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_clause </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0x1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_load_b64 s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">3</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0x8</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_load_b64 s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0x0</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_waitcnt lgkmcnt(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">) </span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_mov_b32 exec_lo, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0xFFFF</span><span style="--shiki-light:#6A737D;--shiki-dark:#768390"> ; explicit</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_lshlrev_b32 v1, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, v0 </span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">global_load_b32 v4, v1, s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_waitcnt vmcnt(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_add_f32 v4, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1.0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, v4</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">global_store_b32 v1, v4, s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">3</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_endpgm</span></span></code></pre>
+<p>And the tinygrad code to run the program</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="py"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">a </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> Buffer(gpu, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">16</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.float32).allocate()</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">out </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> Buffer(gpu, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">16</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.float32).allocate()</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">a.copyin(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">memoryview</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(np.arange(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">16</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">dtype</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">np.float32)))</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">local </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">16</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">) </span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">global_ </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">16</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">) </span></span></code></pre>
+<h2 id="launch-kernel">launch kernel</h2>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="py"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">prg(a._buf, out._buf, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">global_size</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">global_, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">local_size</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">local, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">wait</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">True</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span></span></code></pre>
+<p><code>tid</code> (0-31) is in v0, pointers to <code>a</code> and <code>a_out</code> (global memory addresses) in a <code>KernArg</code> struct at <code>s[0:1]</code>.</p>
+<p>This kernel just does <code>Tensor.arange(16, dtype=dtypes.float32) + 1.0</code>.</p>
+<h2 id="launching">launching</h2>
+<p>The launch settings here specify a single work-group with 16 threads.</p>
+<p>Every wave runs a copy of this kernel, with a copy of the following state:</p>
+<div class="md-table-wrap">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>State</th><th>Description</th><th>Width / Range</th></tr></thead><tbody><tr><td>SGPRs</td><td>scalar general purpose registers</td><td>s0–s105</td></tr><tr><td>VGPRs</td><td>vector general purpose registers</td><td>v0–v255</td></tr><tr><td>LDS</td><td>on-chip workgroup-shared mem; “local” memory</td><td>64kB</td></tr><tr><td>EXEC</td><td>top half not used in wave32</td><td>64-bit</td></tr><tr><td>EXECZ</td><td>exec is zero</td><td>1-bit</td></tr><tr><td>VCC</td><td>vector condition code</td><td>64-bit</td></tr><tr><td>VCCZ</td><td>vcc is zero</td><td>1-bit</td></tr><tr><td>SCC</td><td>scalar condition code</td><td>1-bit</td></tr><tr><td>VMcnt</td><td>vmem load and sample instructions issued but not yet completed</td><td>6-bit</td></tr><tr><td>VScnt</td><td>issued, not completed vmem store instructions</td><td>6-bit</td></tr><tr><td>LGKMcnt</td><td>outstanding lds, gds, constant and message count</td><td>6-bit</td></tr></tbody></table>
+</div>
+<h2 id="architecture-fundamentals">architecture fundamentals</h2>
+<p>In RDNA, instructions can be vector (<code>v_*</code>) or scalar (<code>s_*</code>), and they deal with two different kinds of registers.</p>
+<p><strong>SGPRs</strong></p>
+<p>SGPRs are per-wave (shared by all lanes). On gfx10+ the ISA names 106 scalar registers as <code>s0..s105</code>. Separate from those, the ISA also exposes special named registers like <code>exec</code> (the lane mask), <code>vcc</code> (condition code), and <code>ttmp0..ttmp15</code> (trap temporaries). So you’ll usually see kernel arguments kept in SGPRs, while exec/vcc live in their own named registers.</p>
+<p><strong>VGPRs</strong></p>
+<p>VGPRs are unique per thread. In <code>wave32</code>, every thread in the wave (32 threads) gets its own 32-bit register. When you access <code>v0</code>, you’re accessing one 32-bit value for every thread in that wave, which is how you end up with 32 32-bit values that can be fed into one of the simd32s in the CU.</p>
+<p>VGPRs are allocated in blocks of 16 in <code>wave32</code> and 8 in <code>wave64</code>. When you write the <code>hsaco</code> code object contaning the kernel, you have to specify how many VGPRs your kernel requires per wave (this will be rounded up based on the wave size).</p>
+<p><code>v0</code> in this example contains the AMD equivalent of <code>threadIdx</code>, “what thread am I in this wave”? It looks like this:</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>v0              : 0 1 2 3 4 5 6 7 .. 31</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>thread # in wave: 0 1 2 3 4 5 6 7 .. 31 </span></span></code></pre>
+<p>As a data structure: <code>v0: [u32] = vec![0; VGPR_count * num of threads per wave]</code>, where <code>VGPR_count</code> is the number of VGPRs you specify the kernel should allocate.</p>
+<p><strong>exec_lo and exec_hi</strong></p>
+<p>All vector instructions (loads, computes, and stores) hit this register. <code>exec</code> is a 64-bit register (split into two halves) allocated per wave that controls which threads vector instructions act on. In <code>wave32</code>, there are only 32 threads, so only <code>exec_lo</code> is used. You don’t need to manually copy into this register; in this kernel, it’s determined by the <code>local</code> and <code>global_</code> launch sizes we set earlier.</p>
+<p>In this example, we launched 1 work-group containing 16 threads. In <code>wave32</code>, this means that the top half of threads have no data and can be ignored.</p>
+<p>So we can write <code>s_mov_b32 exec_lo, 0xFFFF</code> (debugging confirms that this is the actual value). Now all of our vector instructions (including global memory loads) only execute on the bottom 16 threads. If you set this value incorrectly, your GPU will crash. In this case, the offset calculations and global memory read instructions would run beyond the bottom 16 threads; thread 17 (1-indexed, literally the 17th thread) would read <code>a[16]</code> from global memory, which isn’t allocated. Again, normally the hardware/runtime sets this, it’s only set explicitly for educational purposes.</p>
+<p>If you write <code>0b1</code> to <code>exec_lo</code>, only the first thread will be active for the duration of the kernel. Notice that <code>exec</code> affects writes from vector memory as well, not just compute instructions.</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>a:     [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14. 15.]</span></span>
+<span class="line"><span>a + 1: [1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]</span></span></code></pre>
+<p>If you ever manually write to <code>exec_lo</code>, save its value to an SGPR so you can restore its value.</p>
+<p><strong>s_clause</strong></p>
+<p>A marker that tells the GPU that the next memory ops belong together. On pre-gfx10 hardware, the GPU would implicitly detect soft clauses (runs of adjacent memory instructions of the same general kind). Starting with gfx10, this detection was removed and <code>s_clause</code> was introduced so that compilers could explicitly mark a hard clause. <label for="sn-1" class="sidenote-number"></label><input type="checkbox" id="sn-1" class="sidenote-toggle"/><span class="sidenote">This is part of a broader trend in RDNA where AMD shifted responsibility for microarchitectural hints from hardware heuristics to explicit compiler-emitted instructions.</span></p>
+<p>In practice, it tells the memory pipeline to treat the next N eligible memory instructions as one clause. Clausing load instructions can give cache coherency benefits, and the scheduler is expected to line up similar memory instructions.</p>
+<p><code>clause_len = (imm &amp; 63) + 1</code>, so we write <code>s_clause N-1</code> to clause the next N instructions.</p>
+<p>There are a lot of restrictions on the types of instructions you can clause:</p>
+<ul>
+<li>VMEM loads</li>
+<li>VMEM stores</li>
+<li>atomics</li>
+<li>FLAT loads/stores/atomics</li>
+</ul>
+<p>Branches, messages, <code>s_waitcnt</code> are also illegal inside clauses.</p>
+<p>It doesn’t really matter in this kernel because the only place we can <em>maybe</em> put an <code>s_clause</code> is at the very start, since the first two instructions (<code>s_load*</code>) are fairly similar. In future, we’ll benchmark kernels with and without this instruction and see if it makes a difference.</p>
+<h2 id="line-by-line">line by line:</h2>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>s_load_b64 s[2:3], s[0:1], 0x8</span></span>
+<span class="line"><span>s_load_b64 s[0:1], s[0:1], 0x0</span></span></code></pre>
+<p>Our kernel arguments are stored in the <code>kernarg_block</code>, and all we get is a 64-bit pointer to that in <code>s[0:1]</code>.</p>
+<p>KernArgs is essentially just a C-struct containing pointers to global memory. The address we get in <code>s[0:1]</code> is the base address of the struct.</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="c"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">struct</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> KernArgs {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">  float*</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> a_ptr;</span><span style="--shiki-light:#6A737D;--shiki-dark:#768390"> // offset 0x0</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">  float*</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> out_ptr;</span><span style="--shiki-light:#6A737D;--shiki-dark:#768390"> // offset 0x8 (pointers are 64-bit addresses)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">}</span></span></code></pre>
+<p>Line 1 loads <code>out_ptr</code> (64-bit) into <code>s[2:3]</code> so that we can use it to do a global memory load later.
+Line 2 overwrites <code>s[0:1]</code>  with the contents of <code>a_ptr</code> (offset <code>0x0</code>).</p>
+<p>Remember SGPRs are 32-bit, so we need 2 SGPRs to store a 64-bit value.</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="asm"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_waitcnt lgkmcnt(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span></span></code></pre>
+<p>If you omit this line, you get complete garbage</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50">a:</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">     [ </span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">0.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  2.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  3.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  4.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  5.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  6.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  7.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  8.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  9.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 10.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 11.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 12.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 13.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 14.</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 15.]</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50">a</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> +</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 1:</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> [-1.1589701e+11  </span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">1.0000000e+00</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> -1.1586345e+11</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">  1.0000000e+00]</span></span></code></pre>
+<p>because you didn’t wait for the previous SMEM loads to complete.</p>
+<p>On AMD GPUs, there are a few registers per wave that tell you how many memory operations are pending. Loads and stores are tracked independently.</p>
+<ul>
+<li>VMcnt: outstanding vmem/flat/global loads. ops that <em>return</em> data to VGPRs</li>
+<li>VScnt: vector memory stores issued but not yet completed</li>
+<li>LGKMcnt: LDS, GDS, Constant and Message count. <code>s_load*</code> instructions fall into this bucket</li>
+<li>EXPcnt (in compute kernels this is almost never used, this is more for graphics/shaders)</li>
+</ul>
+<p>LDS: Memory per CU (2 CUs per Work Group Processor) (64kB)
+GDS: Memory that can be used by all WGPs</p>
+<p>The number you specify in <code>s_waitcnt</code> for each register type (you can combine them) is how many of those operations you’re willing to leave in-flight before continuing on.</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="asm"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_lshlrev_b32 v1, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, v0</span></span></code></pre>
+<p>To actually do something with <code>a</code>, we need to copy it into a VGPR. The model is typically</p>
+<ul>
+<li>host writes data to gpu global memory</li>
+<li>gpu copies data from global memory to vector registers</li>
+<li>computation happens</li>
+<li>gpu copies from registers back to global memory so the host can read back the value</li>
+</ul>
+<p>We want each thread to load one float32 value from global memory. We have the base address of <code>a</code> in <code>s[0:1]</code>, and since every <code>f32</code> is 4 bytes long, each thread needs to read the <code>f32</code> value 4 bytes (32 bits) after the previous thread.</p>
+<p><code>v_lshlrev_b32 v1, 2, v0</code> = <code>v1 = v0 &lt;&lt; 2</code>.</p>
+<p>If the base address <code>s[0:1]</code> is <code>0x0</code>, v1 now looks like:</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>v0  : 0 1 2 03 04 05 .. 15 ; our original threadIdx </span></span>
+<span class="line"><span>v1  : 0 4 8 12 16 20 .. 60 ; offset (in bytes) from addr of a in glbl memory</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>thread # in wave: 0 1 2 03 04 05 .. 15</span></span></code></pre>
+<p>Thread 0 loads the first float (0), thread 1 loads the second float (1), etc.</p>
+<p>We can now use these offsets to perform the load from global memory into a VGPR.</p>
+<p><strong>This is a massive oversimplification</strong></p>
+<p>What actually happens (in architectures that support VGPR packing) is the x,y, and z dimension in your local dispatch are all packed into v0 like this:</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>bit: 31      30 29         20 19         10 9          0</span></span>
+<span class="line"><span>     ┌─────────┬────────────┬────────────┬────────────┐</span></span>
+<span class="line"><span>     │ unused  │     Z      │     Y      │     X      │</span></span>
+<span class="line"><span>     └─────────┴────────────┴────────────┴────────────┘</span></span>
+<span class="line"><span>      (31..30)   (29..20)     (19..10)     (9..0)</span></span></code></pre>
+<p>The instruction in this kernel work because in a 1D dispatch, Y and Z are set to 0. For &gt;1D dispatch, you have to manually extract the X,Y, and Z instructions. We’ll revisit this later.</p>
+<p>The workgroup id (global) dimensions are stored in SGPRs. The exact SGPR number depends on what you have enabled in your hsaco file. Typically, x,y, and z will be stored in s2,s3, and s4, since s[0:1] is where the pointer to the <code>KernArg</code> struct is.</p>
+<p><code>global_load_b32 v4 (dest), v1 (vector address offset), s[0:1] (global memory address)</code></p>
+<p>Now v4 contains <code>[0,1,2,3,4..15]</code>.</p>
+<p><code>v_add_f32 v4 (dst), 1.0 (immediate), v4 (src)</code></p>
+<p>This one does the addition.</p>
+<p><code>global_store_b32 v1 (vector address offset), v4 (src data), s[2:3] (global mem address)</code></p>
+<p>Remember that <code>s[2:3]</code> is the address of <code>a_out</code> in our <code>KernArg</code> struct. The store works the same way as the float load that we wrote earlier. We use the same offsets (<code>v1</code>) to write each float 4 bytes after the previous one.</p>
+<p><code>s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)</code> is part of a family of instructions that send a small message to the GPU control logic so some <em>side effect</em> happens. This frees up all per-wave allocated resources, and the only thing you can do after this is end the program. Be careful though, if you deallocate vectors directly after</p>
+<p>We don’t need a final “wait-for-memory” instruction after our global store; in modern RDNA, <code>s_endpgm</code> will automatically wait for all non-atomic stores to complete before exiting the kernel. <label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-2" class="sidenote-toggle"/><span class="sidenote">Atomic stores are excluded because their completion semantics are more complex — the hardware can’t always determine when a remote atomic has taken effect from the issuing wave’s perspective.</span></p>
+<h2 id="tinygrads-kernel-llvm-generated">tinygrad’s kernel (LLVM-generated)</h2>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="py"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#768390">## DEBUG=7, AMD_LLVM=1</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">from</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> tinygrad </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">import</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> Tensor, dtypes</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">a </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> Tensor.arange(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">15</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">dtype</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">dtypes.float32).realize()</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">print</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">((a</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">+</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1.0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">).realize().numpy()) </span><span style="--shiki-light:#6A737D;--shiki-dark:#768390"># we&#39;re disassembling this kernel</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="asm"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_load_b128 s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">4</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">7</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], s[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], null</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_mad_u64_u32 v[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], null, s2, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">3</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, v[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_delay_alu instid0(VALU_DEP_1) | instskip(NEXT) | instid1(VALU_DEP_1)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_ashrrev_i32_e32 v1, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">31</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, v0</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_lshlrev_b64 v[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, v[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_waitcnt lgkmcnt(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_delay_alu instid0(VALU_DEP_1) | instskip(NEXT) | instid1(VALU_DEP_2)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_add_co_u32 v2, vcc_lo, s6, v0</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_add_co_ci_u32_e32 v3, vcc_lo, s7, v1, vcc_lo</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_add_co_u32 v0, vcc_lo, s4, v0</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_add_co_ci_u32_e32 v1, vcc_lo, s5, v1, vcc_lo</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">global_load_b32 v2, v[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">3</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], off</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_waitcnt vmcnt(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">v_add_f32_e32 v2, </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1.0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, v2</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">global_store_b32 v[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], v2, off</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_nop </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_sendmsg sendmsg(MSG_DEALLOC_VGPRS)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">s_endpgm</span></span></code></pre></article></div><script type="module" src="/_astro/gallery.B6cRjD71.ts"></script><script type="module" src="/_astro/diagram-zoom.C1fRBZe1.ts"></script></main><footer class="site-footer" data-astro-cid-ju4pidww><nav class="footer-nav" aria-label="Footer" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww>home</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>github</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>@boopdotpng</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="/rss.xml" target="_self" data-astro-cid-ju4pidww>rss</a></nav><div class="theme-pick" role="group" aria-label="Theme" data-astro-cid-ju4pidww><button type="button" data-scene-pick="morning" aria-pressed="false" data-astro-cid-ju4pidww>morning</button><button type="button" data-scene-pick="day" aria-pressed="false" data-astro-cid-ju4pidww>day</button><button type="button" data-scene-pick="sunset" aria-pressed="false" data-astro-cid-ju4pidww>sunset</button><button type="button" data-scene-pick="night" aria-pressed="false" data-astro-cid-ju4pidww>night</button></div><script>
+          (() => {
+            const root = document.documentElement;
+            const calm = matchMedia('(prefers-reduced-motion: reduce)');
+            for (const b of document.querySelectorAll('[data-scene-pick]')) {
+              b.setAttribute('aria-pressed', String(b.dataset.scenePick === root.dataset.scene));
+              b.addEventListener('click', () => {
+                const set = () => window.setScene(b.dataset.scenePick);
+                // a short cross-fade where the browser can do one
+                if (document.startViewTransition && !calm.matches) document.startViewTransition(set);
+                else set();
+              });
+            }
+          })();
+        </script></footer></body></html>

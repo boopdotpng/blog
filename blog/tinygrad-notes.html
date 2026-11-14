@@ -1,0 +1,325 @@
+<!DOCTYPE html><html lang="en-US" data-astro-cid-ju4pidww><head><meta charset="UTF-8"><base target="_blank"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="annotated notes on tinygrad internals — the scheduler, linearizer, codegen pipeline, and how the lazy tensor graph compiles to GPU kernels."><meta name="author" content="Anuraag Warudkar"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><title>tinygrad notes</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><link rel="preload" href="/fonts/GoogleSansCode-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/markdown.css"><link rel="canonical" href="https://anuraagw.me/blog/tinygrad-notes"><link rel="alternate" type="application/rss+xml" title="anuraag" href="/rss.xml"><meta property="og:title" content="tinygrad notes"><meta property="og:description" content="annotated notes on tinygrad internals — the scheduler, linearizer, codegen pipeline, and how the lazy tensor graph compiles to GPU kernels."><meta property="og:type" content="article"><meta property="og:url" content="https://anuraagw.me/blog/tinygrad-notes"><meta property="og:image" content="https://anuraagw.me/og/tinygrad-notes.png"><meta property="og:image:alt" content="tinygrad notes"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="anuraag"><meta property="article:published_time" content="2025-12-26T00:00:00.000Z"><meta property="article:section" content="ml"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@boopdotpng"><meta name="twitter:creator" content="@boopdotpng"><meta name="twitter:title" content="tinygrad notes"><meta name="twitter:description" content="annotated notes on tinygrad internals — the scheduler, linearizer, codegen pipeline, and how the lazy tensor graph compiles to GPU kernels."><meta name="twitter:image" content="https://anuraagw.me/og/tinygrad-notes.png"><meta name="twitter:image:alt" content="tinygrad notes"><meta property="article:author" content="https://anuraagw.me/"><meta property="article:tag" content="ml"><meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)"><script>(function(){const isHome = false;
+
+    (() => {
+      // One setting for the whole site: which painting is on the homepage, and with it the theme.
+      // Night is the dark theme; morning, day and sunset are light. Until the visitor picks one,
+      // their system setting decides between night and sunset.
+      const root = document.documentElement;
+      const scenes = ['morning', 'day', 'sunset', 'night'];
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const picked = () => {
+        try { return localStorage.getItem('scene'); } catch (e) { return null; /* private mode */ }
+      };
+      const current = () => {
+        // ?scene=day forces one on the homepage, for linking to it
+        const s = (isHome && new URLSearchParams(location.search).get('scene')) || picked();
+        return scenes.includes(s) ? s : prefersDark.matches ? 'night' : 'sunset';
+      };
+      const apply = (scene) => {
+        root.dataset.scene = scene;
+        root.dataset.theme = scene === 'night' ? 'dark' : 'light';
+        for (const b of document.querySelectorAll('[data-scene-pick]')) b.setAttribute('aria-pressed', String(b.dataset.scenePick === scene));
+      };
+      apply(current());
+      // used by the picker in the footer of every page but the homepage (scene.js runs that one)
+      window.setScene = (scene) => {
+        try { localStorage.setItem('scene', scene); } catch (e) { /* private mode */ }
+        apply(scene);
+      };
+      // the system flips while the page is open and nothing was picked: follow it
+      // (the homepage would have to repaint, so there it waits for the next visit)
+      prefersDark.addEventListener('change', () => { if (!isHome) apply(current()); });
+      // back/forward can restore a page from before the scene was changed on another one
+      window.addEventListener('pageshow', (e) => { if (e.persisted && current() !== root.dataset.scene) location.reload(); });
+      if (isHome) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = `/painting/${root.dataset.scene}.webp`;
+        document.head.append(link);
+      }
+    })();
+  })();</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","@id":"https://anuraagw.me/#person","name":"Anuraag Warudkar","alternateName":["anuraag","anuraagw"],"url":"https://anuraagw.me/","sameAs":["https://github.com/boopdotpng","https://twitter.com/boopdotpng"],"jobTitle":"Software Engineer"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://anuraagw.me/#website","name":"anuraag","url":"https://anuraagw.me/","publisher":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://anuraagw.me/blog/tinygrad-notes#webpage","url":"https://anuraagw.me/blog/tinygrad-notes","name":"tinygrad notes","description":"annotated notes on tinygrad internals — the scheduler, linearizer, codegen pipeline, and how the lazy tensor graph compiles to GPU kernels.","inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"about":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"tinygrad notes","url":"https://anuraagw.me/blog/tinygrad-notes","description":"annotated notes on tinygrad internals — the scheduler, linearizer, codegen pipeline, and how the lazy tensor graph compiles to GPU kernels.","datePublished":"2025-12-26T00:00:00.000Z","dateModified":"2025-12-26T00:00:00.000Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://anuraagw.me/blog/tinygrad-notes"},"author":{"@id":"https://anuraagw.me/#person"},"publisher":{"@type":"Person","name":"Anuraag Warudkar","url":"https://anuraagw.me/"},"inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"image":["https://anuraagw.me/og/tinygrad-notes.png"],"articleSection":"ml","wordCount":1514}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"home","item":"https://anuraagw.me"},{"@type":"ListItem","position":2,"name":"tinygrad notes"}]}</script><link rel="stylesheet" href="/_astro/Layout.D2EGMZn8.css"><link rel="stylesheet" href="/_astro/_slug_.BVDpMPvj.css"></head><body data-astro-cid-ju4pidww><a class="skip-link" href="#main-content" target="_self" data-astro-cid-ju4pidww>skip to content</a><header class="site-header" data-astro-cid-ju4pidww><div class="site-title" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww><span class="arrow" data-astro-cid-ju4pidww>&#8592;</span><span class="site-label" data-astro-cid-ju4pidww>anuraagw.me</span></a></div></header><main id="main-content" class="page-main" data-astro-cid-ju4pidww><nav class="toc" aria-label="Table of contents" data-astro-cid-p33bl5ka><ol data-astro-cid-p33bl5ka><li data-astro-cid-p33bl5ka><a target="_self" href="#rough-progression-of-a-tinygrad-tensor-operation" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>rough progression of a tinygrad tensor operation</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#all-the-ops" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>all the ops</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#ops-that-dont-appear-in-compiled-programs" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>Ops that don’t appear in compiled programs</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#everything-else-ops-that-appear-in-compiled-programs" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>everything else (ops that appear in compiled programs)</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#beam-search" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>BEAM search</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#what-beam-does" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>What BEAM does</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#examples-of-each-optimization" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>Examples of each optimization</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#examples-of-kernels-optimized-with-beam" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>Examples of kernels optimized with BEAM</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#pattern-matchers--graph-rewrites-the-non-beam-optimization-path" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>pattern matchers + graph rewrites (the non-BEAM optimization path)</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#undocumented-environment-variables" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>undocumented environment variables</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#random-tweaks-and-issues" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>random tweaks and issues</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#multilib-handled-poorly-in-cpy" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>multilib handled poorly in c.py</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#wrong-rocm-path-in-amd_disassemble" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>wrong rocm path in amd_disassemble</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#tinygrad-editable-install-not-working-with-lsp" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>tinygrad editable install not working with lsp?</span></a></li></ol></nav><script type="module">var e=document.querySelector(`.toc`);if(e){let t=[...e.querySelectorAll(`a`)].flatMap(e=>{let t=document.getElementById(decodeURIComponent(e.hash.slice(1)));return t?(t.tabIndex=-1,[{link:e,heading:t}]):[]}),n=document.querySelector(`.post-subline`),r=!1,i,a=()=>{r=!1,e.classList.toggle(`is-ready`,!n||n.getBoundingClientRect().bottom<0);let a=-1;t.forEach((e,t)=>{e.heading.getBoundingClientRect().top<=96&&(a=t)}),window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2&&(a=t.length-1),t.forEach((e,t)=>e.link.parentElement.classList.toggle(`is-read`,t<a));let o=t[a]?.link;o!==i&&(i?.removeAttribute(`aria-current`),i=o,i?.setAttribute(`aria-current`,`location`),i&&!e.matches(`:hover, :focus-within`)&&i.scrollIntoView({block:`nearest`}))},o=()=>{r||(r=!0,requestAnimationFrame(a))};window.addEventListener(`scroll`,o,{passive:!0}),window.addEventListener(`resize`,o,{passive:!0}),window.addEventListener(`hashchange`,o),o()}</script><div class="centered-wrapper" data-astro-cid-zg7dkzxc><article class="post-plain markdown-body" data-astro-cid-zg7dkzxc><div class="post-meta" data-astro-cid-zg7dkzxc><time datetime="2025-12-26" data-astro-cid-zg7dkzxc>december 26, 2025</time><span class="post-meta-sep" data-astro-cid-zg7dkzxc>•</span><span class="post-readtime" data-astro-cid-zg7dkzxc>approx 20m read</span></div><h1 id="article-top" class="post-title-main" data-astro-cid-zg7dkzxc>tinygrad notes</h1><div class="post-subline" data-astro-cid-zg7dkzxc><p class="post-description" data-astro-cid-zg7dkzxc>annotated notes on tinygrad internals — the scheduler, linearizer, codegen pipeline, and how the lazy tensor graph compiles to GPU kernels.</p></div><h2 id="rough-progression-of-a-tinygrad-tensor-operation">rough progression of a tinygrad tensor operation</h2>
+<p><strong>1) Tensors are just thin wrappers over UOps</strong></p>
+<p>Files involved:</p>
+<ul>
+<li><code>Tensor.py</code></li>
+<li><code>uop/ops.py</code></li>
+<li><code>uop/init.py</code></li>
+</ul>
+<p>Tensors are just a thin wrapper over UOps. Every tensor operation creates a UOp (or set of UOps) that gets injected into the current UOp graph.</p>
+<p>For example:</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="py"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">Tensor.ones(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">3</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">).uop</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">UOp(Ops.</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">EXPAND</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.float, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">arg</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">None</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">src</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">  UOp(Ops.</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">RESHAPE</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.float, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">arg</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">None</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">src</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">    UOp(Ops.</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">CONST</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.float, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">arg</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1.0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">src</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">      UOp(Ops.</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">DEVICE</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.void, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">arg</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">&#39;CPU&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">src</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">()),</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">      UOp(Ops.</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">UNIQUE</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.void, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">arg</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">src</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">()),)),</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">    UOp(Ops.</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">CONST</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.index, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">arg</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">src</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">()),)),</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">  UOp(Ops.</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">CONST</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, dtypes.index, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">arg</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">3</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">src</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">()),))</span></span></code></pre>
+<h2 id="all-the-ops">all the ops</h2>
+<p>You can write an entire GPU kernel using just UOps, bypassing the tensor layer entirely.</p>
+<h3 id="ops-that-dont-appear-in-compiled-programs">Ops that don’t appear in compiled programs</h3>
+<p>These are higher-level ops that get lowered or eliminated during compilation:</p>
+<ul>
+<li><code>unique</code>, <code>device</code>, <code>kernel</code>, <code>assign</code>, <code>custom_kernel</code>, <code>lunique</code></li>
+<li><code>contiguous</code>, <code>contiguous_backward</code>, <code>detach</code></li>
+<li><code>bufferize</code>, <code>copy</code>, <code>buffer</code>, <code>buffer_view</code>, <code>mselect</code>, <code>mstack</code>, <code>encdec</code></li>
+<li><code>reshape</code>, <code>permute</code>, <code>expand</code>, <code>pad</code>, <code>shrink</code>, <code>flip</code>, <code>multi</code></li>
+<li><code>reduce_axis</code>, <code>reduce</code>, <code>allreduce</code></li>
+<li><code>unroll</code>, <code>contract</code>, <code>cat</code>, <code>ptrcat</code></li>
+</ul>
+<h3 id="everything-else-ops-that-appear-in-compiled-programs">everything else (ops that appear in compiled programs)</h3>
+<p>These are the low-level ops that actually make it into the final compiled kernel:</p>
+<ul>
+<li><code>define_global</code>, <code>define_var</code>, <code>bind</code>, <code>special</code>, <code>define_local</code>, <code>define_reg</code></li>
+<li><code>noop</code>, <code>rewrite_error</code>, <code>program</code>, <code>linear</code>, <code>source</code>, <code>binary</code>, <code>sink</code>, <code>after</code>, <code>group</code>, <code>gep</code>, <code>vectorize</code></li>
+<li><code>index</code>, <code>load</code>, <code>store</code></li>
+<li><code>wmma</code></li>
+<li><code>cast</code>, <code>bitcast</code>, <code>exp2</code>, <code>log2</code>, <code>sin</code>, <code>sqrt</code>, <code>reciprocal</code>, <code>neg</code>, <code>trunc</code></li>
+<li><code>add</code>, <code>mul</code>, <code>shl</code>, <code>shr</code>, <code>idiv</code>, <code>max</code>, <code>mod</code>, <code>cmplt</code>, <code>cmpne</code>, <code>cmpeq</code>, <code>xor</code>, <code>or</code>, <code>and</code>, <code>threefry</code>, <code>sub</code>, <code>fdiv</code>, <code>pow</code></li>
+<li><code>where</code>, <code>mulacc</code></li>
+<li><code>barrier</code>, <code>range</code>, <code>if</code>, <code>end</code>, <code>endif</code></li>
+<li><code>vconst</code>, <code>const</code></li>
+<li><code>custom</code>, <code>customi</code></li>
+</ul>
+<p><strong>2) Schedule creation (kernel partitioning)</strong></p>
+<p>Files involved:</p>
+<ul>
+<li><code>engine/schedule.py</code></li>
+<li><code>schedule/__init__.py</code></li>
+<li><code>rangeify.py</code></li>
+</ul>
+<p>Each UOp graph gets turned into one or more kernel ASTs (each rooted at <code>Ops.SINK</code>). Every kernel becomes an <code>ExecItem</code> with its own AST and buffers. This is where tinygrad figures out how to partition your computation into separate GPU kernel launches.</p>
+<p><strong>3) Kernel AST rewrite + optimization</strong></p>
+<p>Files involved:</p>
+<ul>
+<li><code>codegen/init.py</code></li>
+<li><code>postrange.py</code></li>
+<li><code>opt/search.py</code> (BEAM)</li>
+</ul>
+<p>Kernel ASTs are rewritten and optimized based on rewrite rules defined in <code>PatternMatchers</code>. These are scattered all around the codebase and rewrite portions of the UOp graph: movement ops, range splitting, constant folding, etc.</p>
+<p><code>apply_opts</code> applies optimizations to the AST. This path varies based on the <code>BEAM</code> environment variable.</p>
+<p><strong>BEAM on:</strong>
+BEAM search happens. See the BEAM section below.</p>
+<p><strong>BEAM off:</strong>
+A bunch of hand-written optimizations are applied to each AST. See the pattern-matchers section below (todo).</p>
+<p>Calls <code>codegen/opt/heuristic.py</code> to apply hand-coded optimizations, assuming <code>NOOPT</code> is unset and the AST doesn’t have optimizations already applied.</p>
+<p>More rewrites happen after this:</p>
+<ul>
+<li><strong>expander</strong> — lowers ranges and reduces into loops</li>
+<li><strong>devectorizer</strong> — handles <code>UPCAST</code> ops</li>
+<li><strong>gpudims</strong> — GPU launch dimensions</li>
+<li><strong>lower index dtype</strong> — converts symbolic dtypes into dtypes for the respective backend</li>
+<li><strong>decompositions</strong> — replaces unsupported ops with supported ops on the target renderer</li>
+<li><strong>final rewrite</strong> — one last cleanup pass</li>
+</ul>
+<p>These can be found in:</p>
+<ul>
+<li><code>codegen/late/expander.py</code></li>
+<li><code>codegen/late/devectorizer.py</code></li>
+<li><code>codegen/late/gpudims.py</code></li>
+<li><code>codegen/simplify.py</code></li>
+</ul>
+<p>At the end of the rewrite chain, the UOp graph is linearized into a list of UOps to be run in a straight line.</p>
+<p>Linearization happens in:</p>
+<ul>
+<li><code>codegen/late/linearizer.py</code></li>
+<li><code>renderer/init.py</code></li>
+</ul>
+<p><strong>4) Render to source</strong></p>
+<p>Files involved:</p>
+<ul>
+<li>renderers, like <code>renderer/ptx.py</code></li>
+<li><code>renderer/init.py</code></li>
+</ul>
+<p>The renderer (<code>tinygrad/renderer/*</code>) turns the linearized UOps into device source code (CUDA, HIP, etc). A <code>ProgramSpec</code> object is created.</p>
+<p><strong>5) Compile to binary</strong></p>
+<p>Files involved:</p>
+<ul>
+<li><code>engine/realize.py</code></li>
+<li><code>runtime/ops_*.py</code></li>
+</ul>
+<p>The device compiler compiles the source into a binary (<code>ProgramSpec.lib</code>). This is done via <code>CompiledRunner</code> in <code>tinygrad/engine/realize.py</code>.</p>
+<p><strong>6) Runtime launch</strong></p>
+<p><code>ExecItem.run()</code> calls the device runtime with buffers, global/local sizes, and variable values. The kernel actually runs on the GPU/CPU here.</p>
+<p><strong>7) Caching/JIT</strong></p>
+<p>Files involved:</p>
+<ul>
+<li><code>jit.py</code></li>
+</ul>
+<p><code>get_runner</code> memoizes compiled programs based on the AST + context (including <code>BEAM</code>, <code>NOOPT</code>, <code>DEVECTORIZE</code> settings). If <code>TinyJit</code> is used, it captures kernels and replays them without recompiling.</p>
+<h2 id="beam-search">BEAM search</h2>
+<blockquote>
+<p><a href="https://github.com/tinygrad/tinygrad/pull/13836">https://github.com/tinygrad/tinygrad/pull/13836</a></p>
+</blockquote>
+<p>Python 3.14 removed support for pickling <code>itertools</code> objects, which broke BEAM in tinygrad. Currently, BEAM pickles <code>Scheduler</code> objects and sends them to worker processes to be executed. This is an issue because the <code>Scheduler</code> contains an <code>itertools.count</code> that cannot be serialized:</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="py"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#768390"># tinygrad/codegen/opt/postrange.py:21</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">self</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">.opt_range </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> itertools.count(</span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">start</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">max</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">([x.arg[</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">] </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> x </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> self</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">.rngs], </span><span style="--shiki-light:#E36209;--shiki-dark:#F69D50">default</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">+</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span></span></code></pre>
+<p>This led me down a long rabbit hole into what BEAM actually does. It’s one of the main reasons tinygrad is so fast.</p>
+<h2 id="what-beam-does">What BEAM does</h2>
+<p>It runs many variants of every AST in your graph to find the one that runs fastest on your hardware. Think of it as auto-tuning at the kernel optimization level. <label for="sn-1" class="sidenote-number"></label><input type="checkbox" id="sn-1" class="sidenote-toggle"/><span class="sidenote">Results are cached to disk, so subsequent runs with the same model skip the search entirely. This is why first runs with BEAM=1 are slow but warm runs are fast.</span></p>
+<p>The parameters BEAM adjusts are:</p>
+<div class="md-table-wrap">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>opt</th><th>arguments</th><th>description</th></tr></thead><tbody><tr><td>UNROLL</td><td>axis, amt</td><td>loop unrolling, i.e. <code>#pragma unroll</code></td></tr><tr><td>UPCAST</td><td>axis, amt</td><td>like <code>float4</code> loads, later touched by devectorize</td></tr><tr><td>LOCAL</td><td>axis, amt</td><td>split work between threads in a workgroup</td></tr><tr><td>GROUP</td><td>axis, amt</td><td>parallelize reduce operations, inner axis inside outer loop</td></tr><tr><td>GROUPTOP</td><td>axis, amt</td><td>same as above, inner axis is above outer loop</td></tr><tr><td>THREAD</td><td>axis, amt</td><td>which globalizable axis becomes the thread index? <code>local</code> is workgroup size (block)</td></tr><tr><td>TC</td><td>axis, (tc_select, tc_opt, use)</td><td>tensor core/wmma ops when device supports</td></tr><tr><td>SWAP</td><td>axis0, axis1</td><td>two <code>RANGE</code> nodes exchange axis IDs, only on global axes</td></tr><tr><td>PADTO</td><td>axis, amt</td><td>pads loop axes (for tile sizes that require dimensions to be multiples), adds guard</td></tr><tr><td>NOLOCALS</td><td>NOLOCALS=1 (optional env var)</td><td>disables local/shared memory axes</td></tr></tbody></table>
+</div>
+<p>(from <code>actions</code> in <code>tinygrad/codegen/opt/search.py</code>)</p>
+<p>Keep in mind that all of these optimizations are run at the AST stage, before the kernel is linearized and rendered into a program.</p>
+<h2 id="examples-of-each-optimization">Examples of each optimization</h2>
+<p><strong>Unroll</strong></p>
+<p><strong>Upcast</strong></p>
+<p><strong>Local</strong></p>
+<p><strong>Group</strong></p>
+<p><strong>Grouptop</strong></p>
+<p><strong>Thread</strong></p>
+<p><strong>TC</strong></p>
+<p><strong>Swap</strong></p>
+<p><strong>PadTo</strong></p>
+<p><strong>Nolocals</strong></p>
+<h2 id="examples-of-kernels-optimized-with-beam">Examples of kernels optimized with BEAM</h2>
+<h2 id="pattern-matchers--graph-rewrites-the-non-beam-optimization-path">pattern matchers + graph rewrites (the non-BEAM optimization path)</h2>
+<h2 id="undocumented-environment-variables">undocumented environment variables</h2>
+<p>There are a lot of random environment variables scattered around the tinygrad codebase, and most of these aren’t documented at all. These are incredibly useful for debugging, profiling, and understanding what’s going on. Here’s a list of all the ones I’ve found so far:</p>
+<div class="md-table-wrap">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>variable</th><th>range</th><th>description</th></tr></thead><tbody><tr><td>IGNORE_BEAM_CACHE</td><td>0 or nonzero</td><td>always regenerate BEAM kernels</td></tr><tr><td>CACHELEVEL</td><td>0 or nonzero</td><td>0 disables disk cache</td></tr><tr><td>TRACK_MATCH_STATS</td><td>0-3</td><td>1: basic tracking, 2: detailed trace data, 3: per-match timing</td></tr><tr><td>CUDA_PTX</td><td>0 or nonzero</td><td>PTX codegen for Nvidia GPUs, use with <code>NV=1</code></td></tr><tr><td>NOOPT</td><td>0 or nonzero</td><td>disables optimizations on the AST</td></tr><tr><td>DEVECTORIZE</td><td>0 or nonzero</td><td>controls whether devectorization happens</td></tr><tr><td>HCQ_VISIBLE_DEVICES</td><td>device #</td><td>on amd, choose which device is used by tinygrad. just try each one</td></tr><tr><td>AMD_LLVM</td><td>0 or nonzero</td><td>on amd, use the LLVM-IR -&gt; machine code path instead of comgr</td></tr></tbody></table>
+</div>
+<p>You can set some of these using the <code>with helpers.Context(VAR=n):</code> pattern, which is useful for only enabling certain features for part of a program, but it’s not guaranteed to work with all settings. Either set them using <code>os.environ[&quot;VAR&quot;] = &quot;value&quot;</code> at the start of the file or pass them when you run the program:</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">BEAM</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> TRACK_MATCH_STATS</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">2</span><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50"> python</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> your_script.py</span></span></code></pre>
+<h2 id="random-tweaks-and-issues">random tweaks and issues</h2>
+<h2 id="multilib-handled-poorly-in-cpy">multilib handled poorly in c.py</h2>
+<p>Some Linux distros are multilib, meaning they download and store 32-bit libraries alongside 64-bit ones, for applications like Steam. Fedora is one of them. A lot of tinygrad (essentially all the code that runs your kernels on the GPU) relies on FFI (calling C functions from Python). These libraries are imported in <code>tinygrad/runtime/support/c.py:42</code> (findlib).</p>
+<p>The issue is that on Fedora, /lib contains 32-bit libraries: <label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-2" class="sidenote-toggle"/><span class="sidenote">On Debian/Ubuntu this isn’t a problem because the multilib libs live under <code>/lib/i386-linux-gnu/</code>, so the 64-bit path <code>/lib/x86_64-linux-gnu/</code> is unambiguous.</span></p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50">boop@framework:/lib$</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> file</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> libLTO.so.21.1</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50">libLTO.so.21.1:</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> ELF</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> 32-bit</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> LSB</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> shared</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> object,</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> Intel</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> i386,</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF"> version</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> (SYSV), dynamically linked, BuildID[sha1]</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">574d091ee52fa7856759bc49c393f2c2a4636ae4,</span><span style="--shiki-light:#6F42C1;--shiki-dark:#F69D50"> stripped</span></span></code></pre>
+<p>The 64-bit libs are actually at <code>/lib64</code> or <code>/usr/lib64/</code>. You have to patch <code>c.py</code> to scan these first, and exclude all 32-bit ELFs by checking the magic numbers. If you installed Cuda, add its libs to scanlist as well.</p>
+<h2 id="wrong-rocm-path-in-amd_disassemble">wrong rocm path in amd_disassemble</h2>
+<p>If you have a non-standard ROCm installation (your ROCm isn’t in <code>/opt/rocm</code>), you’ll get a few errors while running <code>VIZ=1</code>, especially during disassembly. You might also encounter this if you run code with <code>DEBUG&gt;5</code>.</p>
+<p>Patch <code>compiler_amd.py</code> and edit <code>amdgpu_disassemble</code> to change the default location of <code>llvm-objdump</code>. This can point to your system llvm install or to your custom ROCm build of llvm.</p>
+<h2 id="tinygrad-editable-install-not-working-with-lsp">tinygrad editable install not working with lsp?</h2>
+<p>If you install tinygrad with <code>uv pip install -e .</code>, it won’t generate types and completions for your LSP.</p>
+<p>Run this instead: <code>uv pip install -e . --config-settings editable_mode=strict</code>.</p></article></div><script type="module" src="/_astro/gallery.B6cRjD71.ts"></script><script type="module" src="/_astro/diagram-zoom.C1fRBZe1.ts"></script></main><footer class="site-footer" data-astro-cid-ju4pidww><nav class="footer-nav" aria-label="Footer" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww>home</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>github</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>@boopdotpng</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="/rss.xml" target="_self" data-astro-cid-ju4pidww>rss</a></nav><div class="theme-pick" role="group" aria-label="Theme" data-astro-cid-ju4pidww><button type="button" data-scene-pick="morning" aria-pressed="false" data-astro-cid-ju4pidww>morning</button><button type="button" data-scene-pick="day" aria-pressed="false" data-astro-cid-ju4pidww>day</button><button type="button" data-scene-pick="sunset" aria-pressed="false" data-astro-cid-ju4pidww>sunset</button><button type="button" data-scene-pick="night" aria-pressed="false" data-astro-cid-ju4pidww>night</button></div><script>
+          (() => {
+            const root = document.documentElement;
+            const calm = matchMedia('(prefers-reduced-motion: reduce)');
+            for (const b of document.querySelectorAll('[data-scene-pick]')) {
+              b.setAttribute('aria-pressed', String(b.dataset.scenePick === root.dataset.scene));
+              b.addEventListener('click', () => {
+                const set = () => window.setScene(b.dataset.scenePick);
+                // a short cross-fade where the browser can do one
+                if (document.startViewTransition && !calm.matches) document.startViewTransition(set);
+                else set();
+              });
+            }
+          })();
+        </script></footer></body></html>

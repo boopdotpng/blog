@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="en-US" data-astro-cid-ju4pidww><head><meta charset="UTF-8"><base target="_blank"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="building an LSP and VS Code extension for RDNA assembly — autocomplete, hover docs, and diagnostics for AMD GPU shader development."><meta name="author" content="Anuraag Warudkar"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><title>amdgpu lsp + vs code extension</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><link rel="preload" href="/fonts/GoogleSansCode-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/markdown.css"><link rel="canonical" href="https://anuraagw.me/blog/rdna-lsp"><link rel="alternate" type="application/rss+xml" title="anuraag" href="/rss.xml"><meta property="og:title" content="amdgpu lsp + vs code extension"><meta property="og:description" content="building an LSP and VS Code extension for RDNA assembly — autocomplete, hover docs, and diagnostics for AMD GPU shader development."><meta property="og:type" content="article"><meta property="og:url" content="https://anuraagw.me/blog/rdna-lsp"><meta property="og:image" content="https://anuraagw.me/og/rdna-lsp.png"><meta property="og:image:alt" content="amdgpu lsp + vs code extension"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="anuraag"><meta property="article:published_time" content="2025-12-25T00:00:00.000Z"><meta property="article:section" content="gpu"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@boopdotpng"><meta name="twitter:creator" content="@boopdotpng"><meta name="twitter:title" content="amdgpu lsp + vs code extension"><meta name="twitter:description" content="building an LSP and VS Code extension for RDNA assembly — autocomplete, hover docs, and diagnostics for AMD GPU shader development."><meta name="twitter:image" content="https://anuraagw.me/og/rdna-lsp.png"><meta name="twitter:image:alt" content="amdgpu lsp + vs code extension"><meta property="article:author" content="https://anuraagw.me/"><meta property="article:tag" content="gpu"><meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)"><script>(function(){const isHome = false;
+
+    (() => {
+      // One setting for the whole site: which painting is on the homepage, and with it the theme.
+      // Night is the dark theme; morning, day and sunset are light. Until the visitor picks one,
+      // their system setting decides between night and sunset.
+      const root = document.documentElement;
+      const scenes = ['morning', 'day', 'sunset', 'night'];
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const picked = () => {
+        try { return localStorage.getItem('scene'); } catch (e) { return null; /* private mode */ }
+      };
+      const current = () => {
+        // ?scene=day forces one on the homepage, for linking to it
+        const s = (isHome && new URLSearchParams(location.search).get('scene')) || picked();
+        return scenes.includes(s) ? s : prefersDark.matches ? 'night' : 'sunset';
+      };
+      const apply = (scene) => {
+        root.dataset.scene = scene;
+        root.dataset.theme = scene === 'night' ? 'dark' : 'light';
+        for (const b of document.querySelectorAll('[data-scene-pick]')) b.setAttribute('aria-pressed', String(b.dataset.scenePick === scene));
+      };
+      apply(current());
+      // used by the picker in the footer of every page but the homepage (scene.js runs that one)
+      window.setScene = (scene) => {
+        try { localStorage.setItem('scene', scene); } catch (e) { /* private mode */ }
+        apply(scene);
+      };
+      // the system flips while the page is open and nothing was picked: follow it
+      // (the homepage would have to repaint, so there it waits for the next visit)
+      prefersDark.addEventListener('change', () => { if (!isHome) apply(current()); });
+      // back/forward can restore a page from before the scene was changed on another one
+      window.addEventListener('pageshow', (e) => { if (e.persisted && current() !== root.dataset.scene) location.reload(); });
+      if (isHome) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = `/painting/${root.dataset.scene}.webp`;
+        document.head.append(link);
+      }
+    })();
+  })();</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","@id":"https://anuraagw.me/#person","name":"Anuraag Warudkar","alternateName":["anuraag","anuraagw"],"url":"https://anuraagw.me/","sameAs":["https://github.com/boopdotpng","https://twitter.com/boopdotpng"],"jobTitle":"Software Engineer"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://anuraagw.me/#website","name":"anuraag","url":"https://anuraagw.me/","publisher":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://anuraagw.me/blog/rdna-lsp#webpage","url":"https://anuraagw.me/blog/rdna-lsp","name":"amdgpu lsp + vs code extension","description":"building an LSP and VS Code extension for RDNA assembly — autocomplete, hover docs, and diagnostics for AMD GPU shader development.","inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"about":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"amdgpu lsp + vs code extension","url":"https://anuraagw.me/blog/rdna-lsp","description":"building an LSP and VS Code extension for RDNA assembly — autocomplete, hover docs, and diagnostics for AMD GPU shader development.","datePublished":"2025-12-25T00:00:00.000Z","dateModified":"2025-12-25T00:00:00.000Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://anuraagw.me/blog/rdna-lsp"},"author":{"@id":"https://anuraagw.me/#person"},"publisher":{"@type":"Person","name":"Anuraag Warudkar","url":"https://anuraagw.me/"},"inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"image":["https://anuraagw.me/og/rdna-lsp.png"],"articleSection":"gpu","wordCount":299}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"home","item":"https://anuraagw.me"},{"@type":"ListItem","position":2,"name":"amdgpu lsp + vs code extension"}]}</script><link rel="stylesheet" href="/_astro/Layout.D2EGMZn8.css"><link rel="stylesheet" href="/_astro/_slug_.BVDpMPvj.css"></head><body data-astro-cid-ju4pidww><a class="skip-link" href="#main-content" target="_self" data-astro-cid-ju4pidww>skip to content</a><header class="site-header" data-astro-cid-ju4pidww><div class="site-title" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww><span class="arrow" data-astro-cid-ju4pidww>&#8592;</span><span class="site-label" data-astro-cid-ju4pidww>anuraagw.me</span></a></div></header><main id="main-content" class="page-main" data-astro-cid-ju4pidww><div class="centered-wrapper" data-astro-cid-zg7dkzxc><article class="post-plain markdown-body" data-astro-cid-zg7dkzxc><div class="post-meta" data-astro-cid-zg7dkzxc><time datetime="2025-12-25" data-astro-cid-zg7dkzxc>december 25, 2025</time><span class="post-meta-sep" data-astro-cid-zg7dkzxc>•</span><span class="post-readtime" data-astro-cid-zg7dkzxc>approx 3m read</span></div><h1 id="article-top" class="post-title-main" data-astro-cid-zg7dkzxc>amdgpu lsp + vs code extension</h1><div class="post-subline" data-astro-cid-zg7dkzxc><p class="post-description" data-astro-cid-zg7dkzxc>building an LSP and VS Code extension for RDNA assembly — autocomplete, hover docs, and diagnostics for AMD GPU shader development.</p></div><p>I’ve started learning RDNA (AMD’s GPU architecture). While doing that, I realized there’s basically no LSP / autocomplete for RDNA/CDNA instructions. I kept having to flip back to the RDNA 3.5 ISA doc every time I wanted to check operand names, argument types, or even what an instruction was called.</p>
+<p>So I wrote one: <a href="https://github.com/boopdotpng/amdgpu-lsp">https://github.com/boopdotpng/amdgpu-lsp</a></p>
+<p>Codex and Claude Code have gotten really good over the second half of this year. The days of yelling at an LLM because it got something totally wrong are mostly over. Now it barely makes mistakes if you give it clear enough instructions. AMD also helpfully publishes per-architecture XML that includes instructions, operands, and operand types, which made this project pretty straightforward. <label for="sn-1" class="sidenote-number"></label><input type="checkbox" id="sn-1" class="sidenote-toggle"/><span class="sidenote">This XML lives in the <code>amdgpu-dis</code> repo — it’s the same data the LLVM disassembler uses, so it’s accurate and kept up to date with new ISA revisions.</span></p>
+<p>Also, Codex’s rate limits feel infinite. I’m only on the Plus plan and I’ve never gone over 50%. You only get to chat with Opus once an hour!</p>
+<p>If you want an easy way to write and run RDNA, I wrote this: <a href="https://github.com/boopdotpng/rdna-playground">https://github.com/boopdotpng/rdna-playground</a><br/>
+You can write a HIP file, inspect the disassembled RDNA, or write and run your own kernels using tinygrad’s AMD driver. Eventually you’ll also be able to compare your RDNA kernel to the one generated by tinygrad.</p>
+<p>Rough roadmap:</p>
+<ul>
+<li>Finish the LSP (almost done)</li>
+<li>Write basic kernels in RDNA and get familiar with the RDNA 3.5 documentation</li>
+<li>Try to beat existing tinygrad kernels with handwritten RDNA ones</li>
+<li>Write an RDNA simulator that compiles to WASM</li>
+<li>Write an RDNA book (like the Rust Book) that teaches RDNA: <a href="https://doc.rust-lang.org/book/">https://doc.rust-lang.org/book/</a></li>
+<li>Finish this tinygrad bounty: <strong>RDNA3 assembly backend within 10% of perf vs HIP (see speed_compare_cuda_ptx for compare style)</strong></li>
+</ul></article></div><script type="module" src="/_astro/gallery.B6cRjD71.ts"></script><script type="module" src="/_astro/diagram-zoom.C1fRBZe1.ts"></script></main><footer class="site-footer" data-astro-cid-ju4pidww><nav class="footer-nav" aria-label="Footer" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww>home</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>github</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>@boopdotpng</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="/rss.xml" target="_self" data-astro-cid-ju4pidww>rss</a></nav><div class="theme-pick" role="group" aria-label="Theme" data-astro-cid-ju4pidww><button type="button" data-scene-pick="morning" aria-pressed="false" data-astro-cid-ju4pidww>morning</button><button type="button" data-scene-pick="day" aria-pressed="false" data-astro-cid-ju4pidww>day</button><button type="button" data-scene-pick="sunset" aria-pressed="false" data-astro-cid-ju4pidww>sunset</button><button type="button" data-scene-pick="night" aria-pressed="false" data-astro-cid-ju4pidww>night</button></div><script>
+          (() => {
+            const root = document.documentElement;
+            const calm = matchMedia('(prefers-reduced-motion: reduce)');
+            for (const b of document.querySelectorAll('[data-scene-pick]')) {
+              b.setAttribute('aria-pressed', String(b.dataset.scenePick === root.dataset.scene));
+              b.addEventListener('click', () => {
+                const set = () => window.setScene(b.dataset.scenePick);
+                // a short cross-fade where the browser can do one
+                if (document.startViewTransition && !calm.matches) document.startViewTransition(set);
+                else set();
+              });
+            }
+          })();
+        </script></footer></body></html>

@@ -1,0 +1,611 @@
+/* markdown.css */
+.markdown-body {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  overflow-wrap: anywhere;
+  color: var(--fg);
+  background: transparent;
+  line-height: 1.7;
+  font-size: 1.05rem;
+  --media-max-width: 720px;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-weight: 700;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  color: var(--fg-strong);
+  line-height: 1.25;
+  scroll-margin-top: 2rem;
+}
+
+.markdown-body h1 {
+  font-size: 1.8rem;
+  margin-top: 1.8em;
+}
+
+.markdown-body h2 {
+  font-size: 1.45rem;
+  margin-top: 2em;
+}
+
+.markdown-body h3 {
+  font-size: 1.2rem;
+}
+
+.markdown-body h4 {
+  font-size: 1.08rem;
+}
+
+.markdown-body h5 {
+  font-size: 0.95rem;
+}
+
+.markdown-body h6 {
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.markdown-body p {
+  margin: 0 0 0.8em 0;
+  overflow-wrap: break-word;
+}
+
+.markdown-body ul, .markdown-body ol {
+  margin: 1em 0;
+  padding-left: 1.8em;
+}
+
+.markdown-body ul ul,
+.markdown-body ol ol,
+.markdown-body ul ol,
+.markdown-body ol ul {
+  margin-left: 0.25em;
+}
+
+.markdown-body :not(pre) > code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+  background: var(--surface-soft);
+  color: var(--fg);
+  border-radius: 4px;
+}
+
+.markdown-body pre {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+  background: var(--surface-soft);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 1.1em 1.2em;
+  overflow-x: auto;
+  margin: 1.5em 0;
+  text-indent: 0;
+  line-height: 1.6;
+  border: 1px solid var(--border-soft);
+}
+
+.markdown-body pre code {
+  background: transparent;
+  color: inherit;
+  text-indent: 0;
+  margin-left: 0;
+  display: block;
+  font-size: 0.84em;
+  padding: 0;
+  line-height: 1.6;
+}
+
+.markdown-body code {
+  padding: 0.15em 0.3em;
+  font-size: 0.85em;
+}
+
+.markdown-body pre.astro-code,
+.markdown-body pre.astro-code span {
+  color: var(--shiki-light) !important;
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+  text-decoration: var(--shiki-light-text-decoration);
+}
+
+:root[data-theme='dark'] .markdown-body pre.astro-code,
+:root[data-theme='dark'] .markdown-body pre.astro-code span {
+  color: var(--shiki-dark) !important;
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
+}
+
+/* Keep syntax colors, but let code sit quietly against the page in either theme. */
+.markdown-body pre.astro-code {
+  background-color: color-mix(in srgb, var(--bg) 65%, var(--surface-soft)) !important;
+}
+
+.markdown-body pre.astro-code span {
+  background-color: transparent !important;
+}
+
+.markdown-body pre,
+.markdown-body pre code {
+  white-space: pre;
+}
+
+.markdown-body :not(pre) > code {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* --- KaTeX display math: scrollable on overflow --- */
+.markdown-body .katex-display {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--surface-elev);
+  padding: 0.5em 0;
+}
+
+.markdown-body .katex-display::-webkit-scrollbar { height: 8px; }
+.markdown-body .katex-display::-webkit-scrollbar-track { background: var(--surface-elev); border-radius: 6px; }
+.markdown-body .katex-display::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
+.markdown-body .katex-display::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
+
+.markdown-body .md-table-wrap {
+  width: 100%;
+  margin: 1em 0 1.4em;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  /* Scroll shadows: the "local" covers scroll with the content and hide the
+     "scroll" shadows at whichever edge has nothing more to show. */
+  background:
+    linear-gradient(to right, var(--bg) 40%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--bg) 40%, transparent) right center / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(var(--shadow-rgb), 0.14), transparent) left center / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(var(--shadow-rgb), 0.14), transparent) right center / 12px 100% no-repeat scroll;
+}
+
+.markdown-body .md-table-wrap::-webkit-scrollbar { height: 8px; }
+.markdown-body .md-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.markdown-body .md-table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; }
+.markdown-body .md-table-wrap::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
+
+/* Tables fit the reading column and wrap their text; only a table whose
+   columns can't all fit (see min-width below) scrolls sideways. */
+.markdown-body .md-table-wrap > table {
+  border-collapse: collapse;
+  margin: 0;
+  background: none;
+  color: inherit;
+  width: 100%;
+  table-layout: auto;
+  font-size: 0.92em;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-body th, .markdown-body td {
+  padding: 0.55em 0.9em 0.55em 0;
+  text-align: left;
+  vertical-align: top;
+  border: none;
+  background: none;
+  min-width: 7ch;
+  overflow-wrap: normal;
+}
+
+/* identifiers and register names read better unbroken */
+.markdown-body td code,
+.markdown-body th code {
+  white-space: nowrap;
+}
+
+.markdown-body th {
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-strong);
+  color: var(--fg-strong);
+  vertical-align: bottom;
+}
+
+.markdown-body tr:not(:first-child) td {
+  border-top: 1px solid var(--border-muted);
+}
+
+.markdown-body td:last-child,
+.markdown-body th:last-child {
+  padding-right: 0;
+}
+
+@media (max-width: 768px) {
+  .markdown-body .md-table-wrap > table {
+    font-size: 0.85rem;
+  }
+
+  .markdown-body th,
+  .markdown-body td {
+    min-width: 9ch;
+    padding: 0.45em 0.75em 0.45em 0;
+  }
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid var(--border-strong);
+  background: transparent;
+  color: var(--fg-soft);
+  margin: 1.5em 0;
+  padding: 0.5em 0 0.5em 0.75em;
+  font-style: normal;
+}
+
+.markdown-body blockquote p {
+  margin: 0;
+}
+
+.markdown-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(var(--accent-rgb), 0.32);
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.markdown-body a:hover {
+  color: var(--accent-hover);
+  text-decoration-color: rgba(var(--accent-rgb), 0.9);
+}
+
+.markdown-body img {
+  display: block;
+  max-width: min(100%, var(--media-max-width));
+  height: auto;
+  width: auto;
+  margin: 1.5rem auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(var(--shadow-rgb), 0.2);
+}
+
+.markdown-body svg {
+  display: block;
+  height: auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.5rem auto;
+  overflow: visible;
+}
+
+.markdown-body img[src$='.svg'],
+.markdown-body img[src*='.svg?'] {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .markdown-body svg,
+:root[data-theme='dark'] .markdown-body img[src$='.svg'],
+:root[data-theme='dark'] .markdown-body img[src*='.svg?'] {
+  filter: invert(0.94) hue-rotate(180deg) saturate(0.92) contrast(0.95);
+}
+
+/* Keep KaTeX's internal delimiter SVGs on KaTeX's own layout rules. */
+.markdown-body .katex svg {
+  display: block;
+  width: 100%;
+  height: inherit;
+  margin: 0;
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+:root[data-theme='dark'] .markdown-body .katex svg {
+  filter: none;
+}
+
+@media (max-width: 600px) {
+  .markdown-body {
+    --media-max-width: 100%;
+  }
+}
+
+/* Markdown galleries */
+.md-gallery {
+  margin: 1.5rem 0;
+}
+
+.md-gallery-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.md-gallery-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(var(--shadow-rgb), 0.2);
+}
+
+@media (min-width: 1024px) {
+  .markdown-body img {
+    max-width: var(--media-max-width);
+    width: auto;
+  }
+
+  .markdown-body .md-gallery-thumb img {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    transform: none;
+  }
+}
+
+.md-gallery-thumb__badge {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--overlay-control-bg);
+  border: 1px solid var(--overlay-control-border);
+  color: var(--overlay-text);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  backdrop-filter: blur(6px);
+}
+
+.md-gallery-overlay[hidden] {
+  display: none;
+}
+
+.md-gallery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.md-gallery-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-bg);
+}
+
+.md-gallery-overlay__panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.md-gallery-overlay__content {
+  position: relative;
+  width: min(1100px, 100%);
+  max-height: calc(100vh - 3rem);
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 0.75rem;
+}
+
+.md-gallery-overlay__img {
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 8rem);
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(var(--shadow-rgb), 0.18);
+}
+
+.md-gallery-overlay__caption {
+  color: var(--overlay-text);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.md-gallery-overlay__counter {
+  color: var(--overlay-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.md-gallery-overlay__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--overlay-control-border);
+  background: var(--overlay-control-bg);
+  color: var(--overlay-text);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.md-gallery-overlay__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid var(--overlay-control-border);
+  background: var(--overlay-control-bg);
+  color: var(--overlay-text);
+  font-size: 34px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.md-gallery-overlay__nav--prev {
+  left: 1rem;
+}
+
+.md-gallery-overlay__nav--next {
+  right: 1rem;
+}
+
+/* --- Callout blockquotes --- */
+.markdown-body .callout {
+  border-left-width: 3px;
+  border-radius: 0 4px 4px 0;
+  padding: 0.6em 0.9em;
+  background: var(--surface-note);
+  transition: background-color 0.68s ease, border-color 0.68s ease, color 0.68s ease;
+}
+
+.markdown-body .callout .callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  transition: color 0.68s ease;
+}
+
+.markdown-body .callout-update {
+  border-left-color: var(--accent);
+}
+.markdown-body .callout-update .callout-label { color: var(--accent); }
+
+.markdown-body .callout-tldr {
+  border-left-color: var(--cat-bio);
+}
+.markdown-body .callout-tldr .callout-label { color: var(--cat-bio); }
+
+.markdown-body .callout-note {
+  border-left-color: var(--cat-gpu);
+}
+.markdown-body .callout-note .callout-label { color: var(--cat-gpu); }
+
+.markdown-body .callout-warning {
+  border-left-color: var(--cat-ml);
+}
+.markdown-body .callout-warning .callout-label { color: var(--cat-ml); }
+
+/* --- Tufte-style sidenotes --- */
+.markdown-body {
+  counter-reset: sidenote-counter;
+}
+
+.sidenote-number {
+  counter-increment: sidenote-counter;
+  cursor: pointer;
+}
+
+.sidenote-number::after {
+  content: counter(sidenote-counter);
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--accent, #4a7c96);
+  font-family: var(--font-mono);
+  margin-left: 1px;
+}
+
+.sidenote-toggle {
+  display: none;
+}
+
+/* Default: inline collapsible (mobile + medium screens) */
+.sidenote {
+  display: none;
+  float: none;
+  width: auto;
+  margin: 0.4em 0 0.4em 1em;
+  padding: 0.4em 0.75em;
+  background: var(--surface-note);
+  border-left: 2px solid var(--border-muted);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--fg-soft);
+}
+
+.sidenote::before {
+  content: counter(sidenote-counter) ". ";
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--accent, #4a7c96);
+}
+
+.sidenote-toggle:checked + .sidenote {
+  display: block;
+}
+
+/* A standalone note after display math belongs to the equation. */
+.math-sidenote {
+  position: relative;
+  margin: 1em 0;
+}
+
+.math-sidenote-equation {
+  position: relative;
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  margin-inline: auto;
+}
+
+.markdown-body .math-sidenote-equation .katex-display {
+  margin: 0;
+}
+
+.math-sidenote-equation > .sidenote-number {
+  position: absolute;
+  top: 0.5em;
+  left: 100%;
+  padding-left: 0.25em;
+  line-height: 1;
+}
+
+.math-sidenote-equation > .sidenote-number::after {
+  vertical-align: top;
+  line-height: 1;
+}
+
+/* Wide screens: float into the right margin */
+@media (min-width: 1280px) {
+  .sidenote {
+    display: block;
+    float: right;
+    clear: right;
+    width: 200px;
+    margin: 0.2rem 0 0.5rem -200px;
+    margin-right: calc(-200px - 2rem);
+    padding: 0;
+    background: none;
+    border-left: none;
+    border-radius: 0;
+    font-size: 0.8rem;
+    color: var(--fg-faint);
+    position: relative;
+  }
+
+  .sidenote-number {
+    cursor: default;
+  }
+
+  .math-sidenote > .sidenote {
+    position: absolute;
+    top: 0.5rem;
+    left: calc(100% + 2rem);
+    float: none;
+    margin: 0;
+  }
+
+  /* Hide checkbox behavior — always visible */
+  .sidenote-toggle:checked + .sidenote {
+    display: block;
+  }
+}

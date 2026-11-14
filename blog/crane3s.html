@@ -1,0 +1,176 @@
+<!DOCTYPE html><html lang="en-US" data-astro-cid-ju4pidww><head><meta charset="UTF-8"><base target="_blank"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="controlling the crane 3s using raw bluetooth packets."><meta name="author" content="Anuraag Warudkar"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><title>reverse engineering the crane 3s</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><link rel="preload" href="/fonts/GoogleSansCode-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/markdown.css"><link rel="canonical" href="https://anuraagw.me/blog/crane3s"><link rel="alternate" type="application/rss+xml" title="anuraag" href="/rss.xml"><meta property="og:title" content="reverse engineering the crane 3s"><meta property="og:description" content="controlling the crane 3s using raw bluetooth packets."><meta property="og:type" content="article"><meta property="og:url" content="https://anuraagw.me/blog/crane3s"><meta property="og:image" content="https://anuraagw.me/og/crane3s.png"><meta property="og:image:alt" content="reverse engineering the crane 3s"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="anuraag"><meta property="article:published_time" content="2025-07-21T00:00:00.000Z"><meta property="article:section" content="hardware"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@boopdotpng"><meta name="twitter:creator" content="@boopdotpng"><meta name="twitter:title" content="reverse engineering the crane 3s"><meta name="twitter:description" content="controlling the crane 3s using raw bluetooth packets."><meta name="twitter:image" content="https://anuraagw.me/og/crane3s.png"><meta name="twitter:image:alt" content="reverse engineering the crane 3s"><meta property="article:author" content="https://anuraagw.me/"><meta property="article:tag" content="hardware"><meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)"><script>(function(){const isHome = false;
+
+    (() => {
+      // One setting for the whole site: which painting is on the homepage, and with it the theme.
+      // Night is the dark theme; morning, day and sunset are light. Until the visitor picks one,
+      // their system setting decides between night and sunset.
+      const root = document.documentElement;
+      const scenes = ['morning', 'day', 'sunset', 'night'];
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const picked = () => {
+        try { return localStorage.getItem('scene'); } catch (e) { return null; /* private mode */ }
+      };
+      const current = () => {
+        // ?scene=day forces one on the homepage, for linking to it
+        const s = (isHome && new URLSearchParams(location.search).get('scene')) || picked();
+        return scenes.includes(s) ? s : prefersDark.matches ? 'night' : 'sunset';
+      };
+      const apply = (scene) => {
+        root.dataset.scene = scene;
+        root.dataset.theme = scene === 'night' ? 'dark' : 'light';
+        for (const b of document.querySelectorAll('[data-scene-pick]')) b.setAttribute('aria-pressed', String(b.dataset.scenePick === scene));
+      };
+      apply(current());
+      // used by the picker in the footer of every page but the homepage (scene.js runs that one)
+      window.setScene = (scene) => {
+        try { localStorage.setItem('scene', scene); } catch (e) { /* private mode */ }
+        apply(scene);
+      };
+      // the system flips while the page is open and nothing was picked: follow it
+      // (the homepage would have to repaint, so there it waits for the next visit)
+      prefersDark.addEventListener('change', () => { if (!isHome) apply(current()); });
+      // back/forward can restore a page from before the scene was changed on another one
+      window.addEventListener('pageshow', (e) => { if (e.persisted && current() !== root.dataset.scene) location.reload(); });
+      if (isHome) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = `/painting/${root.dataset.scene}.webp`;
+        document.head.append(link);
+      }
+    })();
+  })();</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","@id":"https://anuraagw.me/#person","name":"Anuraag Warudkar","alternateName":["anuraag","anuraagw"],"url":"https://anuraagw.me/","sameAs":["https://github.com/boopdotpng","https://twitter.com/boopdotpng"],"jobTitle":"Software Engineer"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://anuraagw.me/#website","name":"anuraag","url":"https://anuraagw.me/","publisher":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://anuraagw.me/blog/crane3s#webpage","url":"https://anuraagw.me/blog/crane3s","name":"reverse engineering the crane 3s","description":"controlling the crane 3s using raw bluetooth packets.","inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"about":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"reverse engineering the crane 3s","url":"https://anuraagw.me/blog/crane3s","description":"controlling the crane 3s using raw bluetooth packets.","datePublished":"2025-07-21T00:00:00.000Z","dateModified":"2025-07-21T00:00:00.000Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://anuraagw.me/blog/crane3s"},"author":{"@id":"https://anuraagw.me/#person"},"publisher":{"@type":"Person","name":"Anuraag Warudkar","url":"https://anuraagw.me/"},"inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"image":["https://anuraagw.me/og/crane3s.png"],"articleSection":"hardware","wordCount":1333}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"home","item":"https://anuraagw.me"},{"@type":"ListItem","position":2,"name":"reverse engineering the crane 3s"}]}</script><link rel="stylesheet" href="/_astro/Layout.D2EGMZn8.css"><link rel="stylesheet" href="/_astro/_slug_.BVDpMPvj.css"></head><body data-astro-cid-ju4pidww><a class="skip-link" href="#main-content" target="_self" data-astro-cid-ju4pidww>skip to content</a><header class="site-header" data-astro-cid-ju4pidww><div class="site-title" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww><span class="arrow" data-astro-cid-ju4pidww>&#8592;</span><span class="site-label" data-astro-cid-ju4pidww>anuraagw.me</span></a></div></header><main id="main-content" class="page-main" data-astro-cid-ju4pidww><nav class="toc" aria-label="Table of contents" data-astro-cid-p33bl5ka><ol data-astro-cid-p33bl5ka><li data-astro-cid-p33bl5ka><a target="_self" href="#how-it-works-i-think" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>how it works (i think)</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#frame-breakdown" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>frame breakdown</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#finding-the-checksum-algorithm" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>finding the checksum algorithm</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#intensity-and-axis-selection" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>intensity and axis selection</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#notifications" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>notifications</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#unanswered-questions" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>unanswered questions</span></a></li></ol></nav><script type="module">var e=document.querySelector(`.toc`);if(e){let t=[...e.querySelectorAll(`a`)].flatMap(e=>{let t=document.getElementById(decodeURIComponent(e.hash.slice(1)));return t?(t.tabIndex=-1,[{link:e,heading:t}]):[]}),n=document.querySelector(`.post-subline`),r=!1,i,a=()=>{r=!1,e.classList.toggle(`is-ready`,!n||n.getBoundingClientRect().bottom<0);let a=-1;t.forEach((e,t)=>{e.heading.getBoundingClientRect().top<=96&&(a=t)}),window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2&&(a=t.length-1),t.forEach((e,t)=>e.link.parentElement.classList.toggle(`is-read`,t<a));let o=t[a]?.link;o!==i&&(i?.removeAttribute(`aria-current`),i=o,i?.setAttribute(`aria-current`,`location`),i&&!e.matches(`:hover, :focus-within`)&&i.scrollIntoView({block:`nearest`}))},o=()=>{r||(r=!0,requestAnimationFrame(a))};window.addEventListener(`scroll`,o,{passive:!0}),window.addEventListener(`resize`,o,{passive:!0}),window.addEventListener(`hashchange`,o),o()}</script><div class="centered-wrapper" data-astro-cid-zg7dkzxc><article class="post-plain markdown-body" data-astro-cid-zg7dkzxc><div class="post-meta" data-astro-cid-zg7dkzxc><time datetime="2025-07-21" data-astro-cid-zg7dkzxc>july 21, 2025</time><span class="post-meta-sep" data-astro-cid-zg7dkzxc>•</span><span class="post-readtime" data-astro-cid-zg7dkzxc>approx 15m read</span></div><h1 id="article-top" class="post-title-main" data-astro-cid-zg7dkzxc>reverse engineering the crane 3s</h1><div class="post-subline" data-astro-cid-zg7dkzxc><p class="post-description" data-astro-cid-zg7dkzxc>controlling the crane 3s using raw bluetooth packets.</p></div><p>Short post, but if anyone bought a Crane 3s and wants to control it without using the ZY play app, here’s how: <a href="https://github.com/boopdotpng/crane3s-reversed">github</a>.</p>
+<p>This was quite an interesting and challenging journey. The structure of the packets and the checksum took a while to figure out, but otherwise this was a very straightforward reverse engineering effort.</p>
+<p>This <a href="https://petermaguire.xyz/posts/zhiyun-weebil-s-ble-protocol/">article</a> by Peter Maguire covers most of the initial effort, including using Android’s Bluetooth HCI snoop functionality to read all the packets being sent to the Crane 3s. However, I think it includes a lot of unnecessary information and gets the packet structure slightly wrong. He also doesn’t go over how to generate the checksum for the packets, meaning you’re stuck just replaying whatever packets are sent by the app instead of being able to finetune the speed and timing (by generating your own packets).</p>
+<h2 id="how-it-works-i-think">how it works (i think)</h2>
+<p>Here’s how I think each packet is structured:</p>
+<h3 id="frame-breakdown">frame breakdown</h3>
+<div class="md-table-wrap">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Byte Range</strong></th><th><strong>Field</strong></th><th><strong>Description</strong></th></tr></thead><tbody><tr><td><code>0–1</code></td><td><code>24 3C</code></td><td><strong>Header / magic value</strong> (always fixed)</td></tr><tr><td><code>2–3</code></td><td><code>08 00</code></td><td><strong>Payload length</strong> (always <code>8</code>, little-endian)</td></tr><tr><td><code>4–5</code></td><td><code>18 12</code></td><td><strong>Command group</strong> — always this for motion control</td></tr><tr><td><code>6</code></td><td>Sequence number</td><td>Increments with every packet (wraps at 255)</td></tr><tr><td><code>7</code></td><td>Sub-command type</td><td>Always <code>01</code> = “joystick axis update”</td></tr><tr><td><code>8</code></td><td>Axis ID</td><td><code>01</code> = <strong>Tilt</strong>, <code>02</code> = <strong>Roll</strong> (centred), <code>03</code> = <strong>Pan</strong></td></tr><tr><td><code>9</code></td><td>Frame type</td><td>Always <code>10</code> = interpreted as absolute target position/speed</td></tr><tr><td><code>10–11</code></td><td>Axis value (LE)</td><td>2-byte <strong>axis deflection value</strong> (see below)</td></tr><tr><td><code>12–13</code></td><td>CRC-16 (XModem)</td><td>Calculated over <strong>bytes 4–11</strong>, little-endian</td></tr></tbody></table>
+</div>
+<h2 id="finding-the-checksum-algorithm">finding the checksum algorithm</h2>
+<p>The checksum is a CRC-16 based checksum with polynomial <code>0x1021</code> and initial value <code>0x0</code>. CRC-16 is by far the most popular checksum used in embedded systems and development (I’ve used it many times), and the most common polynomial is <code>0x1021</code>. Since I had no way of guessing the initial value, I wrote a python script to brute force every possible initial value, and since there are only ~65k possible values, this took almost no time. <label for="sn-1" class="sidenote-number"></label><input type="checkbox" id="sn-1" class="sidenote-toggle"/><span class="sidenote">The XModem variant of CRC-16 uses exactly this polynomial and init=0 — matching the protocol here without any tweaks.</span></p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="py"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">from</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> itertools </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">import</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> product</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">def</span><span style="--shiki-light:#6F42C1;--shiki-dark:#DCBDFB"> crc16</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(data, poly</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1021</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, init</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0000</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, xor_out</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">0000</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">):</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">  crc </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> init</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">  for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> b </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> data:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">    crc </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">^=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> b </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">&lt;&lt;</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> 8</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">    for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> _ </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> range</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">8</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">):</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">      crc </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> ((crc </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">&lt;&lt;</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">^</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> poly) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">&amp;</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067"> 0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">FFFF</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067"> if</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> (crc </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">&amp;</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067"> 0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">8000</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">else</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> (crc </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">&lt;&lt;</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">&amp;</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067"> 0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">FFFF</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">  return</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> crc </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">^</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> xor_out</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">frames </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> [</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">bytes</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">.fromhex(line) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> line </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> ...</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">]  </span><span style="--shiki-light:#6A737D;--shiki-dark:#768390"># your dump</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">samples </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> [(f[:</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">-</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">], </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">int</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">.from_bytes(f[</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">-</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">2</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">:], </span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">&quot;little&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> f </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> frames]</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> poly </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">1021</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">8005</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">, </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">A001</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">): </span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">  for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> init </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> range</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(</span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">0x</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">10000</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">):</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">    ok </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> all</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(crc16(d, poly, init) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">==</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> c </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> d, c </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> samples[:</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">4</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">])</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> ok:</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">      if</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> all</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(crc16(d, poly, init) </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">==</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> c </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">for</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> d, c </span><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">in</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7"> samples):</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">        print</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">hex</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(poly), </span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF">hex</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">(init), </span><span style="--shiki-light:#032F62;--shiki-dark:#96D0FF">&quot;works&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#ADBAC7">)</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F47067">        raise</span><span style="--shiki-light:#005CC5;--shiki-dark:#6CB6FF"> SystemExit</span></span></code></pre>
+<p>I realized a little later on that I was calculating the checksum on the wrong set of bytes. The checksum is usually only calculated on the payload, not the surrounding data (which usually stays the same because the protocol is static). According to the length parameter in the packet above (always 8), the payload is bytes 4-11 (inclusive). Running the script with this modification produced the correct initial value.</p>
+<h3 id="intensity-and-axis-selection">intensity and axis selection</h3>
+<p>The next insight came from simply replaying the packets that I saw in the wireshark log. I made 4 different captures, moving the joystick in a different direction each time (up, down, left, right). I then sent those same packets to the gimbal and observed how it moved. It turned out that there was a huge difference in movement speed between the first 15 packets and the last 15 packets. Now I knew that there was some kind of “speed” parameter in the payload that encoded how far the joystick was pushed in a certain direction. Since I had started each capture with the joystick close to center and slowly moved toward the edge, this made sense. Then, I noticed another pattern:</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>// packets with opcode 52 (write) from the tail end of the pan-left capture </span></span>
+<span class="line"><span>// non-changing bytes removed</span></span>
+<span class="line"><span>20 01 01 10 00 08 70 5f</span></span>
+<span class="line"><span>21 01 02 10 00 08 0c 81</span></span>
+<span class="line"><span>22 01 03 10 2c 01 fa eb</span></span>
+<span class="line"><span>23 01 01 10 00 08 90 91</span></span>
+<span class="line"><span>24 01 02 10 00 08 0d c2</span></span>
+<span class="line"><span>25 01 03 10 2c 01 bb 23</span></span>
+<span class="line"><span>26 01 01 10 00 08 91 d2</span></span>
+<span class="line"><span>27 01 02 10 00 08 ed 0c</span></span>
+<span class="line"><span>28 01 03 10 2c 01 f8 6d</span></span></code></pre>
+<p>The first byte is the counter, which just increments by one and then wraps. The next one is static, so we’ll also ignore that. The third byte, however, seems to indicate that these packets are being sent in groups of three. Every “tick”, a group of three packets is sent—one for tilt, one for pan, and one for roll, each with an intensity (the next two bytes). In this capture, the intensity is much higher for axis three than the other two, suggesting that axis 3 corresponds to pan.</p>
+<pre class="astro-code astro-code-themes github-light github-dark-dimmed" style="--shiki-light:#24292e;--shiki-dark:#adbac7;--shiki-light-bg:#fff;--shiki-dark-bg:#22272e;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>// packets with opcode 52 (write) from the tail end of the tilt-up capture </span></span>
+<span class="line"><span>// non-changing bytes removed</span></span>
+<span class="line"><span>1a 01 01 10 d4 0e db 4f</span></span>
+<span class="line"><span>1b 01 02 10 00 08 82 28</span></span>
+<span class="line"><span>1c 01 03 10 00 08 77 96</span></span>
+<span class="line"><span>1d 01 01 10 d4 0e 9a 87</span></span>
+<span class="line"><span>1e 01 02 10 00 08 83 6b</span></span>
+<span class="line"><span>1f 01 03 10 00 08 97 58</span></span>
+<span class="line"><span>20 01 01 10 d4 0e 55 e6</span></span>
+<span class="line"><span>21 01 02 10 00 08 0c 81</span></span>
+<span class="line"><span>22 01 03 10 00 08 58 39</span></span></code></pre>
+<p>Similarly, the intensity value is higher for axis one, meaning that axis 1 corresponds to tilt. Axis two goes unused, as far as I can tell. It seems that the gimbal manages its own roll; there’s no option to roll in the app and sending intensity values with ais 2 doesn’t seem to do anything. I’m not sure why Zhiyun chose to include it in the transmission protocol.</p>
+<p>The intensity value is an unsigned 16-bit value, but only the lowest 12 bits are used. The center is <code>0x0800</code> (2048), and the range is <code>0x0000</code> to <code>0x0FFF</code> (4095). If the value sent is less than 2048 it’s treated as a negative value (down and left are encoded like this).</p>
+<h2 id="notifications">notifications</h2>
+<p>The gimbal sends notifications back (the script prints them out), but I don’t think there’s a way to figure out the structure of those packets. Figuring out the gimbal’s battery, how far it’s been moved in a certain direction, and where it is in space (relative to origin) are out of the question. To reliably control it, you need to attach some sort of IMU to the gimbal and track how far you’ve moved the gimbal in each direction so you know where it is. I initially went down the rabbit hole of trying to decompile and read the source code for the .apk file for their android app, but it’s incredibly obfuscated. The app includes code for accessing a lot of other Zhiyun products, and seems to pull a lot of information from the internet during startup (like fetching the gimbal models and protocols). The protocol information might not even be stored in the apk.</p>
+<h2 id="unanswered-questions">unanswered questions</h2>
+<ol>
+<li>Why did they include axis 02? Is it possible to control roll?</li>
+<li>Can you encode multiple directions at once? Sending non-centered intensity values for two axes?</li>
+<li>Is there a heartbeat packet? From looking at my packet captures, there doesn’t appear to be. There are a couple of oddball packets (like one that reads “support” midway through), but the gimbal seems to work just fine without including them. The script I wrote only sends the movement packets.</li>
+</ol></article></div><script type="module" src="/_astro/gallery.B6cRjD71.ts"></script><script type="module" src="/_astro/diagram-zoom.C1fRBZe1.ts"></script></main><footer class="site-footer" data-astro-cid-ju4pidww><nav class="footer-nav" aria-label="Footer" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww>home</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>github</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>@boopdotpng</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="/rss.xml" target="_self" data-astro-cid-ju4pidww>rss</a></nav><div class="theme-pick" role="group" aria-label="Theme" data-astro-cid-ju4pidww><button type="button" data-scene-pick="morning" aria-pressed="false" data-astro-cid-ju4pidww>morning</button><button type="button" data-scene-pick="day" aria-pressed="false" data-astro-cid-ju4pidww>day</button><button type="button" data-scene-pick="sunset" aria-pressed="false" data-astro-cid-ju4pidww>sunset</button><button type="button" data-scene-pick="night" aria-pressed="false" data-astro-cid-ju4pidww>night</button></div><script>
+          (() => {
+            const root = document.documentElement;
+            const calm = matchMedia('(prefers-reduced-motion: reduce)');
+            for (const b of document.querySelectorAll('[data-scene-pick]')) {
+              b.setAttribute('aria-pressed', String(b.dataset.scenePick === root.dataset.scene));
+              b.addEventListener('click', () => {
+                const set = () => window.setScene(b.dataset.scenePick);
+                // a short cross-fade where the browser can do one
+                if (document.startViewTransition && !calm.matches) document.startViewTransition(set);
+                else set();
+              });
+            }
+          })();
+        </script></footer></body></html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="en-US" data-astro-cid-ju4pidww><head><meta charset="UTF-8"><base target="_blank"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="hands-on review of the framework laptop 13 — build quality, repairability, linux support, and whether the modular dream holds up."><meta name="author" content="Anuraag Warudkar"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><title>framework 13 review</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><link rel="preload" href="/fonts/GoogleSansCode-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/katex.min.css"><link rel="stylesheet" href="/markdown.css"><link rel="canonical" href="https://anuraagw.me/blog/framework13"><link rel="alternate" type="application/rss+xml" title="anuraag" href="/rss.xml"><meta property="og:title" content="framework 13 review"><meta property="og:description" content="hands-on review of the framework laptop 13 — build quality, repairability, linux support, and whether the modular dream holds up."><meta property="og:type" content="article"><meta property="og:url" content="https://anuraagw.me/blog/framework13"><meta property="og:image" content="https://anuraagw.me/og/framework13.png"><meta property="og:image:alt" content="framework 13 review"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="anuraag"><meta property="article:published_time" content="2025-12-30T00:00:00.000Z"><meta property="article:section" content="misc"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@boopdotpng"><meta name="twitter:creator" content="@boopdotpng"><meta name="twitter:title" content="framework 13 review"><meta name="twitter:description" content="hands-on review of the framework laptop 13 — build quality, repairability, linux support, and whether the modular dream holds up."><meta name="twitter:image" content="https://anuraagw.me/og/framework13.png"><meta name="twitter:image:alt" content="framework 13 review"><meta property="article:author" content="https://anuraagw.me/"><meta property="article:tag" content="misc"><meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)"><script>(function(){const isHome = false;
+
+    (() => {
+      // One setting for the whole site: which painting is on the homepage, and with it the theme.
+      // Night is the dark theme; morning, day and sunset are light. Until the visitor picks one,
+      // their system setting decides between night and sunset.
+      const root = document.documentElement;
+      const scenes = ['morning', 'day', 'sunset', 'night'];
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const picked = () => {
+        try { return localStorage.getItem('scene'); } catch (e) { return null; /* private mode */ }
+      };
+      const current = () => {
+        // ?scene=day forces one on the homepage, for linking to it
+        const s = (isHome && new URLSearchParams(location.search).get('scene')) || picked();
+        return scenes.includes(s) ? s : prefersDark.matches ? 'night' : 'sunset';
+      };
+      const apply = (scene) => {
+        root.dataset.scene = scene;
+        root.dataset.theme = scene === 'night' ? 'dark' : 'light';
+        for (const b of document.querySelectorAll('[data-scene-pick]')) b.setAttribute('aria-pressed', String(b.dataset.scenePick === scene));
+      };
+      apply(current());
+      // used by the picker in the footer of every page but the homepage (scene.js runs that one)
+      window.setScene = (scene) => {
+        try { localStorage.setItem('scene', scene); } catch (e) { /* private mode */ }
+        apply(scene);
+      };
+      // the system flips while the page is open and nothing was picked: follow it
+      // (the homepage would have to repaint, so there it waits for the next visit)
+      prefersDark.addEventListener('change', () => { if (!isHome) apply(current()); });
+      // back/forward can restore a page from before the scene was changed on another one
+      window.addEventListener('pageshow', (e) => { if (e.persisted && current() !== root.dataset.scene) location.reload(); });
+      if (isHome) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = `/painting/${root.dataset.scene}.webp`;
+        document.head.append(link);
+      }
+    })();
+  })();</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","@id":"https://anuraagw.me/#person","name":"Anuraag Warudkar","alternateName":["anuraag","anuraagw"],"url":"https://anuraagw.me/","sameAs":["https://github.com/boopdotpng","https://twitter.com/boopdotpng"],"jobTitle":"Software Engineer"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://anuraagw.me/#website","name":"anuraag","url":"https://anuraagw.me/","publisher":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://anuraagw.me/blog/framework13#webpage","url":"https://anuraagw.me/blog/framework13","name":"framework 13 review","description":"hands-on review of the framework laptop 13 — build quality, repairability, linux support, and whether the modular dream holds up.","inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"about":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"framework 13 review","url":"https://anuraagw.me/blog/framework13","description":"hands-on review of the framework laptop 13 — build quality, repairability, linux support, and whether the modular dream holds up.","datePublished":"2025-12-30T00:00:00.000Z","dateModified":"2025-12-30T00:00:00.000Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://anuraagw.me/blog/framework13"},"author":{"@id":"https://anuraagw.me/#person"},"publisher":{"@type":"Person","name":"Anuraag Warudkar","url":"https://anuraagw.me/"},"inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"image":["https://anuraagw.me/og/framework13.png"],"articleSection":"misc","wordCount":985}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"home","item":"https://anuraagw.me"},{"@type":"ListItem","position":2,"name":"framework 13 review"}]}</script><link rel="stylesheet" href="/_astro/Layout.D2EGMZn8.css"><link rel="stylesheet" href="/_astro/_slug_.BVDpMPvj.css"></head><body data-astro-cid-ju4pidww><a class="skip-link" href="#main-content" target="_self" data-astro-cid-ju4pidww>skip to content</a><header class="site-header" data-astro-cid-ju4pidww><div class="site-title" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww><span class="arrow" data-astro-cid-ju4pidww>&#8592;</span><span class="site-label" data-astro-cid-ju4pidww>anuraagw.me</span></a></div></header><main id="main-content" class="page-main" data-astro-cid-ju4pidww><nav class="toc" aria-label="Table of contents" data-astro-cid-p33bl5ka><ol data-astro-cid-p33bl5ka><li data-astro-cid-p33bl5ka><a target="_self" href="#screen" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>screen</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#performance" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>performance</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#cpu" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>cpu</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#integrated-gpu" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>integrated gpu</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#fan-noise" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>fan noise</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#battery-life" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>battery life</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#random-things" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>random things</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#why-buy-one" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>why buy one?</span></a></li><li data-astro-cid-p33bl5ka><a target="_self" href="#aside-framework-desktop-and-home-ai-box-alternatives" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>aside: framework desktop and home ai box alternatives</span></a></li><li class="is-sub" data-astro-cid-p33bl5ka><a target="_self" href="#alternatives" data-astro-cid-p33bl5ka><span class="toc-tick" aria-hidden="true" data-astro-cid-p33bl5ka></span><span class="toc-label" data-astro-cid-p33bl5ka>alternatives</span></a></li></ol></nav><script type="module">var e=document.querySelector(`.toc`);if(e){let t=[...e.querySelectorAll(`a`)].flatMap(e=>{let t=document.getElementById(decodeURIComponent(e.hash.slice(1)));return t?(t.tabIndex=-1,[{link:e,heading:t}]):[]}),n=document.querySelector(`.post-subline`),r=!1,i,a=()=>{r=!1,e.classList.toggle(`is-ready`,!n||n.getBoundingClientRect().bottom<0);let a=-1;t.forEach((e,t)=>{e.heading.getBoundingClientRect().top<=96&&(a=t)}),window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2&&(a=t.length-1),t.forEach((e,t)=>e.link.parentElement.classList.toggle(`is-read`,t<a));let o=t[a]?.link;o!==i&&(i?.removeAttribute(`aria-current`),i=o,i?.setAttribute(`aria-current`,`location`),i&&!e.matches(`:hover, :focus-within`)&&i.scrollIntoView({block:`nearest`}))},o=()=>{r||(r=!0,requestAnimationFrame(a))};window.addEventListener(`scroll`,o,{passive:!0}),window.addEventListener(`resize`,o,{passive:!0}),window.addEventListener(`hashchange`,o),o()}</script><div class="centered-wrapper" data-astro-cid-zg7dkzxc><article class="post-plain markdown-body" data-astro-cid-zg7dkzxc><div class="post-meta" data-astro-cid-zg7dkzxc><time datetime="2025-12-30" data-astro-cid-zg7dkzxc>december 30, 2025</time><span class="post-meta-sep" data-astro-cid-zg7dkzxc>•</span><span class="post-readtime" data-astro-cid-zg7dkzxc>approx 6m read</span></div><h1 id="article-top" class="post-title-main" data-astro-cid-zg7dkzxc>framework 13 review</h1><div class="post-subline" data-astro-cid-zg7dkzxc><p class="post-description" data-astro-cid-zg7dkzxc>hands-on review of the framework laptop 13 — build quality, repairability, linux support, and whether the modular dream holds up.</p></div><blockquote class="callout callout-tldr">
+<p><strong class="callout-label">tl;dr:</strong></p>
+<ul>
+<li>ok battery life</li>
+<li>ok display</li>
+<li>fantastic keyboard, better than my macbook</li>
+<li>3:2 aspect ratio is awesome</li>
+<li>performance is ok. cpu is great, gpu is awful</li>
+<li>USB4 support / PCIe Tunneling</li>
+<li>build is slightly worse than a macbook air (way better than framework 16)</li>
+</ul>
+</blockquote>
+<h2 id="screen">screen</h2>
+<p>i have the 2.2k panel. i took one look at the rounded corners on the 2.8k display and how it leaves a small gap at the top corners and couldn’t unsee it. the 2.8k display also has worse color accuracy, more ghosting, and a higher response time. i think it’s more of a side-grade than an upgrade.</p>
+<p>after you install a color profile, the colors are quite decent. also had an annoying issue where the lowest power profile would mess with the brightness of the display and everything would look washed out. <a href="https://chatgpt.com/share/6950e06b-fa08-800c-9670-272d4369ade2">the fix</a></p>
+<p>60hz is not really that much of a dealbreaker. i don’t really notice that its low-refresh rate 90% of the time.</p>
+<p>the screen is also <em>very</em> bright. ~450 nits!</p>
+<h2 id="performance">performance</h2>
+<p>total power draw is about ~50W between the cpu and gpu. the gpu can pull 40W at full utilization. the cpu pulls about 40W as well (but not at the same time).</p>
+<h3 id="cpu">cpu</h3>
+<p>8c/16t ai 7 350 is actually decent. things compile fast-ish for a laptop. no complaints here.</p>
+<h3 id="integrated-gpu">integrated gpu</h3>
+<p>slow. very slow.</p>
+<img src="/images/slow-gpu.png" alt="GPU benchmark showing poor integrated graphics performance" loading="lazy" decoding="async"/>
+<p>you basically can’t do any real gpu work on the iGPU. elden ring runs at 40fps on the absolute lowest settings.</p>
+<p>these laptops are RDNA3.5, and have ROCm support (<code>sudo dnf install rocm*</code> will install 6.4). very nice for learning the amdgpu stack.</p>
+<h3 id="fan-noise">fan noise</h3>
+<p>it’s mostly silent when you’re using it normally (as long as the bottom vents are uncovered). the fan never runs longer than it needs to. awesome job here.</p>
+<h2 id="battery-life">battery life</h2>
+<p>idle power is not great. i have vs code, chrome, and ghostty open, and i’m in the lowest power profile. 45% screen brightness.</p>
+<img src="/images/idle-power-power-saver.png" alt="Power consumption at idle in power saver mode showing 5.5-6W draw" loading="lazy" decoding="async"/>
+<p>best case is 5.5 to 6W, which gives you about 10 hours of battery life. the catch is that in this power profile, the max cpu freq has been massively reduced. the computer is noticeably slower.</p>
+<p>in the middle and performance power profiles, idle is ~7.5W (8 hours). still quite reasonable.</p>
+<p>cpu/gpu performance on battery vs plugged in is identical!</p>
+<h2 id="random-things">random things</h2>
+<p><strong>keyboard brightness</strong></p>
+<p>the lowest keyboard brightness is too bright. it looks super cool with the transparent keyboard option, but in a completely dark room it will blind you.</p>
+<p><strong>fingerprint</strong></p>
+<p>super reliable, no issues.</p>
+<p><strong>trackpad</strong></p>
+<p>forgettable.</p>
+<p><strong>removable ports</strong></p>
+<p>this is actually sort of useful. usb-c charging on both sides, and i can add a usb-a or hdmi port without much hassle.</p>
+<p><strong>aesthetics</strong></p>
+<p>top-tier. noobs can’t use the translucent keyboard, and the translucent purple bezel and ports are fantastic. super unique looking laptop, especially if you can put a dbrand skin on the top.</p>
+<h2 id="why-buy-one">why buy one?</h2>
+<p>the cost to upgrade is quite high. the HX 370 motherboard itself is $999! imagine how expensive the next-gen top-end motherboard would be. it’s almost cheaper to buy a whole new laptop.</p>
+<p>soldered memory is going to be standard going forward. newer AMD cpus like strix halo are requiring soldered memory (see framework desktop), and that reduces the upgradeability of the laptop. the memory bandwidth on this laptop (dual channel ddr5-5600 — 89GB/s) is one of the main reasons the GPU is so slow. <label for="sn-1" class="sidenote-number"></label><input type="checkbox" id="sn-1" class="sidenote-toggle"/><span class="sidenote">Strix Halo with LPDDR5X-8000 in contrast gets ~256 GB/s — nearly 3x — which is why its iGPU is in a different league.</span></p>
+<p>i don’t really see the case for buying a framework <em>because</em> it’s a framework. buy it because it’s a decent laptop. most other laptops miss out on a core area that makes it a terrible experience. i don’t feel this way with the framework 13.</p>
+<ul>
+<li>zephyrus g14/g16: questionable PCIe tunneling support, poor battery life, screen is less bright, 16:10 aspect ratio, nvidia gpu + linux</li>
+<li>zenbook s16: display is very dim, and you only get 24GB ram with the HX370 (32 would be ideal)</li>
+<li>new-gen thinkpad: honestly, haven’t tried this one. but it’s expensive, not in the same price bracket as the framework 13 (bring your own ram+ssd, i bought before the shortage :))</li>
+<li>macbook air/used pro: doesn’t run linux, disqualified.</li>
+<li>hp zbook g1a: $2,000! probably an all around better laptop than the fw13, but almost double the price.</li>
+</ul>
+<h2 id="aside-framework-desktop-and-home-ai-box-alternatives">aside: framework desktop and home ai box alternatives</h2>
+<p>saw a lot of people buying framework desktops for AI on twitter, and frankly it doesn’t make sense to me. 250GB/s memory bandwidth? RX 7600 class peformance? the only models that run somewhat well on it are MoE models. every dense model is under 10k/s, which is unusable.</p>
+<p>training models on it (from scratch) is also impossible. it would take weeks to train anything decent.</p>
+<ul>
+<li>open source models (that you can run at usable speeds) aren’t good yet. just pay the $20/mo and enjoy while it’s cheap.</li>
+</ul>
+<h3 id="alternatives">alternatives</h3>
+<p>2x 3090 / amd epyc - $4000 ish?</p>
+<p>add 2 more 3090s - $5500. you have 96GB of much faster VRAM, and a half-decent training setup.</p>
+<p>with a good motherboard, you can potentially have 6 3090s, 144GB of fast VRAM.</p>
+<p>you can undercut the tinybox prices by ~20%, as long as you’re willing to sink hours into troubleshooting, setup and building. <label for="sn-2" class="sidenote-number"></label><input type="checkbox" id="sn-2" class="sidenote-toggle"/><span class="sidenote">The tinybox red is 6x 7900 XTX, which is a fundamentally better architecture for this use case than 3090s — more memory bandwidth and better ROCm support on recent builds.</span></p>
+<p>all better options than spending $2,000 on a machine that does AI poorly. save that for a future 3090 machine!</p></article></div><script type="module" src="/_astro/gallery.B6cRjD71.ts"></script><script type="module" src="/_astro/diagram-zoom.C1fRBZe1.ts"></script></main><footer class="site-footer" data-astro-cid-ju4pidww><nav class="footer-nav" aria-label="Footer" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww>home</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>github</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>@boopdotpng</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="/rss.xml" target="_self" data-astro-cid-ju4pidww>rss</a></nav><div class="theme-pick" role="group" aria-label="Theme" data-astro-cid-ju4pidww><button type="button" data-scene-pick="morning" aria-pressed="false" data-astro-cid-ju4pidww>morning</button><button type="button" data-scene-pick="day" aria-pressed="false" data-astro-cid-ju4pidww>day</button><button type="button" data-scene-pick="sunset" aria-pressed="false" data-astro-cid-ju4pidww>sunset</button><button type="button" data-scene-pick="night" aria-pressed="false" data-astro-cid-ju4pidww>night</button></div><script>
+          (() => {
+            const root = document.documentElement;
+            const calm = matchMedia('(prefers-reduced-motion: reduce)');
+            for (const b of document.querySelectorAll('[data-scene-pick]')) {
+              b.setAttribute('aria-pressed', String(b.dataset.scenePick === root.dataset.scene));
+              b.addEventListener('click', () => {
+                const set = () => window.setScene(b.dataset.scenePick);
+                // a short cross-fade where the browser can do one
+                if (document.startViewTransition && !calm.matches) document.startViewTransition(set);
+                else set();
+              });
+            }
+          })();
+        </script></footer></body></html>

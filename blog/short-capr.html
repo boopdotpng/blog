@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="en-US" data-astro-cid-ju4pidww><head><meta charset="UTF-8"><base target="_blank"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="why deramiocel will fail to hit its primary endpoint."><meta name="author" content="Anuraag Warudkar"><meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"><title>short $capr</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><link rel="preload" href="/fonts/GoogleSansCode-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/GoogleSansCode-VariableItalic.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/katex.min.css"><link rel="stylesheet" href="/markdown.css"><link rel="canonical" href="https://anuraagw.me/blog/short-capr"><link rel="alternate" type="application/rss+xml" title="anuraag" href="/rss.xml"><meta property="og:title" content="short $capr"><meta property="og:description" content="why deramiocel will fail to hit its primary endpoint."><meta property="og:type" content="article"><meta property="og:url" content="https://anuraagw.me/blog/short-capr"><meta property="og:image" content="https://anuraagw.me/og/short-capr.png"><meta property="og:image:alt" content="short $capr"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="anuraag"><meta property="article:published_time" content="2025-07-31T00:00:00.000Z"><meta property="article:section" content="bio"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@boopdotpng"><meta name="twitter:creator" content="@boopdotpng"><meta name="twitter:title" content="short $capr"><meta name="twitter:description" content="why deramiocel will fail to hit its primary endpoint."><meta name="twitter:image" content="https://anuraagw.me/og/short-capr.png"><meta name="twitter:image:alt" content="short $capr"><meta property="article:author" content="https://anuraagw.me/"><meta property="article:tag" content="bio"><meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)"><script>(function(){const isHome = false;
+
+    (() => {
+      // One setting for the whole site: which painting is on the homepage, and with it the theme.
+      // Night is the dark theme; morning, day and sunset are light. Until the visitor picks one,
+      // their system setting decides between night and sunset.
+      const root = document.documentElement;
+      const scenes = ['morning', 'day', 'sunset', 'night'];
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const picked = () => {
+        try { return localStorage.getItem('scene'); } catch (e) { return null; /* private mode */ }
+      };
+      const current = () => {
+        // ?scene=day forces one on the homepage, for linking to it
+        const s = (isHome && new URLSearchParams(location.search).get('scene')) || picked();
+        return scenes.includes(s) ? s : prefersDark.matches ? 'night' : 'sunset';
+      };
+      const apply = (scene) => {
+        root.dataset.scene = scene;
+        root.dataset.theme = scene === 'night' ? 'dark' : 'light';
+        for (const b of document.querySelectorAll('[data-scene-pick]')) b.setAttribute('aria-pressed', String(b.dataset.scenePick === scene));
+      };
+      apply(current());
+      // used by the picker in the footer of every page but the homepage (scene.js runs that one)
+      window.setScene = (scene) => {
+        try { localStorage.setItem('scene', scene); } catch (e) { /* private mode */ }
+        apply(scene);
+      };
+      // the system flips while the page is open and nothing was picked: follow it
+      // (the homepage would have to repaint, so there it waits for the next visit)
+      prefersDark.addEventListener('change', () => { if (!isHome) apply(current()); });
+      // back/forward can restore a page from before the scene was changed on another one
+      window.addEventListener('pageshow', (e) => { if (e.persisted && current() !== root.dataset.scene) location.reload(); });
+      if (isHome) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = `/painting/${root.dataset.scene}.webp`;
+        document.head.append(link);
+      }
+    })();
+  })();</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","@id":"https://anuraagw.me/#person","name":"Anuraag Warudkar","alternateName":["anuraag","anuraagw"],"url":"https://anuraagw.me/","sameAs":["https://github.com/boopdotpng","https://twitter.com/boopdotpng"],"jobTitle":"Software Engineer"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://anuraagw.me/#website","name":"anuraag","url":"https://anuraagw.me/","publisher":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://anuraagw.me/blog/short-capr#webpage","url":"https://anuraagw.me/blog/short-capr","name":"short $capr","description":"why deramiocel will fail to hit its primary endpoint.","inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"about":{"@id":"https://anuraagw.me/#person"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"short $capr","url":"https://anuraagw.me/blog/short-capr","description":"why deramiocel will fail to hit its primary endpoint.","datePublished":"2025-07-31T00:00:00.000Z","dateModified":"2025-07-31T00:00:00.000Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://anuraagw.me/blog/short-capr"},"author":{"@id":"https://anuraagw.me/#person"},"publisher":{"@type":"Person","name":"Anuraag Warudkar","url":"https://anuraagw.me/"},"inLanguage":"en-US","isPartOf":{"@id":"https://anuraagw.me/#website"},"image":["https://anuraagw.me/og/short-capr.png"],"articleSection":"bio","wordCount":477}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"home","item":"https://anuraagw.me"},{"@type":"ListItem","position":2,"name":"short $capr"}]}</script><link rel="stylesheet" href="/_astro/Layout.D2EGMZn8.css"><link rel="stylesheet" href="/_astro/_slug_.BVDpMPvj.css"></head><body data-astro-cid-ju4pidww><a class="skip-link" href="#main-content" target="_self" data-astro-cid-ju4pidww>skip to content</a><header class="site-header" data-astro-cid-ju4pidww><div class="site-title" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww><span class="arrow" data-astro-cid-ju4pidww>&#8592;</span><span class="site-label" data-astro-cid-ju4pidww>anuraagw.me</span></a></div></header><main id="main-content" class="page-main" data-astro-cid-ju4pidww><div class="centered-wrapper" data-astro-cid-zg7dkzxc><article class="post-plain markdown-body" data-astro-cid-zg7dkzxc><div class="post-meta" data-astro-cid-zg7dkzxc><time datetime="2025-07-31" data-astro-cid-zg7dkzxc>july 31, 2025</time><span class="post-meta-sep" data-astro-cid-zg7dkzxc>•</span><span class="post-readtime" data-astro-cid-zg7dkzxc>approx 5m read</span></div><h1 id="article-top" class="post-title-main" data-astro-cid-zg7dkzxc>short $capr</h1><div class="post-subline" data-astro-cid-zg7dkzxc><p class="post-description" data-astro-cid-zg7dkzxc>why deramiocel will fail to hit its primary endpoint.</p></div><p>The full report can be found <a href="https://anuraagw.me/reports/capricor.pdf">here</a>.</p>
+<blockquote>
+<p><strong>Quick note:</strong> I work full time and wrote this in the little free time I have — there may be some spelling or formatting issues, but the core thesis and data analysis are correct.</p>
+</blockquote>
+<blockquote>
+<p><strong>Update – August 11, 2025</strong><br/>
+Capricor seeks to resubmit its BLA based on its existing dataset, with HOPE-3 data (expected in Q4 2025) potentially serving as supportive and confirmatory evidence, pending regulatory guidance. They’re submitting the same dataset to the same person who rejected them last time.</p>
+</blockquote>
+<blockquote>
+<p><strong>Update – August 9, 2025</strong><br/>
+Vinay Prasad, who previously issued a CRL for Deramiocel, is back at the FDA. This no doubt decreases the chance that the drug is approved.</p>
+</blockquote>
+<hr/>
+<h2 id="what-is-cap-1002">What is CAP-1002?</h2>
+<p>Deramiocel is a 150M dose of cardiosphere-derived cells (CDCs) administered via IV every 3 months. The CDCs release short-lived exosomes that, in theory, degrade some of the negative downstream effects of dystrophin deficiency. These exosomes carry miRNAs and bioactive proteins that slow down the generation of scar tissue and aid stem cells in muscle regeneration. This is not a disease-modifying therapy; it does not restore dystrophin, and it intervenes far too late in the disease progression to have any real chance at reversal. It’s merely intended as a palliative.</p>
+<p>This is Capricor’s only pipeline asset. If the phase 3 trial fails, the company has nothing left and no route to market. The core thesis is that there’s no evidence that the drug improves PUL 2.0 score significantly over a 12 month period (). Capricor seems to know this. During a webinar on 7/29, the company said the following (paraphrased):</p>
+<blockquote>
+<p>A request has been sent to the FDA for addition of LVEF (ie, cardiomyopathy) as a primary endpoint in HOPE-3; if accepted alongside existing primary endpoint of upper limb function (ie, skeletal myopathy), this opens the door for BLA-approval AND label-expansion (which was the original intent of HOPE-3…)</p>
+</blockquote>
+<p>LVEF is a stronger endpoint for CAP-1002 — past trials have shown that LVEF decline is approximately 0 compared to a modest drop in standard of care. However, the FDA has already issued Capricor a CRL on their last submission, which included HOPE-1, HOPE-2, and intermediate results from HOPE-2-OLE, citing lack of clinically meaningful skeletal benefit and unresolved CMC questions. HOPE-3 appears structurally identical to HOPE-2: mediocre PUL 2.0 efficacy, stronger LVEF data, and a larger sample size. Given the prior CRL, it’s fair to assume that in this case the FDA would not allow this drug to go to market. Additionally, LVEF is not a valid surrogate for survival in DMD; there is a very poor correlation between preserved EF and functional outcomes.</p>
+<blockquote>
+<p><strong>Conclusion:</strong><br/>
+<strong>HOPE-3 will fail on its primary endpoint (PUL2.0) and achieve statistical significance on its secondary endpoint (LVEF). The FDA will not approve this drug.</strong></p>
+</blockquote></article></div><script type="module" src="/_astro/gallery.B6cRjD71.ts"></script><script type="module" src="/_astro/diagram-zoom.C1fRBZe1.ts"></script></main><footer class="site-footer" data-astro-cid-ju4pidww><nav class="footer-nav" aria-label="Footer" data-astro-cid-ju4pidww><a href="/" target="_self" data-astro-cid-ju4pidww>home</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>github</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer" data-astro-cid-ju4pidww>@boopdotpng</a><span class="footer-sep" aria-hidden="true" data-astro-cid-ju4pidww>·</span><a href="/rss.xml" target="_self" data-astro-cid-ju4pidww>rss</a></nav><div class="theme-pick" role="group" aria-label="Theme" data-astro-cid-ju4pidww><button type="button" data-scene-pick="morning" aria-pressed="false" data-astro-cid-ju4pidww>morning</button><button type="button" data-scene-pick="day" aria-pressed="false" data-astro-cid-ju4pidww>day</button><button type="button" data-scene-pick="sunset" aria-pressed="false" data-astro-cid-ju4pidww>sunset</button><button type="button" data-scene-pick="night" aria-pressed="false" data-astro-cid-ju4pidww>night</button></div><script>
+          (() => {
+            const root = document.documentElement;
+            const calm = matchMedia('(prefers-reduced-motion: reduce)');
+            for (const b of document.querySelectorAll('[data-scene-pick]')) {
+              b.setAttribute('aria-pressed', String(b.dataset.scenePick === root.dataset.scene));
+              b.addEventListener('click', () => {
+                const set = () => window.setScene(b.dataset.scenePick);
+                // a short cross-fade where the browser can do one
+                if (document.startViewTransition && !calm.matches) document.startViewTransition(set);
+                else set();
+              });
+            }
+          })();
+        </script></footer></body></html>
