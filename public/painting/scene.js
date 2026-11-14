@@ -1095,7 +1095,7 @@
     const sctx = spriteCv.getContext('2d');
     if (!pctx || !sctx) return;
 
-    // the scene is chosen in the page head (the visitor's pick, else sunset, or night for a dark system) before anything is drawn
+    // the scene is chosen in the page head (the last pick, else sunset, or ?scene=) before anything is drawn
     const scene = () => (SCENES.includes(root.dataset.scene) ? root.dataset.scene : 'sunset');
     const picks = [...document.querySelectorAll('[data-scene-pick]')];
 
@@ -1134,7 +1134,7 @@
     let settleTimer = 0;
     const commit = (name) => {
       root.dataset.scene = name;
-      root.dataset.theme = name === 'night' ? 'dark' : 'light'; // the rest of the site goes dark with the night
+      root.dataset.theme = name === 'night' ? 'dark' : 'light'; // only the homepage: posts follow the browser
       try { localStorage.setItem('scene', name); } catch (e) { /* private mode */ }
       // the slips were turned over one by one as the brush passed; the page as a whole now agrees with them
       for (const el of document.querySelectorAll('[data-paper]')) el.removeAttribute('data-paper');
