@@ -37,19 +37,6 @@ const favoriteSong = {
   title: 'journey of a lifetime ~ frieren main theme',
   url: 'https://open.spotify.com/track/1FhWuo97KqSWbe4UYpKAei',
 };
-
-// Category legend for the sidebar — counts derived from posts, sorted by frequency.
-const catCounts = sortedPosts.reduce<Record<string, number>>((acc, post) => {
-  const cat = post.data.cat ?? 'misc';
-  acc[cat] = (acc[cat] ?? 0) + 1;
-  return acc;
-}, {});
-const categories = Object.entries(catCounts)
-  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-  .map(([name, count]) => ({ name, count }));
-
-// Edit this line to change the "now" blurb in the sidebar.
-const now = 'writing a tenstorrent backend for tinygrad';
 ---
 
 <Layout
@@ -57,8 +44,6 @@ const now = 'writing a tenstorrent backend for tinygrad';
   description="Field notes on systems, ML, and GPUs, plus reverse engineering writeups and project updates."
   schema={homeSchema}
   favoriteSong={favoriteSong}
-  categories={categories}
-  now={now}
 >
   <Home posts={sortedPosts} unpublished={unpublishedPosts} />
 </Layout>

@@ -22,349 +22,192 @@ const formatShortDate = (date: Date) => {
   return `${month} ${day} ${date.getFullYear()}`;
 };
 
-const catColors: Record<string, string> = {
-  'gpu': 'var(--cat-gpu)',
-  'ml': 'var(--cat-ml)',
-  'hardware': 'var(--cat-hardware)',
-  'tenstorrent': 'var(--cat-tenstorrent)',
-  'bio': 'var(--cat-bio)',
-  'misc': 'var(--cat-misc)',
+
+// A small fixed tilt per post, so the slips look set down by hand (and stay put between builds).
+const tilt = (id: string) => {
+  let h = 2166136261;
+  for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return `--tilt: ${((((h >>> 0) % 1000) / 1000) * 1.4 - 0.7).toFixed(2)}deg`;
 };
-const getCatColor = (cat: string) => catColors[cat] || 'var(--fg-soft)';
 ---
 
 <section class="home">
   {isDev && (
-    <div class="section dev-unpublished">
-      <div class="section-header">
-        <span class="section-title">// unpublished</span>
-        <span class="section-rule" aria-hidden="true"></span>
-        <a class="dev-new-post" href="/editor">+ new post</a>
-      </div>
-      <ol class="post-index">
+    <div class="dev-unpublished">
+      <ol class="posts">
         {unpublished.map((post) => {
-          const cat = post.data.cat ?? '—';
           const date = parseLocalDate(post.data.pubDate);
           return (
-            <li class="post-row has-edit" data-cat={cat} style={`--row-color: ${getCatColor(cat)}`}>
-              <a href={`/blog/${post.id}`} class="post-link" target="_self">
-                <span class="post-bar" aria-hidden="true"></span>
-                <span class="post-num">wip</span>
+            <li class="post-row" style={tilt(post.id)}>
+              <a href={`/blog/${post.id}`} class="post-link slip is-wip" target="_self">
                 <span class="post-title">{post.data.title}</span>
-                <span class="post-meta">
-                  <span class="post-cat">{cat}</span>
-                  <span class="post-sep" aria-hidden="true">·</span>
-                  <time class="post-date" datetime={post.data.pubDate}>{date ? formatShortDate(date) : post.data.pubDate}</time>
-                </span>
+                <span class="post-date">wip · <time datetime={post.data.pubDate}>{date ? formatShortDate(date) : post.data.pubDate}</time></span>
               </a>
-              <button type="button" class="dev-row-action" data-dev-publish data-slug={post.id} data-publish="true" title="publish" aria-label="publish">↑</button>
-              <a class="dev-row-action" href={`/editor?slug=${post.id}`} title="edit in the post editor" aria-label="edit">✎</a>
+              <button type="button" class="dev-row-action slip" data-dev-publish data-slug={post.id} data-publish="true" title="publish" aria-label="publish">↑</button>
+              <a class="dev-row-action slip" href={`/editor?slug=${post.id}`} title="edit in the post editor" aria-label="edit">✎</a>
             </li>
           );
         })}
+        <li class="post-row">
+          <a class="dev-row-action dev-new slip" href="/editor">+ new post</a>
+        </li>
       </ol>
     </div>
   )}
 
-  <div class="section">
-    <div class="section-header">
-      <span class="section-title">// index</span>
-      <span class="section-rule" aria-hidden="true"></span>
-    </div>
-    <ol class="post-index">
-      {posts.map((post, idx) => {
-        const num = posts.length - idx;
-        const hex = `0x${num.toString(16).padStart(2, '0')}`;
-        const cat = post.data.cat ?? '—';
-        const date = parseLocalDate(post.data.pubDate);
-        const dateLabel = date ? formatShortDate(date) : post.data.pubDate;
-        const year = date?.getFullYear() ?? null;
-        const prevDate = idx > 0 ? parseLocalDate(posts[idx - 1].data.pubDate) : null;
-        const newYear = idx > 0 && year !== null && prevDate !== null && year !== prevDate.getFullYear();
-
-        return (
-          <>
-          {newYear && (
-            <li class="year-row" role="presentation">
-              <span class="year-label">{year}</span>
-              <span class="year-rule" aria-hidden="true"></span>
-            </li>
+  <ol class="posts">
+    {posts.map((post) => {
+      const date = parseLocalDate(post.data.pubDate);
+      return (
+        <li class="post-row" style={tilt(post.id)}>
+          <a href={`/blog/${post.id}`} class="post-link slip" target="_self">
+            <span class="post-title">{post.data.title}</span>
+            <time class="post-date" datetime={post.data.pubDate}>{date ? formatShortDate(date) : post.data.pubDate}</time>
+          </a>
+          {isDev && (
+            <>
+              <button type="button" class="dev-row-action slip" data-dev-publish data-slug={post.id} data-publish="false" title="unpublish" aria-label="unpublish">↓</button>
+              <a class="dev-row-action slip" href={`/editor?slug=${post.id}`} title="edit in the post editor" aria-label="edit">✎</a>
+            </>
           )}
-          <li class={isDev ? 'post-row has-edit' : 'post-row'} data-cat={cat} style={`--row-color: ${getCatColor(cat)}`}>
-            <a href={`/blog/${post.id}`} class="post-link" target="_self">
-              <span class="post-bar" aria-hidden="true"></span>
-              <span class="post-num">{hex}</span>
-              <span class="post-title">{post.data.title}</span>
-              <span class="post-meta">
-                <span class="post-cat">{cat}</span>
-                <span class="post-sep" aria-hidden="true">·</span>
-                <time class="post-date" datetime={post.data.pubDate}>{dateLabel}</time>
-              </span>
-            </a>
-            {isDev && (
-              <>
-                <button type="button" class="dev-row-action" data-dev-publish data-slug={post.id} data-publish="false" title="unpublish" aria-label="unpublish">↓</button>
-                <a class="dev-row-action" href={`/editor?slug=${post.id}`} title="edit in the post editor" aria-label="edit">✎</a>
-              </>
-            )}
-          </li>
-          </>
-        );
-      })}
-    </ol>
-  </div>
+        </li>
+      );
+    })}
+  </ol>
 </section>
 {isDev && <DevPublishScript />}
 
 <style>
   .home {
-    width: 100%;
-    padding: 0.25rem 0 0;
-    font-family: var(--font-mono);
-  }
-
-
-
-
-
-
-  /* dev only */
-  .dev-new-post {
-    flex-shrink: 0;
-    font-size: 0.75rem;
-    color: var(--fg-muted);
-    text-decoration: none;
-    border: 1px solid var(--border-soft);
-    border-radius: 4px;
-    padding: 0 0.45rem;
-  }
-  .dev-new-post:hover {
-    color: var(--fg-strong);
-    border-color: var(--border-strong);
-  }
-
-  /* ── sections ──────────────────────────────────────────── */
-
-  .section {
-    margin-bottom: 0;
-  }
-
-  .section + .section {
-    margin-top: 2.25rem;
-  }
-
-  /* dev only: per-row edit link */
-  .post-row.has-edit {
     display: flex;
-    align-items: center;
-  }
-  .post-row.has-edit .post-link {
-    flex: 1;
-    min-width: 0;
-  }
-  .dev-row-action {
-    flex-shrink: 0;
-    margin-left: 0.15rem;
-    font: inherit;
-    font-size: 0.85rem;
-    line-height: 1;
-    color: var(--fg-faint);
-    background: none;
-    border: 0;
-    cursor: pointer;
-    text-decoration: none;
-    padding: 0.2rem 0.3rem;
-  }
-  .post-link + .dev-row-action {
-    margin-left: 0.5rem;
-  }
-  .dev-row-action:hover {
-    color: var(--fg-strong);
+    flex-direction: column;
+    gap: 1.75rem;
   }
 
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.85rem;
-  }
-
-  .section-title {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    color: var(--fg-muted);
-    text-transform: lowercase;
-    flex-shrink: 0;
-  }
-
-  .section-rule {
-    flex: 1;
-    height: 1px;
-    background: var(--border-soft);
-  }
-
-  /* ── post index ────────────────────────────────────────── */
-
-  .post-index {
+  .posts {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
   }
 
   .post-row {
-    border-bottom: 1px dashed var(--border-soft);
-    transition: opacity 0.15s;
-  }
-
-  .post-row:first-child {
-    border-top: 1px dashed var(--border-soft);
-  }
-
-  .post-row.is-dim {
-    opacity: 0.3;
-  }
-
-  .year-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1.4rem 0 0.85rem;
+    gap: 0.4rem;
+    max-width: min(100%, 40rem);
   }
 
-  .year-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    color: var(--fg-muted);
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-  }
-
-  .year-rule {
-    flex: 1;
-    height: 1px;
-    background: var(--border-soft);
-  }
-
+  /* each post is its own slip, set down slightly askew */
   .post-link {
-    display: grid;
-    grid-template-columns: 3px 2.8rem minmax(0, 1fr) auto;
-    gap: 0.7rem;
-    align-items: center;
-    padding: 0.75rem 0.5rem 0.75rem 0;
-    text-decoration: none;
-    color: inherit;
-    transition: background 0.12s;
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.15rem 1rem;
+    padding: 0.45rem 0.85rem 0.5rem;
+    min-width: 0;
+    transform-origin: left center;
   }
 
-  .post-link:hover,
-  .post-link:focus-visible {
-    background: var(--surface-soft);
+  .post-row .post-link {
+    transform: rotate(var(--tilt, 0deg));
   }
 
-  .post-bar {
-    background: var(--row-color);
-    opacity: 0.55;
-    transition: opacity 0.12s;
-    align-self: stretch;
-    border-radius: 2px;
-  }
-
-  .post-link:hover .post-bar {
-    opacity: 1;
-  }
-
-  .post-num {
-    font-size: 0.78rem;
-    color: var(--fg-faint);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.03em;
-  }
-
-  .post-link:hover .post-num {
-    color: var(--row-color);
+  .post-row .post-link:hover,
+  .post-row .post-link:focus-visible {
+    transform: rotate(0) translateX(6px);
+    box-shadow: var(--paper-shadow-lift);
   }
 
   .post-title {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--fg);
-    line-height: 1.5;
+    font-family: var(--font-sans);
+    font-size: 1.08rem;
+    line-height: 1.35;
     min-width: 0;
   }
 
   .post-link:hover .post-title {
-    color: var(--fg-strong);
     text-decoration: underline;
+    text-decoration-thickness: 1px;
     text-underline-offset: 3px;
   }
 
-  .post-meta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.72rem;
-    color: var(--fg-faint);
-    white-space: nowrap;
-  }
-
-  .post-cat {
-    color: var(--row-color);
-    text-transform: lowercase;
-    font-weight: 500;
-  }
-
-  .post-sep {
-    color: var(--border-strong);
-  }
-
   .post-date {
-    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    color: var(--paper-ink-soft);
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
 
-  /* ── responsive ────────────────────────────────────────── */
-
-  @media (min-width: 1101px) and (max-height: 950px) {
-    .post-link { padding-block: 0.6rem; }
+  /* drafts: pencilled outline, not quite all there yet */
+  .post-link.is-wip {
+    outline: 1px dashed var(--paper-ink-soft);
+    outline-offset: -4px;
+    opacity: 0.85;
   }
 
-  @media (min-width: 761px) and (max-width: 1100px) {
-    .post-link {
-      grid-template-columns: 3px 2.8rem minmax(0, 1fr);
-      row-gap: 0.3rem;
+  .post-link.is-wip:hover,
+  .post-link.is-wip:focus-visible {
+    opacity: 1;
+  }
+
+  /* dev only: small paper tabs tucked beside a slip */
+  .dev-row-action {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1;
+    border: 0;
+    cursor: pointer;
+    padding: 0.4rem 0.45rem;
+    color: var(--paper-ink-soft);
+    transform: rotate(calc(var(--tilt, 0deg) * -1.5));
+  }
+
+  .dev-row-action:hover,
+  .dev-row-action:focus-visible {
+    color: var(--paper-ink);
+    transform: rotate(0) translateY(-1px);
+  }
+
+  /* the slip slides right on hover: the tabs move with it instead of being run into */
+  .dev-row-action {
+    transition: transform 0.18s ease, translate 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .post-row:has(.post-link:hover) .dev-row-action,
+  .post-row:has(.post-link:focus-visible) .dev-row-action {
+    translate: 6px 0;
+  }
+
+  .dev-new {
+    padding: 0.45rem 0.7rem;
+  }
+
+  /* with a pointer, the tabs stay out of the picture until you reach for a row */
+  @media (hover: hover) {
+    .post-row .dev-row-action:not(.dev-new) {
+      opacity: 0;
     }
 
-    .post-bar { grid-row: 1 / 3; }
-    .post-num { grid-row: 1 / 3; }
-    .post-meta { grid-column: 3; }
+    .post-row:hover .dev-row-action,
+    .post-row:focus-within .dev-row-action {
+      opacity: 1;
+    }
   }
 
   @media (max-width: 760px) {
-    .home {
-      padding: 0.25rem 0 0;
+    .posts {
+      gap: 0.55rem;
     }
 
-    .post-link {
-      grid-template-columns: 4px 1fr;
-      grid-template-rows: auto auto;
-      gap: 0.25rem 0.7rem;
-    }
-
-    .post-bar {
-      grid-row: 1 / 3;
-    }
-
-    .post-num {
-      display: none;
-    }
-
-    .post-meta {
-      grid-column: 2;
-      grid-row: 2;
-      font-size: 0.7rem;
+    .post-title {
+      font-size: 1rem;
     }
   }
 </style>

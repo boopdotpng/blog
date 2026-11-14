@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- Renders the full painting once; render.sh screenshots this page. ?scene=morning|day|sunset|night&seed=N -->
+<meta charset="utf-8" />
+<title>painting</title>
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+</style>
+<canvas id="c"></canvas>
+<script src="../../public/painting/scene.js"></script>
+<script>
+  const qs = new URLSearchParams(location.search);
+  Painting.render(document.getElementById('c'), qs.get('scene') || 'morning', Number(qs.get('seed') || 11));
+</script>

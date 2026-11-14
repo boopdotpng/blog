@@ -1,6 +1,5 @@
 ---
 import '../styles/diagrams.css';
-import ResidentCat from '../components/ResidentCat.astro';
 // Normalize the path so it works in both `astro dev` (pathname "/") and the
 // static build, which uses `build.format: 'file'` and yields "/index.html".
 const cleanPath = Astro.url.pathname
@@ -15,8 +14,6 @@ const {
   schemaArticle,
   schema,
   favoriteSong,
-  categories = [],
-  now,
   robots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
   useKatex = false,
   ogImage,
@@ -138,14 +135,45 @@ if (articleSchema && schemaArticle?.wordCount) {
   <meta name="theme-color" content="#111" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)" />
 
-  <script is:inline>
+  <script is:inline define:vars={{ isHome }}>
     (() => {
+      // One setting for the whole site: which painting is on the homepage, and with it the theme.
+      // Night is the dark theme; morning, day and sunset are light. Until the visitor picks one,
+      // their system setting decides between night and sunset.
+      const root = document.documentElement;
+      const scenes = ['morning', 'day', 'sunset', 'night'];
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-      const apply = () => {
-        document.documentElement.dataset.theme = prefersDark.matches ? 'dark' : 'light';
+      const picked = () => {
+        try { return localStorage.getItem('scene'); } catch (e) { return null; /* private mode */ }
       };
-      apply();
-      prefersDark.addEventListener('change', apply);
+      const current = () => {
+        // ?scene=day forces one on the homepage, for linking to it
+        const s = (isHome && new URLSearchParams(location.search).get('scene')) || picked();
+        return scenes.includes(s) ? s : prefersDark.matches ? 'night' : 'sunset';
+      };
+      const apply = (scene) => {
+        root.dataset.scene = scene;
+        root.dataset.theme = scene === 'night' ? 'dark' : 'light';
+        for (const b of document.querySelectorAll('[data-scene-pick]')) b.setAttribute('aria-pressed', String(b.dataset.scenePick === scene));
+      };
+      apply(current());
+      // used by the picker in the footer of every page but the homepage (scene.js runs that one)
+      window.setScene = (scene) => {
+        try { localStorage.setItem('scene', scene); } catch (e) { /* private mode */ }
+        apply(scene);
+      };
+      // the system flips while the page is open and nothing was picked: follow it
+      // (the homepage would have to repaint, so there it waits for the next visit)
+      prefersDark.addEventListener('change', () => { if (!isHome) apply(current()); });
+      // back/forward can restore a page from before the scene was changed on another one
+      window.addEventListener('pageshow', (e) => { if (e.persisted && current() !== root.dataset.scene) location.reload(); });
+      if (isHome) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = `/painting/${root.dataset.scene}.webp`;
+        document.head.append(link);
+      }
     })();
   </script>
 
@@ -299,31 +327,6 @@ if (articleSchema && schemaArticle?.wordCount) {
     font-family: var(--font-mono);
   }
 
-  .home-song {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
-    color: var(--fg-faint);
-    text-decoration: none;
-  }
-
-  .home-song:hover .song-title {
-    color: var(--fg);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .song-icon {
-    color: var(--fg-subtle);
-  }
-
-  .song-title {
-    color: var(--fg-soft);
-    letter-spacing: 0.02em;
-  }
-
   .site-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -409,6 +412,11 @@ if (articleSchema && schemaArticle?.wordCount) {
   }
 
   .site-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
     max-width: 800px;
     margin: 3.5rem auto 0;
     padding: 1.5rem clamp(1rem, 4vw, 2rem) 2.5rem;
@@ -443,259 +451,251 @@ if (articleSchema && schemaArticle?.wordCount) {
     color: var(--border-strong);
   }
 
-  /* ── home: sidebar card + index ─────────────────────────── */
-
-  .home-shell {
+  /* the same four words as the homepage picker; here they only choose the theme */
+  .theme-pick {
     display: flex;
-    flex: 1;
-    min-height: 100vh;
-    align-items: stretch;
-    gap: clamp(1.5rem, 4vw, 3rem);
-    width: 100%;
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 2rem clamp(1rem, 4vw, 2rem);
-    box-sizing: border-box;
+    gap: 0.7rem;
   }
 
-  .home-sidebar {
-    flex: 0 0 230px;
-    display: flex;
-  }
-
-  .home-card {
-    position: sticky;
-    top: clamp(1.5rem, 4vw, 3rem);
-    align-self: flex-start;
-    width: 100%;
-    max-height: calc(100vh - 2 * clamp(1.5rem, 4vw, 3rem));
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    padding: 1.5rem 1.4rem;
-    box-sizing: border-box;
-    border: 1px solid var(--border-muted);
-    border-radius: 10px;
-    background: var(--surface-soft);
-    font-family: var(--font-mono);
-    box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.025);
-  }
-
-  .home-name {
-    font-size: 1.05rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: lowercase;
-    color: var(--fg-strong);
-    text-decoration: none;
-  }
-
-  .home-name:hover {
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
-
-  .home-card .home-song {
-    display: block;
-    font-size: 0.78rem;
-    line-height: 1.5;
-  }
-
-  .home-card .home-song .song-icon {
-    display: inline-block;
-    vertical-align: -0.15em;
-    margin-right: 0.35rem;
-  }
-
-  .home-nav {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.15rem;
-  }
-
-  .home-nav a {
-    color: var(--fg-muted);
-    text-decoration: none;
-    font-size: 0.82rem;
-    padding: 0.2rem 0;
-    text-transform: lowercase;
+  .theme-pick button {
+    font: inherit;
+    font-size: 0.8rem;
     letter-spacing: 0.05em;
+    color: var(--fg-faint);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
   }
 
-  .home-nav a:hover {
+  .theme-pick button:hover {
+    color: var(--fg);
+  }
+
+  .theme-pick button[aria-pressed='true'] {
     color: var(--fg);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
-  .home-block {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding-top: 1.1rem;
-    border-top: 1px solid var(--border-muted);
+  /* ── home: a painting, with paper tags laid over it ─────── */
+
+  .painting {
+    position: fixed;
+    inset: 0;
+    /* largest viewport height, so mobile toolbars sliding away never expose an edge */
+    height: 100lvh;
+    z-index: 0;
+    /* the flat colour stands in for the sky until the image arrives;
+       64% is FOCUS_X in scene.js, which paints over this image stroke for stroke */
+    background: #c8749a url("/painting/sunset.webp") 64% 50% / cover no-repeat;
   }
 
-  .home-block-title {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: lowercase;
-    color: var(--fg-subtle);
+  :root[data-scene='morning'] .painting {
+    background-color: #7d8fdc;
+    background-image: url("/painting/morning.webp");
   }
 
-  .home-tags {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
+  :root[data-scene='day'] .painting {
+    background-color: #5d95dd;
+    background-image: url("/painting/day.webp");
   }
 
-  .home-tag {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
+  /* scene.js adds two canvases: fresh strokes over the image, and whatever is flying */
+  .painting :global(canvas) {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    font: inherit;
-    font-size: 0.8rem;
-    color: var(--fg-soft);
-    background: none;
-    border: 0;
-    cursor: pointer;
-    transition: color 0.15s;
-    padding: 0.25rem 0;
-    text-align: left;
+    height: 100%;
   }
 
-  .home-tag:hover,
-  .home-tag[aria-pressed='true'] {
-    color: var(--fg-strong);
+  :root[data-scene='night'] .painting {
+    background-color: #0b1130;
+    background-image: url("/painting/night.webp");
   }
 
-  .home-tag-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 2px;
-    flex: none;
-    transition: transform 0.2s ease, border-radius 0.2s ease;
+  /* warm parchment, with a little tooth so the slips sit in the painting rather than on it.
+     [data-paper] is set by scene.js on single slips while a scene change sweeps across the page. */
+  .home-shell,
+  .home-shell :global(.slip[data-paper='day']) {
+    --paper: rgba(245, 236, 216, 0.95);
+    --paper-solid: #f5ecd8;
+    --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .27 0 0 0 0 .14 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
+    --paper-ink: #2c2830;
+    --paper-ink-soft: #6c6570;
+    --paper-shadow: 0 1px 1px rgba(40, 30, 60, 0.14), 0 6px 14px rgba(30, 26, 70, 0.14), 0 14px 34px rgba(30, 26, 70, 0.18);
+    --paper-shadow-lift: 0 1px 2px rgba(40, 30, 60, 0.18), 0 10px 20px rgba(30, 26, 70, 0.2), 0 22px 46px rgba(30, 26, 70, 0.24);
   }
 
-  .home-tag[aria-pressed='true'] .home-tag-dot {
-    transform: scale(1.25);
-    border-radius: 50%;
-  }
-
-  .home-tag[aria-pressed='true'] .home-tag-name {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .home-tag-name {
-    text-transform: lowercase;
-  }
-
-  .home-tag-count {
-    margin-left: auto;
-    font-size: 0.72rem;
-    color: var(--fg-faint);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .home-now {
-    margin: 0;
-    font-size: 0.8rem;
-    line-height: 1.7;
-    color: var(--fg-soft);
-  }
-
-  .home-layout {
+  .home-shell {
     position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    flex: 1;
-    width: 100%;
-    overflow: hidden;
+    align-items: flex-start;
+    gap: 1.6rem;
+    min-height: 100vh;
+    min-height: 100svh;
+    box-sizing: border-box;
+    padding: clamp(1.5rem, 6vh, 4rem) clamp(1rem, 6vw, 6.5rem) 2rem;
   }
 
+  /* dark paper under the night sky */
+  :root[data-scene='night'] .home-shell,
+  .home-shell :global(.slip[data-paper='night']) {
+    --paper: rgba(15, 18, 36, 0.86);
+    --paper-solid: #0f1224;
+    --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .7 0 0 0 0 .75 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+    --paper-ink: #e9e9f4;
+    --paper-ink-soft: #a3a6c4;
+    --paper-shadow: 0 0 0 1px rgba(150, 170, 255, 0.14), 0 8px 26px rgba(0, 0, 10, 0.45);
+    --paper-shadow-lift: 0 0 0 1px rgba(150, 170, 255, 0.24), 0 14px 36px rgba(0, 0, 10, 0.6);
+  }
+
+  /* every label on the homepage is a slip of paper */
+  .home-shell :global(.slip) {
+    background: var(--paper-grain) var(--paper);
+    color: var(--paper-ink);
+    box-shadow: var(--paper-shadow);
+    border-radius: 2px;
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  /* while night falls or lifts, the paper and its ink turn gradually instead of flipping */
+  :root[data-repainting] .home-shell :global(.slip) {
+    transition: transform 0.18s ease, box-shadow 0.7s ease, background-color 0.7s ease, color 0.7s ease;
+  }
+
+  :root[data-repainting] .home-shell :global(.slip *) {
+    transition: color 0.7s ease;
+  }
+
+  .home-name {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.7rem 1.1rem 0.75rem;
+    transform: rotate(-2deg);
+    transform-origin: left center;
+  }
+
+  .home-name-title {
+    font-family: var(--font-sans);
+    font-style: italic;
+    font-size: 1.55rem;
+    line-height: 1.2;
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .home-name-sub {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--paper-ink-soft);
+  }
 
   .home-content {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
+    width: 100%;
     min-width: 0;
   }
 
-  @media (min-width: 1101px) and (max-height: 950px) {
-    .home-shell { padding-block: 1.5rem; }
+  .home-links {
+    position: fixed;
+    right: clamp(1rem, 2vw, 1.75rem);
+    bottom: clamp(1rem, 2vw, 1.5rem);
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .home-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem 0.35rem;
+    font-family: var(--font-sans);
+    font-style: italic;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    /* they sit over the busiest part of the picture: opaque paper, heavier shadow */
+    background-color: var(--paper-solid);
+    box-shadow: var(--paper-shadow-lift);
+  }
+
+  /* `nav a:hover` above would otherwise ink these with the page's --fg: dark on dark at night */
+  .home-links a:hover,
+  .home-links a:focus-visible {
+    color: var(--paper-ink);
+  }
+
+  /* time of day: one slip, four words */
+  .scene-toggle {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.3rem;
+    background-color: var(--paper-solid);
+    box-shadow: var(--paper-shadow-lift);
+    transform: rotate(0.7deg);
+  }
+
+  .scene-toggle button {
+    font-family: var(--font-sans);
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--paper-ink-soft);
+    background: none;
+    border: 0;
+    padding: 0.2rem 0.45rem 0.25rem;
+    cursor: pointer;
+  }
+
+  .scene-toggle button:hover {
+    color: var(--paper-ink);
+  }
+
+  .scene-toggle button[aria-pressed='true'] {
+    color: var(--paper-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .home-links a:nth-child(odd) { transform: rotate(-1.2deg); }
+  .home-links a:nth-child(even) { transform: rotate(0.9deg); }
+
+  .home-links a:hover,
+  .home-links a:focus-visible {
+    transform: rotate(0) translateY(-2px);
+  }
+
+  .home-links svg {
+    color: var(--paper-ink-soft);
+  }
+
+  @media (max-width: 900px) {
+    /* no room to pin the links in a corner: let them follow the posts */
+    .home-links {
+      position: static;
+      justify-content: flex-start;
+      margin-top: auto;
+      padding-top: 1rem;
+    }
+
+    .home-links a {
+      white-space: normal;
+    }
   }
 
   @media (max-width: 760px) {
     .home-shell {
-      flex-direction: column;
-      min-height: 0;
-      gap: 2rem;
-      padding: 1.25rem 1rem 2.5rem;
+      gap: 1.25rem;
+      padding: 1.5rem 0.9rem 1.5rem;
     }
-
-    .home-sidebar {
-      flex: none;
-      width: auto;
-    }
-
-    .home-card {
-      position: static;
-      min-height: 0;
-      max-height: none;
-      overflow: visible;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.75rem 1.25rem;
-      padding: 1.25rem;
-    }
-
-    .home-name {
-      flex-basis: 100%;
-    }
-
-    .home-card .home-song {
-      flex-basis: 100%;
-    }
-
-    .home-nav {
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 0.9rem;
-    }
-
-    .home-block {
-      flex-basis: 100%;
-      padding-top: 0.75rem;
-    }
-
-    .home-tags {
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 0.4rem 1.1rem;
-    }
-
-    .home-tag {
-      width: auto;
-    }
-
-    .home-tag-count {
-      margin-left: 0.35rem;
-    }
-
-    .home-layout {
-      overflow: visible;
-    }
-
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -720,56 +720,39 @@ if (articleSchema && schemaArticle?.wordCount) {
 <body>
   <a class="skip-link" href="#main-content" target="_self">skip to content</a>
   {isHome ? (
-    <div class="home-layout">
-    <div class="home-shell">
-      <aside class="home-sidebar">
-        <div class="home-card">
-          <a class="home-name" href="/" target="_self">boop</a>
+    <Fragment>
+      <div class="painting" aria-hidden="true"></div>
+      <script is:inline src="/painting/scene.js" defer></script>
+      <div class="home-shell">
+        <header>
+          <a class="home-name slip" href="/" target="_self">
+            <h1 class="home-name-title">boop</h1>
+            <span class="home-name-sub">notes on gpus, ml, and chips</span>
+          </a>
+        </header>
+        <main class="home-content" id="main-content">
+          <slot />
+        </main>
+        <nav class="home-links" aria-label="Primary">
+          <div class="scene-toggle slip" role="group" aria-label="Time of day in the painting">
+            {['morning', 'day', 'sunset', 'night'].map((scene) => (
+              <button type="button" data-scene-pick={scene} aria-pressed="false">{scene}</button>
+            ))}
+          </div>
           {favoriteSong && (
-            <a class="home-song" href={favoriteSong.url} target="_blank" aria-label="Favorite song right now">
-              <span class="song-icon" aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M13 2.5a.5.5 0 0 0-.62-.48l-6 1.5A.5.5 0 0 0 6 4v6.05A2.5 2.5 0 1 0 7 12V6.39l5-1.25v3.91A2.5 2.5 0 1 0 13 11V2.5Z"/>
-                </svg>
-              </span>
-              <span class="song-title">{favoriteSong.title}</span>
+            <a class="slip" href={favoriteSong.url} target="_blank" rel="noopener noreferrer" aria-label={`Favorite song right now: ${favoriteSong.title}`}>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M13 2.5a.5.5 0 0 0-.62-.48l-6 1.5A.5.5 0 0 0 6 4v6.05A2.5 2.5 0 1 0 7 12V6.39l5-1.25v3.91A2.5 2.5 0 1 0 13 11V2.5Z"/>
+              </svg>
+              {favoriteSong.title}
             </a>
           )}
-          <nav class="home-nav" aria-label="Primary">
-            <a href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
-            <a href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
-            <a href="/rss.xml" target="_self">rss</a>
-          </nav>
-          {categories.length > 0 && (
-            <div class="home-block">
-              <span class="home-block-title">// tags</span>
-              <ul class="home-tags">
-                {categories.map((c) => (
-                  <li>
-                    <button class="home-tag" type="button" data-cat={c.name} aria-pressed="false">
-                      <span class="home-tag-dot" style={`background: var(--cat-${c.name})`} aria-hidden="true"></span>
-                      <span class="home-tag-name">{c.name}</span>
-                      <span class="home-tag-count">{c.count}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {now && (
-            <div class="home-block">
-              <span class="home-block-title">now</span>
-              <p class="home-now">{now}</p>
-            </div>
-          )}
-        </div>
-      </aside>
-      <main class="home-content" id="main-content">
-        <slot />
-        <ResidentCat />
-      </main>
-    </div>
-    </div>
+          <a class="slip" href="https://github.com/boopdotpng" target="_blank" rel="noopener noreferrer">github</a>
+          <a class="slip" href="https://twitter.com/boopdotpng" target="_blank" rel="noopener noreferrer">@boopdotpng</a>
+          <a class="slip" href="/rss.xml" target="_self">rss</a>
+        </nav>
+      </div>
+    </Fragment>
   ) : (
     <Fragment>
       <header class="site-header">
@@ -799,32 +782,28 @@ if (articleSchema && schemaArticle?.wordCount) {
           <span class="footer-sep" aria-hidden="true">·</span>
           <a href="/rss.xml" target="_self">rss</a>
         </nav>
+        <div class="theme-pick" role="group" aria-label="Theme">
+          {['morning', 'day', 'sunset', 'night'].map((scene) => (
+            <button type="button" data-scene-pick={scene} aria-pressed="false">{scene}</button>
+          ))}
+        </div>
+        <script is:inline>
+          (() => {
+            const root = document.documentElement;
+            const calm = matchMedia('(prefers-reduced-motion: reduce)');
+            for (const b of document.querySelectorAll('[data-scene-pick]')) {
+              b.setAttribute('aria-pressed', String(b.dataset.scenePick === root.dataset.scene));
+              b.addEventListener('click', () => {
+                const set = () => window.setScene(b.dataset.scenePick);
+                // a short cross-fade where the browser can do one
+                if (document.startViewTransition && !calm.matches) document.startViewTransition(set);
+                else set();
+              });
+            }
+          })();
+        </script>
       </footer>
     </Fragment>
   )}
-  <script is:inline>
-    (() => {
-      // Sidebar tags: hovering previews a category, clicking pins it (click again to clear).
-      const tags = [...document.querySelectorAll('.home-tag[data-cat]')];
-      if (!tags.length) return;
-      const rows = document.querySelectorAll('.post-row[data-cat]');
-      let pinned = null;
-
-      const show = (cat) => {
-        rows.forEach((row) => row.classList.toggle('is-dim', cat !== null && row.dataset.cat !== cat));
-      };
-
-      tags.forEach((tag) => {
-        const cat = tag.dataset.cat;
-        tag.addEventListener('mouseenter', () => show(cat));
-        tag.addEventListener('mouseleave', () => show(pinned));
-        tag.addEventListener('click', () => {
-          pinned = pinned === cat ? null : cat;
-          tags.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.cat === pinned)));
-          show(pinned);
-        });
-      });
-    })();
-  </script>
 </body>
 </html>
